@@ -1,0 +1,2579 @@
+openapi: 3.0.3
+info:
+  title: Ilqar Mammadov Art Platform API
+  version: 1.0.0
+  description: Modular REST API for artworks, digital books, editorial articles, and
+    creator accounts.
+paths:
+  /api/v1/articles/:
+    get:
+      operationId: articles_list
+      description: Public editorial list. Returns only approved PUBLISHED articles.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - articles
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleListList'
+          description: ''
+  /api/v1/articles/{id}/manage/:
+    get:
+      operationId: articles_manage_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - articles
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+          description: ''
+    put:
+      operationId: articles_manage_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleDetail'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+          description: ''
+    patch:
+      operationId: articles_manage_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleDetail'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+          description: ''
+    delete:
+      operationId: articles_manage_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - articles
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/articles/{slug_or_id}/:
+    get:
+      operationId: articles_retrieve
+      parameters:
+      - in: path
+        name: slug_or_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - articles
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+          description: ''
+  /api/v1/articles/categories/:
+    get:
+      operationId: articles_categories_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - articles
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleCategoryList'
+          description: ''
+  /api/v1/articles/my/:
+    get:
+      operationId: articles_my_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - articles
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleListList'
+          description: ''
+  /api/v1/articles/publish/:
+    post:
+      operationId: articles_publish_create
+      tags:
+      - articles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateUpdate'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+          description: ''
+  /api/v1/artists/:
+    get:
+      operationId: artists_list
+      description: Public directory of artists with search and pagination.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - artists
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArtistProfileList'
+          description: ''
+  /api/v1/artists/{username}/:
+    get:
+      operationId: artists_retrieve
+      description: Public profile of an individual artist.
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - artists
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtistProfile'
+          description: ''
+  /api/v1/artworks/:
+    get:
+      operationId: artworks_list
+      description: Public artwork gallery. Shows only PUBLISHED, non-deleted artworks.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - artworks
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArtworkListList'
+          description: ''
+  /api/v1/artworks/{id}/:
+    get:
+      operationId: artworks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - artworks
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworkDetail'
+          description: ''
+  /api/v1/artworks/{id}/download/:
+    get:
+      operationId: artworks_download_retrieve
+      description: |-
+        Controlled download endpoint.
+        If the artist selected allow_download=False, this returns 403 Forbidden.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - artworks
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/artworks/{id}/manage/:
+    get:
+      operationId: artworks_manage_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - artworks
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworkDetail'
+          description: ''
+    put:
+      operationId: artworks_manage_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - artworks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtworkDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtworkDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtworkDetail'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworkDetail'
+          description: ''
+    patch:
+      operationId: artworks_manage_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - artworks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArtworkDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArtworkDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArtworkDetail'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworkDetail'
+          description: ''
+    delete:
+      operationId: artworks_manage_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - artworks
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/artworks/categories/:
+    get:
+      operationId: artworks_categories_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - artworks
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArtworkCategoryList'
+          description: ''
+  /api/v1/artworks/my/:
+    get:
+      operationId: artworks_my_list
+      description: Returns authenticated artist's own artworks including drafts and
+        pending reviews.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - artworks
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArtworkListList'
+          description: ''
+  /api/v1/artworks/publish/:
+    post:
+      operationId: artworks_publish_create
+      tags:
+      - artworks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtworkCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArtworkCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArtworkCreateUpdate'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworkDetail'
+          description: ''
+  /api/v1/auth/login/:
+    post:
+      operationId: auth_login_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: auth_me_partial_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArtistProfile'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/auth/register/request-code/:
+    post:
+      operationId: auth_register_request_code_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestVerificationCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RequestVerificationCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RequestVerificationCode'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/auth/register/verify/:
+    post:
+      operationId: auth_register_verify_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyAndRegister'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerifyAndRegister'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyAndRegister'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/books/:
+    get:
+      operationId: books_list
+      description: Public books catalog. Returns only approved PUBLISHED books.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - books
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBookListList'
+          description: ''
+  /api/v1/books/{id}/access-grants/:
+    get:
+      operationId: books_access_grants_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - books
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBookAccessRecordList'
+          description: ''
+  /api/v1/books/{id}/download/:
+    get:
+      operationId: books_download_retrieve
+      description: |-
+        Strict server-side authorized book file download.
+        Never exposes direct media files statically.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - books
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/books/{id}/grant-access/:
+    post:
+      operationId: books_grant_access_create
+      description: Owner or Admin grants private download permission to a specific
+        registered user.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - books
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantBookAccess'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GrantBookAccess'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GrantBookAccess'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookAccessRecord'
+          description: ''
+  /api/v1/books/{id}/manage/:
+    get:
+      operationId: books_manage_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - books
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+          description: ''
+    put:
+      operationId: books_manage_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - books
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BookDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BookDetail'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+          description: ''
+    patch:
+      operationId: books_manage_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - books
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBookDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBookDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBookDetail'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+          description: ''
+    delete:
+      operationId: books_manage_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - books
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/books/{slug_or_id}/:
+    get:
+      operationId: books_retrieve
+      parameters:
+      - in: path
+        name: slug_or_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - books
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+          description: ''
+  /api/v1/books/my/:
+    get:
+      operationId: books_my_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - books
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBookListList'
+          description: ''
+  /api/v1/books/publish/:
+    post:
+      operationId: books_publish_create
+      tags:
+      - books
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BookCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BookCreateUpdate'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+          description: ''
+  /api/v1/pages/about/:
+    get:
+      operationId: pages_about_retrieve
+      tags:
+      - pages
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/pages/banner/:
+    get:
+      operationId: pages_banner_retrieve
+      tags:
+      - pages
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/pages/home-overview/:
+    get:
+      operationId: pages_home_overview_retrieve
+      description: |-
+        Optimized aggregation endpoint for Homepage loading.
+        Returns:
+        - hero_banner
+        - featured_artworks (limit 6)
+        - featured_articles (limit 3)
+        - featured_books (limit 4)
+        - founder_intro
+      tags:
+      - pages
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/pages/settings/:
+    get:
+      operationId: pages_settings_retrieve
+      tags:
+      - pages
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/search/:
+    get:
+      operationId: search_retrieve
+      description: Cross-domain unified search across artists, artworks, books, and
+        articles.
+      tags:
+      - search
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/seo/sitemap/:
+    get:
+      operationId: seo_sitemap_retrieve
+      description: |-
+        Dedicated endpoint returning all public, published, non-deleted URLs
+        for Next.js sitemap.xml generation.
+      tags:
+      - seo
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/users/lookup/:
+    get:
+      operationId: users_lookup_retrieve
+      description: |-
+        Protected email existence check for granting book access.
+        Rate-limited, does not expose full user lists.
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+components:
+  schemas:
+    ArticleCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 100
+          pattern: ^[-a-zA-Z0-9_]+$
+        name_az:
+          type: string
+          maxLength: 150
+        name_en:
+          type: string
+          maxLength: 150
+        name_ru:
+          type: string
+          maxLength: 150
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - name_az
+      - name_en
+      - name_ru
+      - slug
+    ArticleCreateUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        category:
+          type: string
+          format: uuid
+          nullable: true
+        cover_image:
+          type: string
+          format: uri
+        title_az:
+          type: string
+          writeOnly: true
+        excerpt_az:
+          type: string
+          writeOnly: true
+        content_az:
+          type: string
+          writeOnly: true
+        title_en:
+          type: string
+          writeOnly: true
+        excerpt_en:
+          type: string
+          writeOnly: true
+        content_en:
+          type: string
+          writeOnly: true
+        title_ru:
+          type: string
+          writeOnly: true
+        excerpt_ru:
+          type: string
+          writeOnly: true
+        content_ru:
+          type: string
+          writeOnly: true
+      required:
+      - content_az
+      - cover_image
+      - excerpt_az
+      - id
+      - title_az
+    ArticleDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+        excerpt:
+          type: string
+          readOnly: true
+        content:
+          type: string
+          readOnly: true
+        author_profile:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/ArticleCategory'
+          readOnly: true
+        cover_image:
+          type: string
+          format: uri
+        cover_thumbnail:
+          type: string
+          format: uri
+          nullable: true
+        reading_time_minutes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        views_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_featured:
+          type: boolean
+        is_founder_article:
+          type: boolean
+          description: Written by Ilqar Mammadov
+        moderation_status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+        rejection_reason:
+          type: string
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleTranslation'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author_profile
+      - category
+      - content
+      - cover_image
+      - created_at
+      - excerpt
+      - id
+      - slug
+      - title
+      - translations
+    ArticleList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+        excerpt:
+          type: string
+          readOnly: true
+        category_slug:
+          type: string
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        author_name:
+          type: string
+          readOnly: true
+        author_username:
+          type: string
+          readOnly: true
+        author_avatar:
+          type: string
+          readOnly: true
+          default: ''
+        cover_thumbnail:
+          type: string
+          format: uri
+          nullable: true
+        reading_time_minutes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_featured:
+          type: boolean
+        is_founder_article:
+          type: boolean
+          description: Written by Ilqar Mammadov
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author_avatar
+      - author_name
+      - author_username
+      - category_name
+      - category_slug
+      - created_at
+      - excerpt
+      - id
+      - slug
+      - title
+    ArticleTranslation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        language:
+          $ref: '#/components/schemas/LanguageEnum'
+        title:
+          type: string
+          maxLength: 250
+        slug:
+          type: string
+          maxLength: 250
+          pattern: ^[-a-zA-Z0-9_]+$
+        excerpt:
+          type: string
+          description: Short summary for listing cards
+        content:
+          type: string
+          description: Sanitized editorial article body
+      required:
+      - content
+      - excerpt
+      - id
+      - language
+      - slug
+      - title
+    ArtistProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 200
+        username:
+          type: string
+          maxLength: 100
+          pattern: ^[-a-zA-Z0-9_]+$
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+        avatar_thumbnail:
+          type: string
+          format: uri
+          nullable: true
+        short_bio:
+          type: string
+        artist_statement:
+          type: string
+        website:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 300
+          - type: string
+            maxLength: 0
+        social_links: {}
+        location:
+          type: string
+          maxLength: 150
+        specialties:
+          type: string
+          description: e.g., Oil painting, Canvas, Graphic Art
+          maxLength: 250
+        is_featured:
+          type: boolean
+          readOnly: true
+        is_founder:
+          type: boolean
+          readOnly: true
+          description: True for Ilqar Mammadov, the site creator.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - full_name
+      - id
+      - is_featured
+      - is_founder
+      - username
+    ArtworkCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 100
+          pattern: ^[-a-zA-Z0-9_]+$
+        name_az:
+          type: string
+          maxLength: 150
+        name_en:
+          type: string
+          maxLength: 150
+        name_ru:
+          type: string
+          maxLength: 150
+        name:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - name_az
+      - name_en
+      - name_ru
+      - slug
+    ArtworkCreateUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        category:
+          type: string
+          format: uuid
+          nullable: true
+        artist_attribution:
+          type: string
+          description: Displayed artist name
+          maxLength: 200
+        creation_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        medium:
+          type: string
+          description: e.g. Oil on Canvas
+          maxLength: 150
+        dimensions:
+          type: string
+          description: e.g. 100 x 80 cm
+          maxLength: 100
+        allow_download:
+          type: boolean
+          description: Allows public visitors to download high-res detail
+        is_watermarked:
+          type: boolean
+        original_master:
+          type: string
+          format: uri
+        rights_confirmed:
+          type: boolean
+          description: Uploader confirms ownership or publishing rights
+        title_az:
+          type: string
+          writeOnly: true
+        description_az:
+          type: string
+          writeOnly: true
+        title_en:
+          type: string
+          writeOnly: true
+        description_en:
+          type: string
+          writeOnly: true
+        title_ru:
+          type: string
+          writeOnly: true
+        description_ru:
+          type: string
+          writeOnly: true
+      required:
+      - id
+      - original_master
+      - title_az
+    ArtworkDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        artist_attribution:
+          type: string
+          description: Displayed artist name
+          maxLength: 200
+        artist_profile:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/ArtworkCategory'
+          readOnly: true
+        moderation_status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+        rejection_reason:
+          type: string
+        creation_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        medium:
+          type: string
+          description: e.g. Oil on Canvas
+          maxLength: 150
+        dimensions:
+          type: string
+          description: e.g. 100 x 80 cm
+          maxLength: 100
+        allow_download:
+          type: boolean
+          description: Allows public visitors to download high-res detail
+        is_watermarked:
+          type: boolean
+        detail_image:
+          type: string
+          format: uri
+          nullable: true
+        thumbnail_image:
+          type: string
+          format: uri
+          nullable: true
+        views_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_featured:
+          type: boolean
+        is_founder_piece:
+          type: boolean
+          description: Masterpiece by Ilqar Mammadov
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtworkTranslation'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - artist_profile
+      - category
+      - created_at
+      - description
+      - id
+      - title
+      - translations
+    ArtworkList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        artist_attribution:
+          type: string
+          description: Displayed artist name
+          maxLength: 200
+        artist_username:
+          type: string
+          readOnly: true
+        category_slug:
+          type: string
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        creation_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        medium:
+          type: string
+          description: e.g. Oil on Canvas
+          maxLength: 150
+        dimensions:
+          type: string
+          description: e.g. 100 x 80 cm
+          maxLength: 100
+        thumbnail_image:
+          type: string
+          format: uri
+          nullable: true
+        detail_image:
+          type: string
+          format: uri
+          nullable: true
+        allow_download:
+          type: boolean
+          description: Allows public visitors to download high-res detail
+        is_featured:
+          type: boolean
+        is_founder_piece:
+          type: boolean
+          description: Masterpiece by Ilqar Mammadov
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - artist_username
+      - category_name
+      - category_slug
+      - created_at
+      - description
+      - id
+      - title
+    ArtworkTranslation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        language:
+          $ref: '#/components/schemas/LanguageEnum'
+        title:
+          type: string
+          maxLength: 250
+        description:
+          type: string
+      required:
+      - id
+      - language
+      - title
+    AvailabilityModeEnum:
+      enum:
+      - NOT_FOR_SALE
+      - FREE
+      - PRIVATE_ACCESS
+      - FUTURE_PAID
+      type: string
+      description: |-
+        * `NOT_FOR_SALE` - Not For Sale
+        * `FREE` - Free Public Access
+        * `PRIVATE_ACCESS` - Private Granted Access
+        * `FUTURE_PAID` - Future Paid Edition
+    BookAccessRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user_email:
+          type: string
+          format: email
+          readOnly: true
+        user_name:
+          type: string
+          readOnly: true
+        granted_by_email:
+          type: string
+          format: email
+          readOnly: true
+        granted_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+          readOnly: true
+      required:
+      - granted_at
+      - granted_by_email
+      - id
+      - is_active
+      - user_email
+      - user_name
+    BookContributor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        bio:
+          type: string
+          readOnly: true
+        linked_username:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+      required:
+      - bio
+      - full_name
+      - id
+      - linked_username
+      - role
+    BookCreateUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        cover_image:
+          type: string
+          format: uri
+        digital_file:
+          type: string
+          format: uri
+          nullable: true
+        availability_mode:
+          $ref: '#/components/schemas/AvailabilityModeEnum'
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+          maxLength: 10
+        publication_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        isbn:
+          type: string
+          maxLength: 50
+        publisher:
+          type: string
+          maxLength: 150
+        languages:
+          type: string
+          description: e.g. AZ, EN, RU
+          maxLength: 100
+        page_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        authors:
+          type: string
+          writeOnly: true
+        title_az:
+          type: string
+          writeOnly: true
+        short_description_az:
+          type: string
+          writeOnly: true
+        full_description_az:
+          type: string
+          writeOnly: true
+        table_of_contents_az:
+          type: string
+          writeOnly: true
+        title_en:
+          type: string
+          writeOnly: true
+        short_description_en:
+          type: string
+          writeOnly: true
+        full_description_en:
+          type: string
+          writeOnly: true
+        table_of_contents_en:
+          type: string
+          writeOnly: true
+        title_ru:
+          type: string
+          writeOnly: true
+        short_description_ru:
+          type: string
+          writeOnly: true
+        full_description_ru:
+          type: string
+          writeOnly: true
+        table_of_contents_ru:
+          type: string
+          writeOnly: true
+      required:
+      - cover_image
+      - full_description_az
+      - id
+      - short_description_az
+      - title_az
+    BookDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+        short_description:
+          type: string
+          readOnly: true
+        full_description:
+          type: string
+          readOnly: true
+        table_of_contents:
+          type: string
+          readOnly: true
+        cover_image:
+          type: string
+          format: uri
+        contributors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookContributor'
+          readOnly: true
+        availability_mode:
+          $ref: '#/components/schemas/AvailabilityModeEnum'
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+          maxLength: 10
+        publication_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        isbn:
+          type: string
+          maxLength: 50
+        publisher:
+          type: string
+          maxLength: 150
+        languages:
+          type: string
+          description: e.g. AZ, EN, RU
+          maxLength: 100
+        page_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        is_featured:
+          type: boolean
+        is_founder_book:
+          type: boolean
+          description: Book authored/curated by Ilqar Mammadov
+        views_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        downloads_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        moderation_status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+        rejection_reason:
+          type: string
+        has_digital_file:
+          type: string
+          readOnly: true
+        has_download_access:
+          type: string
+          readOnly: true
+        can_manage_access:
+          type: string
+          readOnly: true
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookTranslation'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - can_manage_access
+      - contributors
+      - cover_image
+      - created_at
+      - full_description
+      - has_digital_file
+      - has_download_access
+      - id
+      - short_description
+      - slug
+      - table_of_contents
+      - title
+      - translations
+    BookList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+        short_description:
+          type: string
+          readOnly: true
+        cover_image:
+          type: string
+          format: uri
+        contributors:
+          type: string
+          readOnly: true
+        availability_mode:
+          $ref: '#/components/schemas/AvailabilityModeEnum'
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+          maxLength: 10
+        publication_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        publisher:
+          type: string
+          maxLength: 150
+        page_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        is_featured:
+          type: boolean
+        is_founder_book:
+          type: boolean
+          description: Book authored/curated by Ilqar Mammadov
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - contributors
+      - cover_image
+      - created_at
+      - id
+      - short_description
+      - slug
+      - title
+    BookTranslation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        language:
+          $ref: '#/components/schemas/LanguageEnum'
+        title:
+          type: string
+          maxLength: 250
+        slug:
+          type: string
+          maxLength: 250
+          pattern: ^[-a-zA-Z0-9_]+$
+        short_description:
+          type: string
+          description: Short description for book card
+        full_description:
+          type: string
+          description: Detailed book presentation
+        table_of_contents:
+          type: string
+          description: Book index / contents
+      required:
+      - full_description
+      - id
+      - language
+      - short_description
+      - slug
+      - title
+    GrantBookAccess:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        expires_in_days:
+          type: integer
+          minimum: 1
+      required:
+      - email
+    LanguageEnum:
+      enum:
+      - az
+      - en
+      - ru
+      type: string
+      description: |-
+        * `az` - Azerbaijani
+        * `en` - English
+        * `ru` - Russian
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    ModerationStatusEnum:
+      enum:
+      - DRAFT
+      - PENDING_REVIEW
+      - PUBLISHED
+      - REJECTED
+      - ARCHIVED
+      type: string
+      description: |-
+        * `DRAFT` - Draft
+        * `PENDING_REVIEW` - Pending Review
+        * `PUBLISHED` - Published
+        * `REJECTED` - Rejected
+        * `ARCHIVED` - Archived
+    PaginatedArticleCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleCategory'
+    PaginatedArticleListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleList'
+    PaginatedArtistProfileList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtistProfile'
+    PaginatedArtworkCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtworkCategory'
+    PaginatedArtworkListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtworkList'
+    PaginatedBookAccessRecordList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookAccessRecord'
+    PaginatedBookListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookList'
+    PatchedArticleDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+        excerpt:
+          type: string
+          readOnly: true
+        content:
+          type: string
+          readOnly: true
+        author_profile:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/ArticleCategory'
+          readOnly: true
+        cover_image:
+          type: string
+          format: uri
+        cover_thumbnail:
+          type: string
+          format: uri
+          nullable: true
+        reading_time_minutes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        views_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_featured:
+          type: boolean
+        is_founder_article:
+          type: boolean
+          description: Written by Ilqar Mammadov
+        moderation_status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+        rejection_reason:
+          type: string
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleTranslation'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedArtistProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 200
+        username:
+          type: string
+          maxLength: 100
+          pattern: ^[-a-zA-Z0-9_]+$
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+        avatar_thumbnail:
+          type: string
+          format: uri
+          nullable: true
+        short_bio:
+          type: string
+        artist_statement:
+          type: string
+        website:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 300
+          - type: string
+            maxLength: 0
+        social_links: {}
+        location:
+          type: string
+          maxLength: 150
+        specialties:
+          type: string
+          description: e.g., Oil painting, Canvas, Graphic Art
+          maxLength: 250
+        is_featured:
+          type: boolean
+          readOnly: true
+        is_founder:
+          type: boolean
+          readOnly: true
+          description: True for Ilqar Mammadov, the site creator.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedArtworkDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        artist_attribution:
+          type: string
+          description: Displayed artist name
+          maxLength: 200
+        artist_profile:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/ArtworkCategory'
+          readOnly: true
+        moderation_status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+        rejection_reason:
+          type: string
+        creation_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        medium:
+          type: string
+          description: e.g. Oil on Canvas
+          maxLength: 150
+        dimensions:
+          type: string
+          description: e.g. 100 x 80 cm
+          maxLength: 100
+        allow_download:
+          type: boolean
+          description: Allows public visitors to download high-res detail
+        is_watermarked:
+          type: boolean
+        detail_image:
+          type: string
+          format: uri
+          nullable: true
+        thumbnail_image:
+          type: string
+          format: uri
+          nullable: true
+        views_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        is_featured:
+          type: boolean
+        is_founder_piece:
+          type: boolean
+          description: Masterpiece by Ilqar Mammadov
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtworkTranslation'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedBookDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+        short_description:
+          type: string
+          readOnly: true
+        full_description:
+          type: string
+          readOnly: true
+        table_of_contents:
+          type: string
+          readOnly: true
+        cover_image:
+          type: string
+          format: uri
+        contributors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookContributor'
+          readOnly: true
+        availability_mode:
+          $ref: '#/components/schemas/AvailabilityModeEnum'
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+          maxLength: 10
+        publication_year:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        isbn:
+          type: string
+          maxLength: 50
+        publisher:
+          type: string
+          maxLength: 150
+        languages:
+          type: string
+          description: e.g. AZ, EN, RU
+          maxLength: 100
+        page_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        is_featured:
+          type: boolean
+        is_founder_book:
+          type: boolean
+          description: Book authored/curated by Ilqar Mammadov
+        views_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        downloads_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        moderation_status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+        rejection_reason:
+          type: string
+        has_digital_file:
+          type: string
+          readOnly: true
+        has_download_access:
+          type: string
+          readOnly: true
+        can_manage_access:
+          type: string
+          readOnly: true
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookTranslation'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    RequestVerificationCode:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        is_artist:
+          type: boolean
+          description: Designates whether the user can publish artwork/books.
+        is_verified:
+          type: boolean
+          readOnly: true
+          description: Designates whether the user's email has been verified.
+        is_staff:
+          type: boolean
+          readOnly: true
+        artist_profile:
+          allOf:
+          - $ref: '#/components/schemas/ArtistProfile'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - artist_profile
+      - created_at
+      - email
+      - id
+      - is_staff
+      - is_verified
+    VerifyAndRegister:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
+          maxLength: 6
+          minLength: 6
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        full_name:
+          type: string
+          maxLength: 200
+        username:
+          type: string
+          maxLength: 100
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - code
+      - email
+      - full_name
+      - password
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

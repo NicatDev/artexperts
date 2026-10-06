@@ -1,0 +1,88 @@
+name: artexperts
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-artexperts}
+      POSTGRES_USER: ${DB_USER:-artexperts}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_ENGINE: postgresql
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+      - staticfiles:/app/staticfiles
+    expose: ["8000"]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8000/api/v1/auth/csrf/', headers={'X-Forwarded-Proto':'https'}), timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://artexperts.net}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://app.artexperts.net/api/v1}
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-https://app.artexperts.net}
+    restart: unless-stopped
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      API_INTERNAL_URL: http://backend:8000/api/v1
+    expose: ["3000"]
+    healthcheck:
+      test: [CMD, node, -e, "const http=require('http'); const r=http.get('http://127.0.0.1:3000/az/login', s=>{s.resume();process.exit(s.statusCode===200?0:1)});r.setTimeout(5000,()=>{r.destroy();process.exit(1)});r.on('error',()=>process.exit(1));"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  nginx:
+    build: ./deploy/nginx
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    volumes:
+      - media:/srv/media:ro
+      - staticfiles:/srv/static:ro
+      - certificates:/etc/letsencrypt:ro
+      - certbot_webroot:/var/www/certbot:ro
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/nginx-health]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+  certbot:
+    image: certbot/certbot:latest
+    profiles: [certbot]
+    volumes:
+      - certificates:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+volumes:
+  postgres_data:
+  media:
+  staticfiles:
+  certificates:
+  certbot_webroot:

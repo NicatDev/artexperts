@@ -1,0 +1,16 @@
+# Optional native deployment; assumes /opt/artexperts/backend/.venv exists.
+[Unit]
+Description=Art Experts Django Gunicorn
+Requires=gunicorn.socket
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/artexperts/backend
+EnvironmentFile=/opt/artexperts/.env
+ExecStart=/opt/artexperts/backend/.venv/bin/gunicorn --workers 3 --bind fd://3 --timeout 120 --access-logfile - --error-logfile - config.wsgi:application
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

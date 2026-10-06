@@ -1,0 +1,12 @@
+# Optional native deployment; do not enable alongside Docker deployment.
+[Unit]
+Description=Art Experts Gunicorn socket
+
+[Socket]
+ListenStream=/run/artexperts-gunicorn.sock
+SocketUser=www-data
+SocketGroup=www-data
+SocketMode=0660
+
+[Install]
+WantedBy=sockets.target

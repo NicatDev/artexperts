@@ -1,0 +1,9 @@
+[Unit]
+Description=Renew Art Experts HTTPS certificates
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/artexperts
+ExecStart=/bin/sh /opt/artexperts/deploy/renew-ssl.sh
