@@ -22,6 +22,7 @@ services:
       DB_ENGINE: postgresql
       DB_HOST: db
       DB_PORT: 5432
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-app.artexperts.net,localhost,127.0.0.1},backend
     depends_on:
       db:
         condition: service_healthy
