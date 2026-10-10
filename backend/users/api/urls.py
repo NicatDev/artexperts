@@ -11,10 +11,12 @@ from users.api.views import (
     UserLookupView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
+    RegistrationValidationView,
 )
 
 urlpatterns = [
     # Auth endpoints
+    path('auth/register/validate/', RegistrationValidationView.as_view(), name='register-validate'),
     path('auth/register/request-code/', RequestVerificationCodeView.as_view(), name='register-request-code'),
     path('auth/register/verify/', VerifyAndRegisterView.as_view(), name='register-verify'),
     path('auth/login/', LoginView.as_view(), name='login'),

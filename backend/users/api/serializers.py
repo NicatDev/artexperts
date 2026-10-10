@@ -71,41 +71,48 @@ class RequestVerificationCodeSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         value = value.lower().strip()
-        if User.objects.filter(email=value).exists():
+        if User.all_objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("This email is already registered.")
         return value
 
 
-class VerifyAndRegisterSerializer(serializers.Serializer):
+class RegistrationDetailsSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    code = serializers.CharField(max_length=6, min_length=6)
-    password = serializers.CharField(write_only=True, min_length=8)
-    full_name = serializers.CharField(max_length=200)
-    username = serializers.SlugField(max_length=100)
+    password = serializers.CharField(write_only=True, min_length=8, max_length=128, trim_whitespace=False)
+    full_name = serializers.CharField(max_length=200, min_length=2)
+    username = serializers.SlugField(max_length=100, min_length=3)
 
     def validate_email(self, value):
-        return value.lower().strip()
+        value = value.lower().strip()
+        if User.all_objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('This email is already registered.')
+        return value
 
     def validate_username(self, value):
         value = value.lower().strip()
         if not re.match(r'^[a-z0-9_-]+$', value):
             raise serializers.ValidationError("Username can only contain lowercase letters, numbers, hyphens and underscores.")
-        if ArtistProfile.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already taken.")
-        pending_email = self.initial_data.get('email', '').lower().strip()
-        if pending_email and ArtistProfile.objects.filter(user__email=pending_email, username=value).exists():
+        if ArtistProfile.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError("This username is already taken.")
         return value
 
-    def validate(self, attrs):
-        email = attrs.get('email', '').lower().strip()
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError({'email': 'This email is already registered.'})
+    def validate_password(self, value):
+        # These attributes let Django's similarity validator check all signup details.
+        user = User(email=str(self.initial_data.get('email', '')).strip().lower())
+        user.username = str(self.initial_data.get('username', '')).strip().lower()
+        name = str(self.initial_data.get('full_name', '')).strip()
+        parts = name.split()
+        user.first_name = parts[0] if parts else ''
+        user.last_name = ' '.join(parts[1:])
         try:
-            validate_password(attrs['password'], User(email=email))
+            validate_password(value, user)
         except ValidationError as exc:
-            raise serializers.ValidationError({'password': list(exc.messages)})
-        return attrs
+            raise serializers.ValidationError(list(exc.messages))
+        return value
+
+
+class VerifyAndRegisterSerializer(RegistrationDetailsSerializer):
+    code = serializers.RegexField(r'^\d{6}$')
 
 
 class LoginSerializer(serializers.Serializer):

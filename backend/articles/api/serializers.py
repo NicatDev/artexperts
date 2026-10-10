@@ -118,7 +118,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
 
 class ArticleCreateUpdateSerializer(serializers.ModelSerializer):
     rights_confirmed = serializers.BooleanField(write_only=True, required=False)
-    title_az = serializers.CharField(write_only=True, required=True)
+    title_az = serializers.CharField(write_only=True, required=True, max_length=250)
     excerpt_az = serializers.CharField(write_only=True, required=True)
     content_az = serializers.CharField(write_only=True, required=True)
 

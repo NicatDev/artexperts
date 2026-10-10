@@ -102,7 +102,7 @@ class ArtworkDetailSerializer(serializers.ModelSerializer):
 
 
 class ArtworkCreateUpdateSerializer(serializers.ModelSerializer):
-    title_az = serializers.CharField(write_only=True, required=True)
+    title_az = serializers.CharField(write_only=True, required=True, max_length=250)
     description_az = serializers.CharField(write_only=True, required=False, allow_blank=True)
     title_en = serializers.CharField(write_only=True, required=False, allow_blank=True)
     description_en = serializers.CharField(write_only=True, required=False, allow_blank=True)

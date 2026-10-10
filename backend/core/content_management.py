@@ -85,6 +85,15 @@ def save_content(kind, request, instance=None, partial=False):
         for lang in ('az', 'en', 'ru'):
             existing = instance.translations.filter(language=lang).first()
             values = {field: translated[f'{field}_{lang}'] for field in translated_fields if f'{field}_{lang}' in translated}
+            if lang != 'az' and not any(f'{field}_{lang}' in translated for field in translated_fields):
+                # The single-language editor updates existing translated records too,
+                # keeping their stable URLs while showing the same submitted text.
+                if existing:
+                    for field in translated_fields:
+                        if f'{field}_az' in translated:
+                            setattr(existing, field, translated[f'{field}_az'])
+                    existing.save()
+                continue
             if lang != 'az' and values.get('title') == '':
                 # Empty optional translations fall back to the primary language.
                 primary = instance.translations.filter(language='az').first()

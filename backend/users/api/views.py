@@ -23,6 +23,7 @@ from users.api.serializers import (
     UserLookupSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
+    RegistrationDetailsSerializer,
 )
 
 
@@ -32,6 +33,25 @@ class RegisterThrottle(AnonRateThrottle):
 
 class LookupThrottle(UserRateThrottle):
     rate = '30/minute'
+
+
+class RegistrationValidationThrottle(AnonRateThrottle):
+    scope = 'registration_validation'
+    rate = '60/minute'
+
+
+class RegistrationValidationView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegistrationValidationThrottle]
+
+    @extend_schema(request=RegistrationDetailsSerializer, responses={200: dict})
+    def post(self, request):
+        serializer = RegistrationDetailsSerializer(data=request.data, partial=True)
+        valid = serializer.is_valid()
+        response = Response({'valid': valid, 'errors': serializer.errors,
+                             'checked': [field for field in serializer.fields if field in request.data]})
+        response['Cache-Control'] = 'no-store'
+        return response
 
 
 class RequestVerificationCodeView(views.APIView):
@@ -109,16 +129,21 @@ class VerifyAndRegisterView(views.APIView):
                     email=email, is_used=False, token_type='REGISTER',
                 ).order_by('-created_at').first()
                 if not token or not token.is_valid():
-                    return Response({"error": {"message": "Invalid or expired verification code."}}, status=400)
+                    return Response({"error": {"message": "Invalid or expired verification code.", "details": {"code": ["Invalid or expired verification code."]}}}, status=400)
                 if not secrets.compare_digest(token.code, code):
                     token.attempts += 1
                     token.save(update_fields=['attempts'])
-                    return Response({"error": {"message": "Incorrect verification code."}}, status=400)
+                    return Response({"error": {"message": "Incorrect verification code.", "details": {"code": ["Incorrect verification code."]}}}, status=400)
                 user = User.objects.create_user(email=email, password=password, is_artist=True, is_verified=True)
                 ArtistProfile.objects.create(user=user, full_name=full_name, username=username)
                 EmailVerificationToken.objects.filter(email=email, token_type='REGISTER', is_used=False).update(is_used=True)
         except IntegrityError:
-            return Response({"error": {"message": "Email or username is already registered."}}, status=400)
+            fields = {}
+            if User.all_objects.filter(email__iexact=email).exists():
+                fields['email'] = ['This email is already registered.']
+            if ArtistProfile.objects.filter(username__iexact=username).exists():
+                fields['username'] = ['This username is already taken.']
+            return Response({"error": {"message": "Registration could not be completed. Please try again.", "details": fields}}, status=400)
 
         login(request, user)
         response = Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)

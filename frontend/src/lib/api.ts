@@ -9,6 +9,13 @@ export interface ApiResponse<T> {
   };
 }
 
+export class ApiError extends Error {
+  constructor(message: string, public details: unknown, public status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const internalApi = typeof window === "undefined" ? process.env.API_INTERNAL_URL : undefined;
   const baseUrl = internalApi || siteConfig.apiUrl;
@@ -72,7 +79,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       errorData = { message: `Request failed with status ${response.status}` };
     }
     const message = errorData?.error?.message || errorData?.message || `Error ${response.status}`;
-    throw new Error(message);
+    throw new ApiError(message, errorData?.error?.details || errorData, response.status);
   }
   if (response.status === 204) return undefined as T;
   return response.json();
@@ -142,6 +149,8 @@ export const api = {
     request<any>(`/search/?q=${encodeURIComponent(query)}&type=${type}`),
 
   // Auth & Profile
+  validateRegistration: (data: Record<string, string>) =>
+    request<{ valid: boolean; errors: Record<string, string[]>; checked: string[] }>(`/auth/register/validate/`, { method: "POST", body: JSON.stringify(data) }),
   requestVerificationCode: (email: string) =>
     request<any>(`/auth/register/request-code/`, { method: "POST", body: JSON.stringify({ email }) }),
   requestPasswordReset: (email: string) =>

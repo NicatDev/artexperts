@@ -26,6 +26,21 @@
     font-family: Georgia, Cambria, "Times New Roman", Times, serif;
     letter-spacing: 0.015em;
   }
+
+  button:not(:disabled), a[href], select:not(:disabled),
+  input[type="checkbox"]:not(:disabled), input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled), input[type="file"]::file-selector-button,
+  label:has(input[type="checkbox"]:not(:disabled)), label:has(input[type="radio"]:not(:disabled)),
+  summary, [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  button:disabled, select:disabled, input:disabled, [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] {
+    border-color: #e11d48;
+  }
+  [name] { scroll-margin-top: 7rem; }
 }
 
 /* Elegant light gallery scrollbar */

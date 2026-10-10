@@ -195,7 +195,7 @@ class BookAccessRecordSerializer(serializers.ModelSerializer):
 class BookCreateUpdateSerializer(serializers.ModelSerializer):
     rights_confirmed = serializers.BooleanField(write_only=True, required=False)
     remove_digital_file = serializers.BooleanField(write_only=True, required=False)
-    title_az = serializers.CharField(write_only=True, required=True)
+    title_az = serializers.CharField(write_only=True, required=True, max_length=250)
     short_description_az = serializers.CharField(write_only=True, required=True)
     full_description_az = serializers.CharField(write_only=True, required=True)
     table_of_contents_az = serializers.CharField(write_only=True, required=False, allow_blank=True)

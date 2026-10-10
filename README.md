@@ -78,12 +78,19 @@ A production-minded, modular-monolith art platform acting as both the official a
 
 `/az/profile` has separate artwork, book, article and profile settings tabs.
 Each content tab supports adding, editing, pagination and deletion through a confirmation modal.
-The shared editor also powers `/az/publish`. It includes AZ/EN/RU text, categories,
+The shared editor also powers `/az/publish`. Content is entered once in a single
+language, with no translation tabs. It includes categories,
 image replacement, artwork metadata and download settings, article text, and book
 publication metadata, contributor roles/order/biographies and PDF replacement/removal.
 Profile settings support avatar, username, biography, statement, website and social links.
 Artist edits return content to moderation. Ownership, moderation flags and view counters
 are controlled by the server.
+
+Registration validates email/username availability and Django password rules via
+`POST /api/v1/auth/register/validate/` after a short typing pause. Clicking the
+registration button then sends the email code and reveals the verification field.
+Content forms display validation errors next to each field and focus the first
+invalid field after submitting, including errors returned by the backend.
 
 Backend regression checks are in `core.tests_content_management`. With backend dependencies installed:
 
