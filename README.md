@@ -82,6 +82,9 @@ The shared editor also powers `/az/publish`. Content is entered once in a single
 language, with no translation tabs. It includes categories,
 image replacement, artwork metadata and download settings, article text, and book
 publication metadata, contributor roles/order/biographies and PDF replacement/removal.
+PDF uploads allow up to 300 MB in both the API and Django admin. Images remain
+limited to 25 MB. Nginx allows 330 MB multipart requests for the PDF, cover and
+metadata together. Django streams large files to temporary disk storage.
 Profile settings support avatar, username, biography, statement, website and social links.
 Artist edits return content to moderation. Ownership, moderation flags and view counters
 are controlled by the server.

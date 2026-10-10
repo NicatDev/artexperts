@@ -8,7 +8,8 @@ from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from core.services.media import media_service, MAX_FILE_SIZE_BYTES
+from core.services.media import media_service
+from core.validators import validate_pdf_file
 
 
 def content_spec(kind):
@@ -58,8 +59,10 @@ def save_content(kind, request, instance=None, partial=False):
         image.seek(0)
     pdf = data.get('digital_file')
     if pdf:
-        if pdf.size > MAX_FILE_SIZE_BYTES or pdf.read(5) != b'%PDF-':
-            raise ValidationError({'digital_file': 'Upload a PDF file up to 25 MB.'})
+        try:
+            validate_pdf_file(pdf)
+        except DjangoValidationError as exc:
+            raise ValidationError({'digital_file': exc.messages})
         pdf.seek(0)
     if remove_digital_file:
         if pdf:

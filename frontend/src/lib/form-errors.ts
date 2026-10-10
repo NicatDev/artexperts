@@ -20,6 +20,7 @@ export function friendlyError(message: string, t: Translate): string {
     [/positive price|price.*negative/i, "positivePrice"],
     [/valid image|invalid image|corrupt|not.*image|image.*format/i, "imageInvalid"],
     [/image dimensions.*exceed/i, "imageDimensions"],
+    [/PDF.*300 MB|PDF.*too large/i, "pdfSize"],
     [/25 MB|too large|file size|maximum.*size/i, "fileSize"],
     [/PDF/i, "pdfInvalid"],
     [/duplicate contributor/i, "duplicateContributor"],

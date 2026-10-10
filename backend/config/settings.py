@@ -93,6 +93,11 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+# Larger uploads are streamed to temporary disk files, not kept in worker memory.
+# This threshold controls buffering; the PDF validator enforces the 300 MB limit.
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2_621_440
+# Multipart file bytes do not count towards Django's non-file form data limit.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {

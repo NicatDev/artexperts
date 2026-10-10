@@ -50,7 +50,7 @@
     "imageHint": "JPEG, PNG or WebP, up to 25 MB.",
     "keepImage": "Leave empty to keep the current image. Up to 25 MB.",
     "pdf": "Book file (PDF)",
-    "pdfHint": "PDF, up to 25 MB. Leave empty to keep the existing file.",
+    "pdfHint": "PDF, up to 300 MB. Leave empty to keep the existing file.",
     "removePdf": "Remove existing PDF",
     "staffPublish": "Content is published when saved.",
     "reviewNotice": "New and edited content is published after admin approval.",
@@ -329,6 +329,7 @@
     "choiceInvalid": "This option is no longer available. Choose another option.",
     "waitBeforeRetry": "Wait one minute before trying again.",
     "emailDelivery": "We could not send the email. Please try again shortly.",
-    "imageDimensions": "Image width and height must not exceed 10000 pixels."
+    "imageDimensions": "Image width and height must not exceed 10000 pixels.",
+    "pdfSize": "PDF files must be no larger than 300 MB."
   }
 }

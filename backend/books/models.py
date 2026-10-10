@@ -3,6 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 from core.models import SoftDeletableModel, TimestampedModel
 from artworks.models import ModerationStatus
+from core.validators import validate_pdf_file
 
 
 class AvailabilityMode(models.TextChoices):
@@ -52,7 +53,7 @@ class Book(SoftDeletableModel):
 
     cover_image = models.ImageField(upload_to='books/covers/')
     # Digital files are strictly stored in private storage
-    digital_file = models.FileField(upload_to='private/books/files/', null=True, blank=True)
+    digital_file = models.FileField(upload_to='private/books/files/', null=True, blank=True, validators=[validate_pdf_file])
 
     availability_mode = models.CharField(
         max_length=25,

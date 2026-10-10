@@ -50,7 +50,7 @@
     "imageHint": "JPEG, PNG və ya WebP, maksimum 25 MB.",
     "keepImage": "Yeni şəkil seçməsəniz, mövcud şəkil saxlanılır. Maksimum 25 MB.",
     "pdf": "Kitab faylı (PDF)",
-    "pdfHint": "PDF, maksimum 25 MB. Yeni fayl seçilməsə, mövcud fayl saxlanılır.",
+    "pdfHint": "PDF, maksimum 300 MB. Yeni fayl seçilməsə, mövcud fayl saxlanılır.",
     "removePdf": "Mövcud PDF faylını sil",
     "staffPublish": "Məlumatlar yadda saxlanıldıqda dərc ediləcək.",
     "reviewNotice": "Əlavə etdiyiniz və ya redaktə etdiyiniz məzmun admin təsdiqindən sonra dərc ediləcək.",
@@ -329,6 +329,7 @@
     "choiceInvalid": "Bu seçim artıq mövcud deyil. Siyahıdan başqa seçim edin.",
     "waitBeforeRetry": "Yenidən cəhd etməzdən əvvəl 1 dəqiqə gözləyin.",
     "emailDelivery": "Email göndərilə bilmədi. Bir az sonra yenidən cəhd edin.",
-    "imageDimensions": "Şəklin eni və hündürlüyü 10000 pikseldən çox olmamalıdır."
+    "imageDimensions": "Şəklin eni və hündürlüyü 10000 pikseldən çox olmamalıdır.",
+    "pdfSize": "PDF faylı 300 MB-dan böyük olmamalıdır."
   }
 }

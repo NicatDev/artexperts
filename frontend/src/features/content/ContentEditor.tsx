@@ -101,7 +101,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
     if (!rights) next.rights_confirmed = v("rights");
     if (image && image.size > 25 * 1024 * 1024) next[kind === "artworks" ? "original_master" : "cover_image"] = v("fileSize");
     else if (image && !["image/jpeg", "image/png", "image/webp"].includes(image.type)) next[kind === "artworks" ? "original_master" : "cover_image"] = v("imageInvalid");
-    if (pdf && pdf.size > 25 * 1024 * 1024) next.digital_file = v("fileSize");
+    if (pdf && pdf.size > 300 * 1024 * 1024) next.digital_file = v("pdfSize");
     else if (pdf && !/\.pdf$/i.test(pdf.name)) next.digital_file = v("pdfInvalid");
     if (kind === "books") {
       if (values.availability_mode === "FUTURE_PAID" && !(Number(values.price) > 0)) next.price = v("positivePrice");

@@ -4,6 +4,16 @@ Frontend: `https://artexperts.net`, Django API/admin: `https://app.artexperts.ne
 Docker Compose PostgreSQL, Django/Gunicorn, Next.js və Nginx-i qurur. Python, Node,
 PostgreSQL və Nginx host serverdə ayrıca quraşdırılmır; Docker image-lərində gəlir.
 
+PDF limiti API, Django admin və frontenddə 300 MB-dır; şəkil limiti 25 MB-dır.
+Nginx PDF, üz qabığı və digər sahələr üçün ümumi 330 MB sorğu qəbul edir.
+Böyük fayllar Django tərəfindən müvəqqəti disk fayllarında saxlanılır.
+
+Cloudflare proxy istifadə edilirsə, onun plan limiti də tətbiq olunur: Free/Pro
+100 MB, Business 200 MB. Bu planlarda 300 MB PDF yükləmək üçün Cloudflare DNS-də
+`app` qeydini **DNS only** (boz bulud) edin. Backend birbaşa serverə yönələcək;
+`artexperts.net` proxy arxasında qala bilər. Serverdəki HTTPS sertifikatı işləməlidir.
+Mənbə: https://developers.cloudflare.com/support/troubleshooting/http-status-codes/4xx-client-error/error-413/
+
 ## 1. Əvvəl yüklənəcək proqramlar və faylların köçürülməsi
 
 Aşağıdakı ardıcıllıq boş **Ubuntu 24.04 LTS** server üçündür. `SERVER_IP` yerinə
