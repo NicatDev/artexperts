@@ -76,11 +76,68 @@ function rtfImages(rtf: string): File[] {
 
 export type ClipboardImage = { file: File; elements: HTMLImageElement[] };
 
-export function articleClipboard(data: DataTransfer) {
-  const html = data.getData("text/html");
+export type ArticleClipboardData = { html: string; text: string; rtf: string; files: File[] };
+
+export function readArticleClipboard(data: DataTransfer): ArticleClipboardData {
+  const files = Array.from(data.files);
+  for (const item of Array.from(data.items || [])) {
+    if (item.kind !== "file") continue;
+    const file = item.getAsFile();
+    if (file && !files.some(existing => existing.name === file.name && existing.size === file.size && existing.type === file.type)) files.push(file);
+  }
+  return {
+    html: data.getData("text/html"), text: data.getData("text/plain"), files,
+    rtf: data.getData("text/rtf") || data.getData("application/rtf") || data.getData("application/x-rtf") || data.getData("text/richtext"),
+  };
+}
+
+// Called only during a user paste when the event has local image links but no bytes.
+// Some browsers expose PNG data through the async API rather than DataTransfer.files.
+export async function recoverClipboardImages(original: ArticleClipboardData): Promise<ArticleClipboardData> {
+  if (!navigator.clipboard?.read || !window.isSecureContext) return original;
+  try {
+    const items = await navigator.clipboard.read();
+    let text = "";
+    const files: File[] = [];
+    for (const item of items) {
+      if (item.types.includes("text/plain")) text += await (await item.getType("text/plain")).text();
+      const type = item.types.find(type => IMAGE_TYPES.includes(type));
+      if (type) {
+        const blob = await item.getType(type);
+        files.push(new File([blob], `clipboard-${files.length + 1}.${type.split("/")[1]}`, { type }));
+      }
+    }
+    // Do not combine newly copied content with the paste that started this request.
+    if (original.text && text && original.text !== text) return original;
+    return files.length ? { ...original, files } : original;
+  } catch { return original; }
+}
+
+export function articleClipboard(data: ArticleClipboardData) {
+  const { html } = data;
   const document = new DOMParser().parseFromString(html, "text/html");
   const body = document.body;
   const normalizedLists = normalizeWordBullets(body);
+  // Older Word versions can put all VML image markup inside conditional comments.
+  // Read those picture nodes only when there are no normal HTML image fallbacks.
+  if (!body.querySelector("img")) {
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_COMMENT);
+    const comments: Comment[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) comments.push(node as Comment);
+    for (const comment of comments) {
+      if (!/<v:imagedata\b/i.test(comment.data)) continue;
+      const fragment = new DOMParser().parseFromString(comment.data.replace(/^\s*\[if[^\]]*\]>/i, "").replace(/<!\[endif\]\s*$/i, ""), "text/html");
+      const pictures = Array.from(fragment.getElementsByTagName("v:imagedata"));
+      const images = pictures.map(picture => {
+        const image = document.createElement("img");
+        image.setAttribute("src", picture.getAttribute("src") || "");
+        image.alt = picture.getAttribute("o:title") || "";
+        return image;
+      });
+      if (images.length) comment.replaceWith(...images);
+    }
+  }
   // Convert Word's legacy VML picture nodes when a normal image fallback is absent.
   for (const picture of Array.from(body.getElementsByTagName("v:imagedata"))) {
     const shape = picture.parentElement;
@@ -92,9 +149,9 @@ export function articleClipboard(data: DataTransfer) {
     else picture.replaceWith(image);
   }
   const images = Array.from(body.querySelectorAll("img"));
-  const files = Array.from(data.files).filter(file => file.type.startsWith("image/"));
+  const files = data.files.filter(file => file.type.startsWith("image/"));
   const local = images.filter(image => !/^(?:https?:\/\/|\/[^/]|data:)/i.test(image.getAttribute("src") || ""));
-  const wordFiles = local.length || !images.length ? rtfImages(data.getData("text/rtf")) : [];
+  const wordFiles = local.length || !images.length ? rtfImages(data.rtf) : [];
   const localSources = new Set(local.map(image => image.getAttribute("src") || ""));
   const available = wordFiles.length >= localSources.size && wordFiles.length ? wordFiles : files;
   const uploads: ClipboardImage[] = [];
@@ -123,9 +180,9 @@ export function articleClipboard(data: DataTransfer) {
   }
   if (!images.length) {
     // A directly copied picture may supply files/RTF without any HTML.
-    if (!html && data.getData("text/plain")) {
+    if (!html && data.text) {
       const paragraph = document.createElement("p");
-      paragraph.textContent = data.getData("text/plain");
+      paragraph.textContent = data.text;
       body.append(paragraph);
     }
     for (const file of available) {

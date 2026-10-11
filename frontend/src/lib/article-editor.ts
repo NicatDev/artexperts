@@ -4,8 +4,9 @@ import Image from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
 import { FontSize, TextStyle } from "@tiptap/extension-text-style";
 import TextAlign from "@tiptap/extension-text-align";
-import { articleClipboard, validArticleImage } from "./article-clipboard";
+import { articleClipboard, readArticleClipboard, recoverClipboardImages, validArticleImage } from "./article-clipboard";
 import type { ClipboardImage } from "./article-clipboard";
+import { importArticleWord, MAX_WORD_BYTES } from "./article-word-import";
 
 const labels = {
   az: { toolbar: "Mətn formatı", paragraph: "Paraqraf", heading: "Başlıq", size: "Mətn ölçüsü", normal: "Standart", bold: "Qalın", italic: "Kursiv", underline: "Altıxətli", strike: "Üstündən xətt", bullets: "İşarəli siyahı", numbers: "Nömrəli siyahı", quote: "Sitat", rule: "Ayırıcı xətt", undo: "Geri al", redo: "Təkrar et", clear: "Formatı təmizlə", image: "Şəkil əlavə et", table: "Cədvəl əlavə et", tableActions: "Cədvəl əməliyyatları", row: "Sətir əlavə et", column: "Sütun əlavə et", deleteRow: "Sətiri sil", deleteColumn: "Sütunu sil", deleteTable: "Cədvəli sil", merge: "Xanaları birləşdir", split: "Xananı ayır", header: "Başlıq sətri", alignment: "Düzülüş", left: "Sola", center: "Mərkəzə", right: "Sağa", justify: "Hər iki tərəfə", uploading: "Şəkil yüklənir…", uploadError: "Şəkli yükləmək mümkün olmadı. Yenidən cəhd edin.", imageInvalid: "JPEG, PNG və ya WebP seçin, maksimum 25 MB.", alt: "Şəklin təsviri", choose: "Şəkil seçin", insert: "Əlavə et", cancel: "Ləğv et", link: "Link əlavə et", url: "Link ünvanı (https://)", linkInvalid: "Düzgün http, https və ya email linki daxil edin.", removeLink: "Linki sil" },
@@ -14,10 +15,18 @@ const labels = {
 };
 
 const pasteHints = {
-  az: "Word bəzi şəkilləri brauzerə ötürmədi. Şəkli ayrıca kopyalayıb yapışdırın və ya «Şəkil əlavə et» ilə yükləyin.",
-  en: "Word did not provide some images to the browser. Copy and paste each image separately, or upload it with “Add image”.",
-  ru: "Word не передал некоторые изображения браузеру. Скопируйте каждое изображение отдельно или загрузите его через «Добавить изображение».",
+  az: "Brauzer Word-dəki bəzi şəkilləri ötürmədi. «Word faylından əlavə et» ilə .docx faylını seçərək mətn və şəkilləri birlikdə gətirin, yaxud şəkli ayrıca kopyalayıb yapışdırın.",
+  en: "The browser did not provide some Word images. Use “Import Word file” to bring in the text and images from a .docx file, or copy and paste each image separately.",
+  ru: "Браузер не передал некоторые изображения Word. Используйте «Импорт из Word», чтобы добавить текст и изображения из файла .docx, или скопируйте каждое изображение отдельно.",
 };
+
+const wordLabels = {
+  az: { title: "Word faylından əlavə et", choose: "Word faylı (.docx), maksimum 50 MB", hint: "Faylın bütün mətni və şəkilləri kursorun olduğu yerə əlavə ediləcək. Eyni mətni artıq yapışdırmısınızsa, təkrarlanmaması üçün əvvəlcə onu silin.", invalid: "Maksimum 50 MB ölçüdə .docx faylı seçin. Köhnə .doc faylını Word-də .docx kimi saxlayın.", reading: "Word məzmunu oxunur…", clipboard: "Clipboard-dan şəkil alınır…", error: "Word faylını oxumaq mümkün olmadı. Faylı .docx formatında saxlayıb yenidən seçin.", warning: "Bəzi Word formatları çevrilmədi. Mətnin görünüşünü redaktorda yoxlayın." },
+  en: { title: "Import Word file", choose: "Word file (.docx), up to 50 MB", hint: "The entire document and its images will be inserted at the cursor. If you already pasted the same text, remove it first to avoid duplicates.", invalid: "Choose a .docx file up to 50 MB. Save older .doc files as .docx in Word.", reading: "Reading Word document…", clipboard: "Reading clipboard image…", error: "Could not read the Word file. Save it as .docx and select it again.", warning: "Some Word formatting could not be converted. Review the text in the editor." },
+  ru: { title: "Импорт из Word", choose: "Файл Word (.docx), до 50 МБ", hint: "Весь документ и изображения будут добавлены в позиции курсора. Если этот текст уже вставлен, сначала удалите его, чтобы избежать повторов.", invalid: "Выберите файл .docx до 50 МБ. Старый файл .doc сохраните в Word как .docx.", reading: "Чтение документа Word…", clipboard: "Получение изображения из буфера…", error: "Не удалось прочитать файл Word. Сохраните его как .docx и выберите снова.", warning: "Некоторое форматирование Word не удалось перенести. Проверьте текст в редакторе." },
+};
+
+type PreparedImages = { container: HTMLElement; images: ClipboardImage[]; messages: string[] };
 
 export type ArticleEditorOptions = {
   value: string; locale?: string; id: string; labelledBy?: string;
@@ -27,6 +36,7 @@ export type ArticleEditorOptions = {
 
 export function createArticleEditor(host: HTMLElement, options: ArticleEditorOptions) {
   const t = labels[options.locale?.split("-")[0] as keyof typeof labels] || labels.az;
+  const word = wordLabels[options.locale?.split("-")[0] as keyof typeof wordLabels] || wordLabels.az;
   host.classList.add("article-editor");
   const toolbar = document.createElement("div");
   toolbar.className = "article-editor-toolbar";
@@ -52,18 +62,29 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
       attributes: { id: options.id, role: "textbox", "aria-multiline": "true", "aria-required": "true", ...(options.labelledBy ? { "aria-labelledby": options.labelledBy } : {}) },
       handlePaste: (_view, event) => {
         if (!editor.isEditable || uploading || !event.clipboardData) return false;
-        const pasted = articleClipboard(event.clipboardData);
+        const data = readArticleClipboard(event.clipboardData);
+        const pasted = articleClipboard(data);
         if (!pasted.handled) return false;
-        const messages = [];
-        if (pasted.missing) messages.push(pasteHints[options.locale?.split("-")[0] as keyof typeof pasteHints] || pasteHints.az);
-        if (pasted.invalid) messages.push(t.imageInvalid);
-        void insertImages(pasted.body, pasted.uploads, messages);
+        const messages = clipboardMessages(pasted);
+        if (pasted.missing && !pasted.uploads.length && typeof navigator.clipboard?.read === "function" && window.isSecureContext) {
+          void insertImages(pasted.body, [], messages, async () => {
+            const recovered = articleClipboard(await recoverClipboardImages(data));
+            return { container: recovered.body, images: recovered.uploads, messages: clipboardMessages(recovered) };
+          }, word.clipboard);
+        } else void insertImages(pasted.body, pasted.uploads, messages);
         return true;
       },
     },
     onUpdate: ({ editor }) => options.onChange(editor.isEmpty ? "" : editor.getHTML()),
     onTransaction: () => states.forEach(update => update()),
   });
+
+  function clipboardMessages(pasted: ReturnType<typeof articleClipboard>) {
+    const messages: string[] = [];
+    if (pasted.missing) messages.push(pasteHints[options.locale?.split("-")[0] as keyof typeof pasteHints] || pasteHints.az);
+    if (pasted.invalid) messages.push(t.imageInvalid);
+    return messages;
+  }
 
   function button(text: string, title: string, action: () => void, active?: () => boolean) {
     const button = document.createElement("button");
@@ -178,6 +199,29 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
     void insertImages(container, [{ file, elements: [image] }]);
   });
   button(t.image, t.image, () => { imageError.textContent = ""; imageInput.value = ""; altInput.value = ""; imageDialog.showModal(); });
+  const wordDialog = dialog(word.title);
+  const wordHint = document.createElement("p");
+  wordHint.className = "article-editor-dialog-hint";
+  wordHint.textContent = word.hint;
+  wordDialog.append(wordHint);
+  const wordInput = input(wordDialog, word.choose, "file");
+  wordInput.accept = ".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  const wordError = document.createElement("p");
+  wordError.setAttribute("role", "alert");
+  wordDialog.append(wordError);
+  actions(wordDialog, () => {
+    const file = wordInput.files?.[0];
+    if (!file || !/\.docx$/i.test(file.name) || file.size > MAX_WORD_BYTES || file.size < 22) { wordError.textContent = word.invalid; return; }
+    wordDialog.close();
+    void insertImages(document.createElement("div"), [], [], async () => {
+      const imported = await importArticleWord(file);
+      const messages = [];
+      if (imported.invalidImages) messages.push(t.imageInvalid);
+      if (imported.warnings) messages.push(word.warning);
+      return { ...imported, messages };
+    }, word.reading, word.error);
+  });
+  button(word.title, word.title, () => { wordError.textContent = ""; wordInput.value = ""; wordDialog.showModal(); });
   const linkDialog = dialog(t.link);
   const linkInput = input(linkDialog, t.url, "url");
   const linkError = document.createElement("p");
@@ -198,17 +242,19 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
     toolbar.querySelectorAll("select").forEach(control => { control.disabled = !editor.isEditable || uploading; });
     states.forEach(update => update());
   }
-  async function insertImages(container: HTMLElement, images: ClipboardImage[], messages: string[] = []) {
+  async function insertImages(container: HTMLElement, images: ClipboardImage[], messages: string[] = [], prepare?: () => Promise<PreparedImages>, preparing = t.uploading, failureMessage = t.uploadError) {
     if (uploading || !editor.isEditable) return;
     const selection = { from: editor.state.selection.from, to: editor.state.selection.to };
-    if (images.length) {
+    if (images.length || prepare) {
       uploading = true;
       editor.setEditable(false);
       editor.view.dom.setAttribute("aria-busy", "true");
       options.onUploading?.(true);
       updateDisabled();
+      status.textContent = preparing;
     }
     try {
+      if (prepare) ({ container, images, messages } = await prepare());
       let failed = false;
       for (let index = 0; index < images.length; index++) {
         if (disposed) return;
@@ -232,6 +278,8 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
         if (failed) messages.push(t.uploadError);
         status.textContent = messages.join(" ");
       }
+    } catch {
+      if (!disposed) status.textContent = failureMessage;
     } finally {
       uploading = false;
       if (!disposed) {

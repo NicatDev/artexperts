@@ -48,6 +48,7 @@
 .article-editor .article-editor-dialog label { display: block; float: none; width: auto; margin: 15px 0; font-size: 14px; }
 .article-editor-dialog input { display: block; box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid #d6d3d1; border-radius: 8px; padding: 10px; margin-top: 6px; font-size: 16px; }
 .article-editor-dialog p { color: #be123c; font-size: 13px; }
+.article-editor-dialog p.article-editor-dialog-hint { color: #57534e; line-height: 1.6; }
 .article-editor-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 .article-editor-dialog-actions button { min-height: 44px; border: 1px solid #d6d3d1; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
 .article-editor-dialog-actions button:last-child { background: #292524; color: white; }
