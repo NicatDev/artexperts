@@ -35,7 +35,7 @@ class Article(SoftDeletableModel):
     is_founder_article = models.BooleanField(default=False, db_index=True, help_text="Written by Ilqar Mammadov")
 
     # Cover images: full high-res detail and compressed thumbnail for card grid
-    cover_image = models.ImageField(upload_to='articles/covers/')
+    cover_image = models.ImageField(upload_to='articles/covers/', blank=True)
     cover_thumbnail = models.ImageField(upload_to='articles/thumbnails/', blank=True)
 
     reading_time_minutes = models.PositiveIntegerField(default=3)

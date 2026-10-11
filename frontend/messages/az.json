@@ -46,6 +46,7 @@
     "moveDown": "Aşağı keçir",
     "image": "Əsərin şəkli",
     "cover": "Üz qabığı şəkli",
+    "optionalCover": "Üz qabığı şəkli (istəyə bağlı)",
     "preview": "Şəkil önizləməsi",
     "imageHint": "JPEG, PNG və ya WebP, maksimum 25 MB.",
     "keepImage": "Yeni şəkil seçməsəniz, mövcud şəkil saxlanılır. Maksimum 25 MB.",

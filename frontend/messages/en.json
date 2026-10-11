@@ -46,6 +46,7 @@
     "moveDown": "Move down",
     "image": "Artwork image",
     "cover": "Cover image",
+    "optionalCover": "Cover image (optional)",
     "preview": "Image preview",
     "imageHint": "JPEG, PNG or WebP, up to 25 MB.",
     "keepImage": "Leave empty to keep the current image. Up to 25 MB.",

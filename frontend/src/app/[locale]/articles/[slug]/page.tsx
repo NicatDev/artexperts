@@ -24,7 +24,7 @@ export async function generateMetadata({
       openGraph: {
         title: article.title,
         description: article.excerpt,
-        images: [siteConfig.mediaUrl(article.cover_image)],
+        images: article.cover_image ? [siteConfig.mediaUrl(article.cover_image)] : [],
       },
     };
   } catch {
@@ -60,7 +60,7 @@ export default async function ArticleDetailPage({
       "name": article.author_profile?.full_name || "İlqar Məmmədov",
     },
     "datePublished": article.created_at,
-    "image": siteConfig.mediaUrl(article.cover_image),
+    ...(article.cover_image ? { image: siteConfig.mediaUrl(article.cover_image) } : {}),
   };
 
   return (

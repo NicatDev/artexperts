@@ -264,9 +264,9 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
           </div>
         </>}
         <label className="block space-y-2 text-sm">
-          <span>{kind === "artworks" ? t("image") : t("cover")} {!initial && "*"}</span>
+          <span>{kind === "artworks" ? t("image") : kind === "articles" ? t("optionalCover") : t("cover")} {!initial && kind !== "articles" && "*"}</span>
           {preview && <ImageProtectionWrapper src={preview} alt={t("preview")} fill className="h-64 w-full rounded-xl bg-stone-100" imageClassName="object-contain" />}
-          <input {...inputProps(kind === "artworks" ? "original_master" : "cover_image")} className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-2 file:text-xs`} type="file" accept="image/jpeg,image/png,image/webp" required={!initial} onChange={event => { clearError(kind === "artworks" ? "original_master" : "cover_image"); setImage(event.target.files?.[0] || null); }} />
+          <input {...inputProps(kind === "artworks" ? "original_master" : "cover_image")} className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-2 file:text-xs`} type="file" accept="image/jpeg,image/png,image/webp" required={!initial && kind !== "articles"} onChange={event => { clearError(kind === "artworks" ? "original_master" : "cover_image"); setImage(event.target.files?.[0] || null); }} />
           {errorBelow(kind === "artworks" ? "original_master" : "cover_image")}
           <span className="block text-xs text-stone-500">{initial ? t("keepImage") : t("imageHint")}</span>
         </label>
