@@ -1,3 +1,5 @@
+import { normalizeWordBullets } from "./word-lists";
+
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
@@ -78,6 +80,7 @@ export function articleClipboard(data: DataTransfer) {
   const html = data.getData("text/html");
   const document = new DOMParser().parseFromString(html, "text/html");
   const body = document.body;
+  const normalizedLists = normalizeWordBullets(body);
   // Convert Word's legacy VML picture nodes when a normal image fallback is absent.
   for (const picture of Array.from(body.getElementsByTagName("v:imagedata"))) {
     const shape = picture.parentElement;
@@ -98,7 +101,7 @@ export function articleClipboard(data: DataTransfer) {
   const mapped = new Map<string, ClipboardImage>();
   let missing = false;
   let invalid = false;
-  const handled = images.length > 0 || files.length > 0 || wordFiles.length > 0;
+  const handled = normalizedLists || images.length > 0 || files.length > 0 || wordFiles.length > 0;
   let nextFile = 0;
   for (const image of images) {
     const source = image.getAttribute("src") || "";
@@ -133,6 +136,6 @@ export function articleClipboard(data: DataTransfer) {
       uploads.push({ file, elements: [image] });
     }
   }
-  // Let the editor's standard paste preserve text, lists and tables when no image is involved.
+  // Use standard paste when neither Word bullet normalization nor image uploads are needed.
   return { body, uploads, missing, invalid, handled };
 }
