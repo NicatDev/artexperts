@@ -4,6 +4,7 @@ import math
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils.text import slugify
+from django.utils.html import strip_tags
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -115,7 +116,7 @@ def save_content(kind, request, instance=None, partial=False):
 
         if kind == 'article':
             az = instance.translations.filter(language='az').first()
-            instance.reading_time_minutes = max(1, math.ceil(len((az.content if az else '').split()) / 200))
+            instance.reading_time_minutes = max(1, math.ceil(len(strip_tags(az.content if az else '').split()) / 200))
             instance.save(update_fields=['reading_time_minutes'])
         if kind == 'book' and (authors is not None or not instance.contributor_links.exists()):
             from books.models import BookContributor, BookContributorLink

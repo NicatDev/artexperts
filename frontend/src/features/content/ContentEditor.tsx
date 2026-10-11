@@ -9,6 +9,7 @@ import { Plus, Trash2, ArrowUp, ArrowDown, Download } from "lucide-react";
 import { focusFirstError, readFieldErrors, type FieldErrors } from "@/lib/form-errors";
 import { useAuth } from "@/features/auth/AuthContext";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
+import { RichTextEditor } from "@/features/content/RichTextEditor";
 
 export type ContentKind = "artworks" | "books" | "articles";
 type Contributor = { name: string; role: string; bio: string };
@@ -59,6 +60,7 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
   const [categoryError, setCategoryError] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
@@ -104,6 +106,7 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
       else if (input.validity.tooLong) next[input.name] = v("tooLong");
     }
     if (!initial && !rights) next.rights_confirmed = v("rights");
+    if (kind === "articles" && !values.content_az.trim()) next.content_az = v("required");
     if (image && image.size > 25 * 1024 * 1024) next[kind === "artworks" ? "original_master" : "cover_image"] = v("fileSize");
     else if (image && !["image/jpeg", "image/png", "image/webp"].includes(image.type)) next[kind === "artworks" ? "original_master" : "cover_image"] = v("imageInvalid");
     if (pdf && pdf.size > 300 * 1024 * 1024) next.digital_file = v("pdfSize");
@@ -127,7 +130,7 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
   function prepare(event: FormEvent) {
     event.preventDefault();
     setError("");
-    if (busy) return;
+    if (busy || uploadingImage) return;
     const next = validate();
     setFieldErrors(next);
     if (Object.keys(next).length) { focusPending.current = true; return; }
@@ -136,7 +139,7 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
   }
 
   async function save() {
-    if (busy) return;
+    if (busy || uploadingImage) return;
     setBusy(true);
     setError("");
     try {
@@ -201,12 +204,15 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
       <fieldset disabled={busy} className="min-w-0 space-y-6">
         {error && <p ref={errorRef} tabIndex={-1} role="alert" className="break-words rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</p>}
         <div className="space-y-4">
-          {translatedFields[kind].map(name => <label key={name} className="block space-y-2 text-sm text-stone-700">
+          {translatedFields[kind].map(name => <div key={name} className="block min-w-0 space-y-2 text-sm text-stone-700">
             <span id={`${formId}-${name}`}>{t(name)}{name !== "description" && name !== "table_of_contents" && " *"}</span>
             {name === "title" ? <input {...inputProps(`${name}_az`)} aria-labelledby={`${formId}-${name}`} className={inputClass} value={values[`${name}_az`]} maxLength={250} onChange={event => set(`${name}_az`, event.target.value)} required />
-              : <textarea {...inputProps(`${name}_az`)} aria-labelledby={`${formId}-${name}`} className={inputClass} rows={name === "content" || name === "full_description" ? 8 : 3} value={values[`${name}_az`]} onChange={event => set(`${name}_az`, event.target.value)} required={name !== "description" && name !== "table_of_contents"} />}
+              : kind === "articles" && name === "content" ? <>
+                <input type="hidden" name="content_az" value={values.content_az} data-rich-text-target={`${formId}-content-editor`} disabled={busy} />
+                <RichTextEditor value={values.content_az} onChange={html => set("content_az", html)} id={`${formId}-content-editor`} labelledBy={`${formId}-content`} invalid={!!fieldErrors.content_az} describedBy={fieldErrors.content_az ? `${formId}-content_az-error` : undefined} disabled={busy} onUploading={setUploadingImage} />
+              </> : <textarea {...inputProps(`${name}_az`)} aria-labelledby={`${formId}-${name}`} className={inputClass} rows={name === "full_description" ? 8 : 3} value={values[`${name}_az`]} onChange={event => set(`${name}_az`, event.target.value)} required={name !== "description" && name !== "table_of_contents"} />}
             {errorBelow(`${name}_az`)}
-          </label>)}
+          </div>)}
         </div>
         <label className="block space-y-2 text-sm text-stone-700">
           <span>{t("category")}</span>
@@ -289,7 +295,7 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
         </div>}
         {!initial && <div><label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6"><input {...inputProps("rights_confirmed")} type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-amber-700" checked={rights} required onChange={event => { clearError("rights_confirmed"); setRights(event.target.checked); }} />{common("rightsNotice")}</label>{errorBelow("rights_confirmed")}</div>}
         <p className="text-xs leading-6 text-stone-500">{initial ? t(initial.moderation_status === "PUBLISHED" ? "editPublishedNotice" : "editUnpublishedNotice") : t("reviewNotice")}</p>
-        <button type="submit" disabled={busy || loadingCategories || categoryError} className="min-h-12 w-full rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-50 sm:w-auto">{busy ? common("loading") : initial ? common("save") : t("add")}</button>
+        <button type="submit" disabled={busy || uploadingImage || loadingCategories || categoryError} className="min-h-12 w-full rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-50 sm:w-auto">{busy || uploadingImage ? common("loading") : initial ? common("save") : t("add")}</button>
       </fieldset>
     </form>
     <Modal open={confirmOpen} title={publish("modalNoticeTitle")} busy={busy} onClose={() => setConfirmOpen(false)}>

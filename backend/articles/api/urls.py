@@ -6,11 +6,13 @@ from articles.api.views import (
     ArticleCreateView,
     ArticleUpdateDeleteView,
     ArticleCategoryListView,
+    ArticleImageUploadView,
     UserArticlesListView
 )
 
 urlpatterns = [
     path('articles/', ArticleListView.as_view(), name='article-list'),
+    path('articles/images/upload/', ArticleImageUploadView.as_view(), name='article-image-upload'),
     path('articles/categories/', ArticleCategoryListView.as_view(), name='article-categories'),
     path('articles/publish/', ArticleCreateView.as_view(), name='article-create'),
     path('articles/my/', UserArticlesListView.as_view(), name='my-articles'),

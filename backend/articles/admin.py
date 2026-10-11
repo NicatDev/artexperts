@@ -1,10 +1,20 @@
 from django.contrib import admin
 from articles.models import Article, ArticleCategory, ArticleTranslation, ArticleView
 from artworks.models import ModerationStatus
+from django import forms
+from articles.widgets import ArticleRichTextWidget
+
+
+class ArticleTranslationForm(forms.ModelForm):
+    class Meta:
+        model = ArticleTranslation
+        fields = '__all__'
+        widgets = {'content': ArticleRichTextWidget()}
 
 
 class ArticleTranslationInline(admin.StackedInline):
     model = ArticleTranslation
+    form = ArticleTranslationForm
     extra = 1
 
 

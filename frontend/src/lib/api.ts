@@ -116,6 +116,12 @@ export const api = {
   deleteArtwork: (id: string) => request<any>(`/artworks/${id}/manage/`, { method: "DELETE" }),
 
   // Articles
+  uploadArticleImage: async (file: File) => {
+    const form = new FormData();
+    form.append("image", file);
+    const result = await request<{ url: string }>("/articles/images/upload/", { method: "POST", body: form });
+    return siteConfig.mediaUrl(result.url);
+  },
   getArticles: (params: Record<string, string> = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request<any>(`/articles/${qs ? `?${qs}` : ""}`);

@@ -52,8 +52,9 @@ export function focusFirstError(form: HTMLFormElement | null, errors: FieldError
     const input = Array.from(form?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("[name]") || [])
       .find(element => (errors[element.name] || Object.keys(errors).some(key => element.name.startsWith(`${key}.`))) && !element.disabled);
     if (input) {
-      input.scrollIntoView({ behavior: "smooth", block: "center" });
-      input.focus({ preventScroll: true });
+      const target = input.dataset.richTextTarget ? document.getElementById(input.dataset.richTextTarget) || input : input;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.focus({ preventScroll: true });
     }
   });
 }

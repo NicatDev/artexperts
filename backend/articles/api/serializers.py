@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from articles.models import Article, ArticleTranslation, ArticleCategory
 from users.api.serializers import ArtistProfileSerializer
+from articles.rich_text import sanitize_article_html, validate_article_html
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 
 class ArticleCategorySerializer(serializers.ModelSerializer):
@@ -17,6 +19,11 @@ class ArticleCategorySerializer(serializers.ModelSerializer):
 
 
 class ArticleTranslationSerializer(serializers.ModelSerializer):
+    content = serializers.SerializerMethodField()
+
+    def get_content(self, obj):
+        return sanitize_article_html(obj.content)
+
     class Meta:
         model = ArticleTranslation
         fields = ['id', 'language', 'title', 'slug', 'excerpt', 'content']
@@ -108,7 +115,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
 
     def get_content(self, obj):
         t = self._get_translation(obj)
-        return t.content if t else ""
+        return sanitize_article_html(t.content) if t else ""
 
     def get_author_profile(self, obj):
         if hasattr(obj.author, 'artist_profile'):
@@ -129,6 +136,18 @@ class ArticleCreateUpdateSerializer(serializers.ModelSerializer):
     title_ru = serializers.CharField(write_only=True, required=False, allow_blank=True)
     excerpt_ru = serializers.CharField(write_only=True, required=False, allow_blank=True)
     content_ru = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    def validate_content_az(self, value):
+        try:
+            return validate_article_html(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
+
+    def validate_content_en(self, value):
+        return self.validate_content_az(value) if value.strip() else ''
+
+    def validate_content_ru(self, value):
+        return self.validate_content_en(value)
 
     class Meta:
         model = Article

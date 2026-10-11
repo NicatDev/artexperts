@@ -131,9 +131,7 @@ export default async function ArticleDetailPage({
       )}
 
       {/* Article Content Body */}
-      <div className="text-stone-800 leading-relaxed text-base font-sans space-y-6 whitespace-pre-line border-b border-stone-200 pb-12">
-        {article.content}
-      </div>
+      <div className="article-content border-b border-stone-200 pb-12" dangerouslySetInnerHTML={{ __html: article.content }} />
 
       {/* Author Profile Footer Card */}
       {article.author_profile && (

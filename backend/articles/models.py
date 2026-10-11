@@ -3,6 +3,7 @@ from django.conf import settings
 from core.models import SoftDeletableModel, TimestampedModel
 from artworks.models import ModerationStatus
 from core.services.media import refresh_image_derivatives, validate_new_image
+from articles.rich_text import sanitize_article_html, validate_article_html
 
 
 class ArticleCategory(TimestampedModel):
@@ -61,6 +62,12 @@ class Article(SoftDeletableModel):
         return f"{t.title if t else 'Untitled'} ({self.moderation_status})"
 
 
+class ArticleInlineImage(TimestampedModel):
+    """Validated, processed images inserted into an article body."""
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='articles/inline/')
+
+
 class ArticleView(TimestampedModel):
     """Unique article views by account or first-party anonymous browser id."""
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='unique_views')
@@ -89,3 +96,12 @@ class ArticleTranslation(TimestampedModel):
 
     def __str__(self):
         return f"{self.title} [{self.language}]"
+
+    def clean(self):
+        super().clean()
+        self.content = validate_article_html(self.content)
+
+    def save(self, *args, **kwargs):
+        if kwargs.get('update_fields') is None or 'content' in kwargs['update_fields']:
+            self.content = sanitize_article_html(self.content)
+        super().save(*args, **kwargs)

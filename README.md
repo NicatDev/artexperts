@@ -137,6 +137,32 @@ cd backend
 DB_ENGINE=sqlite DB_NAME=:memory: python manage.py test core.tests_content_management
 ```
 
+## Article editor
+
+Article creation, editing and Django admin translation inlines use the same self-hosted
+MIT-licensed Tiptap editor. No API key, external CDN or paid service is required.
+It includes headings, paragraphs, font sizes, bold/italic/underline, lists, links,
+images, alignment and editable tables. Image uploads use authenticated CSRF-protected
+`POST /api/v1/articles/images/upload/` (JPEG/PNG/WebP, 25 MB maximum) and are processed
+into WebP. Images inserted in article bodies are public media, like article covers.
+Uploading before saving an article can leave an unused image in storage.
+
+The backend sanitizes HTML on API/admin writes and again on reads, including older
+imports. Existing plain-text articles retain line breaks. Public detail pages share
+the editor's content styles; wide tables scroll horizontally on small screens.
+
+Django admin JS, CSS and third-party licenses are committed under
+`backend/articles/static/articles/`, and `collectstatic` installs them in Docker.
+After changing the shared editor or its CSS, regenerate the admin assets:
+
+```sh
+cd frontend
+npm ci
+npm run build:admin-editor
+```
+
+Focused checks: `python manage.py test articles.tests_rich_text` from `backend`.
+
 ## Server deployment
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the PostgreSQL, Docker Compose, Nginx,

@@ -3,10 +3,40 @@ from django.db.models import Count, Q
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.throttling import UserRateThrottle
+from core.services.media import media_service
 
-from articles.models import Article, ArticleCategory, ModerationStatus
+from articles.models import Article, ArticleCategory, ArticleInlineImage, ModerationStatus
 from core.pagination import StandardResultsSetPagination
 from articles.api.serializers import ArticleListSerializer, ArticleDetailSerializer, ArticleCategorySerializer
+
+
+class ArticleImageUploadThrottle(UserRateThrottle):
+    rate = '60/hour'
+    scope = 'article_image_upload'
+
+
+class ArticleImageUploadView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    throttle_classes = [ArticleImageUploadThrottle]
+
+    def post(self, request):
+        image = request.FILES.get('image')
+        if not image:
+            raise ValidationError({'image': 'An image is required.'})
+        try:
+            media_service.validate_image(image)
+            detail, _ = media_service.process_artwork_derivatives(image)
+        except DjangoValidationError as exc:
+            raise ValidationError({'image': exc.messages})
+        record = ArticleInlineImage.objects.create(uploaded_by=request.user, image=detail)
+        response = Response({'url': request.build_absolute_uri(record.image.url)}, status=201)
+        response['Cache-Control'] = 'private, no-store'
+        return response
 
 
 class ArticleCategoryListView(generics.ListAPIView):
