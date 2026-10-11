@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.utils import timezone
 from core.models import SoftDeletableModel, TimestampedModel
+from core.validators import normalize_phone_number, validate_phone_number
 
 
 class CustomUserManager(BaseUserManager):
@@ -69,6 +70,7 @@ class ArtistProfile(TimestampedModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='artist_profile')
     full_name = models.CharField(max_length=200, db_index=True)
     username = models.SlugField(max_length=100, unique=True, db_index=True)
+    phone_number = models.CharField(max_length=25, blank=True, default='', validators=[validate_phone_number])
     avatar = models.ImageField(upload_to='avatars/originals/', null=True, blank=True)
     avatar_thumbnail = models.ImageField(upload_to='avatars/thumbnails/', null=True, blank=True)
     short_bio = models.TextField(blank=True, default='')
@@ -79,6 +81,10 @@ class ArtistProfile(TimestampedModel):
     specialties = models.CharField(max_length=250, blank=True, default='', help_text="e.g., Oil painting, Canvas, Graphic Art")
     is_featured = models.BooleanField(default=False, db_index=True)
     is_founder = models.BooleanField(default=False, help_text="True for Ilqar Mammadov, the site creator.")
+
+    def clean(self):
+        super().clean()
+        self.phone_number = normalize_phone_number(self.phone_number)
 
     class Meta:
         verbose_name = 'Artist Profile'

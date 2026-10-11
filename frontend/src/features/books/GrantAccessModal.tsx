@@ -1,164 +1,113 @@
 "use client";
 
-import React, { useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { api } from "@/lib/api";
-import { CheckCircle2, XCircle, Search, UserPlus, X } from "lucide-react";
+import { Modal } from "@/components/shared/Modal";
+import { friendlyError } from "@/lib/form-errors";
 
 interface GrantAccessModalProps {
-  bookId: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
+  bookId: string; isOpen: boolean; onClose: () => void; onSuccess: () => void;
 }
 
 export function GrantAccessModal({ bookId, isOpen, onClose, onSuccess }: GrantAccessModalProps) {
-  const tBooks = useTranslations("books");
-  const tCommon = useTranslations("common");
-
+  const t = useTranslations("books");
+  const common = useTranslations("common");
+  const editor = useTranslations("editor");
+  const v = useTranslations("validation");
+  const emailId = useId();
+  const emailRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState("");
-  const [isChecking, setIsChecking] = useState(false);
-  const [userFound, setUserFound] = useState<any | null>(null);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
+  const [found, setFound] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [grants, setGrants] = useState<any[]>([]);
+  const [listError, setListError] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [revoking, setRevoking] = useState<any>(null);
+  const revision = useRef(0);
 
-  if (!isOpen) return null;
-
-  const handleEmailCheck = async () => {
-    if (!email.trim() || !email.includes("@")) return;
-
-    setIsChecking(true);
-    setErrorMsg("");
-    setUserFound(null);
-    setSuccessMsg("");
-
+  const load = useCallback(async () => {
+    const current = ++revision.current;
+    setLoading(true); setListError(false);
     try {
-      const res = await api.lookupUser(email.trim());
-      if (res.exists) {
-        setUserFound(res);
-      } else {
-        setErrorMsg(tBooks("emailNotFound"));
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Axtarış zamanı xəta baş verdi.");
-    } finally {
-      setIsChecking(false);
-    }
-  };
+      const result = await api.getBookAccessGrants(bookId, page);
+      if (revision.current === current) { setGrants(result.results || []); setTotalPages(Math.max(1, result.total_pages || 1)); }
+    } catch { if (revision.current === current) setListError(true); }
+    finally { if (revision.current === current) setLoading(false); }
+  }, [bookId, page]);
 
-  const handleGrant = async () => {
-    if (!email.trim() || !userFound) return;
+  useEffect(() => {
+    if (!isOpen) return;
+    setEmail(""); setFound(null); setError(""); setSuccess(""); setRevoking(null);
+  }, [isOpen, bookId]);
+  useEffect(() => { if (isOpen) void load(); return () => { revision.current++; }; }, [isOpen, load]);
 
-    setIsSubmitting(true);
-    setErrorMsg("");
+  async function check() {
+    const value = email.trim().toLowerCase();
+    if (!emailRef.current?.checkValidity() || !value) { setError(v("emailInvalid")); emailRef.current?.focus(); return; }
+    setBusy(true); setError(""); setSuccess(""); setFound(null);
     try {
-      await api.grantBookAccess(bookId, email.trim());
-      setSuccessMsg(tBooks("grantSuccess"));
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 1500);
-    } catch (err: any) {
-      setErrorMsg(err.message || "İcazə verilmədi.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      const result = await api.lookupUser(value);
+      if (result.exists) setFound({ ...result, email: value });
+      else setError(t("emailNotFound"));
+    } catch { setError(v("requestFailed")); }
+    finally { setBusy(false); }
+  }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm">
-      <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full p-7 space-y-6 shadow-2xl relative">
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 text-stone-400 hover:text-stone-800 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+  async function grant() {
+    if (busy || !found || found.email !== email.trim().toLowerCase()) return;
+    setBusy(true); setError(""); setSuccess("");
+    try {
+      await api.grantBookAccess(bookId, found.email);
+      setSuccess(t("grantSuccess")); setFound(null); setEmail("");
+      await load(); onSuccess();
+    } catch (error) { setError(error instanceof Error ? friendlyError(error.message, v) : v("requestFailed")); }
+    finally { setBusy(false); }
+  }
 
-        <div className="space-y-2">
-          <div className="w-11 h-11 rounded-full bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center">
-            <UserPlus className="w-5 h-5" />
-          </div>
-          <h3 className="text-xl font-serif text-stone-900 font-medium">
-            {tBooks("grantAccessTitle")}
-          </h3>
-          <p className="text-xs text-stone-500">
-            {tBooks("enterEmailPrompt")}
-          </p>
-        </div>
+  async function revoke() {
+    if (busy || !revoking) return;
+    setBusy(true); setError(""); setSuccess("");
+    try {
+      await api.revokeBookAccess(bookId, revoking.id);
+      setRevoking(null); setSuccess(t("revokeSuccess"));
+      await load(); onSuccess();
+    } catch { setError(v("requestFailed")); }
+    finally { setBusy(false); }
+  }
 
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setUserFound(null);
-                setErrorMsg("");
-              }}
-              placeholder="istifadeci@example.com"
-              className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-amber-600 focus:bg-white transition-colors"
-            />
-            <button
-              type="button"
-              onClick={handleEmailCheck}
-              disabled={isChecking || !email.includes("@")}
-              className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium disabled:opacity-50 transition-colors flex items-center gap-1.5"
-            >
-              <Search className="w-3.5 h-3.5 text-amber-700" />
-              <span>Yoxla</span>
-            </button>
-          </div>
-
-          {/* Verification status indicator */}
-          {userFound && (
-            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-              <div className="text-xs">
-                <span className="block text-emerald-900 font-semibold">
-                  {tBooks("emailVerified")}
-                </span>
-                <span className="block text-stone-600 text-[11px]">
-                  {userFound.full_name} (@{userFound.username || "user"})
-                </span>
-              </div>
-            </div>
-          )}
-
-          {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-300 flex items-center gap-2 text-xs text-rose-800">
-              <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-400 text-xs text-emerald-900 text-center font-medium">
-              {successMsg}
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-full text-xs text-stone-600 hover:text-stone-900 transition-colors"
-          >
-            {tCommon("cancel")}
-          </button>
-          <button
-            type="button"
-            onClick={handleGrant}
-            disabled={!userFound || isSubmitting}
-            className="px-6 py-2.5 rounded-full bg-stone-900 hover:bg-black text-white font-medium text-xs transition-all shadow-xs disabled:opacity-40"
-          >
-            {isSubmitting ? tCommon("loading") : tCommon("submit")}
-          </button>
-        </div>
+  return <Modal open={isOpen} title={t("grantAccessTitle")} busy={busy} onClose={onClose}>
+    <p className="mt-3 text-sm leading-6 text-stone-600">{t("enterEmailPrompt")}</p>
+    <fieldset disabled={busy} className="mt-5 min-w-0 space-y-4">
+      <label htmlFor={emailId} className="block text-sm">{t("accessEmail")}</label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input ref={emailRef} id={emailId} autoFocus type="email" required name="access_email" value={email} aria-invalid={!!error} aria-describedby={error ? `${emailId}-error` : undefined}
+          onChange={event => { setEmail(event.target.value); setFound(null); setError(""); }}
+          className="min-h-12 min-w-0 flex-1 rounded-xl border border-stone-300 bg-stone-50 px-3 text-base focus:border-amber-600 focus:outline-none sm:text-sm" />
+        <button type="button" onClick={() => void check()} className="min-h-12 rounded-xl border px-4 text-sm">{t("checkUser")}</button>
       </div>
-    </div>
-  );
+      {found && <p className="break-words rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{t("emailVerified")} — {found.full_name}</p>}
+      {error && <p id={`${emailId}-error`} role="alert" className="break-words rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
+      {success && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{success}</p>}
+      <button type="button" disabled={!found || busy} onClick={() => void grant()} className="min-h-12 w-full rounded-xl bg-stone-900 px-4 text-sm text-white disabled:opacity-40">{busy ? common("loading") : t("grantAccessBtn")}</button>
+      <div className="space-y-3 border-t pt-4">
+        <h3 className="font-medium">{t("accessList")}</h3>
+        {loading ? <p className="text-sm text-stone-500">{common("loading")}</p> : listError ? <div role="alert" className="space-y-2 text-sm text-rose-700"><p>{t("accessListError")}</p><button type="button" onClick={() => void load()} className="min-h-11 rounded-lg border px-4">{editor("retry")}</button></div> : grants.length === 0 ? <p className="text-sm text-stone-500">{t("noAccessGrants")}</p> : grants.map(row => <div key={row.id} className="min-w-0 space-y-2 rounded-xl border p-3">
+          <p className="break-all text-sm">{row.user_email}</p>
+          <p className="text-xs text-stone-500">{row.is_active ? t("accessActive") : t("accessInactive")}</p>
+          {row.is_active && <button type="button" onClick={() => setRevoking(row)} className="min-h-11 rounded-lg border border-rose-200 px-3 text-sm text-rose-700">{t("revokeAccess")}</button>}
+        </div>)}
+        {!listError && totalPages > 1 && <nav className="flex items-center justify-between gap-2"><button type="button" disabled={page <= 1} onClick={() => setPage(value => value - 1)} className="min-h-11 rounded-lg border px-3 text-sm disabled:opacity-40">{editor("previous")}</button><span className="text-sm">{page}/{totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage(value => value + 1)} className="min-h-11 rounded-lg border px-3 text-sm disabled:opacity-40">{editor("next")}</button></nav>}
+      </div>
+      {revoking && <div className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
+        <p className="break-words text-sm">{t("revokePrompt", { email: revoking.user_email })}</p>
+        <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setRevoking(null)} className="min-h-11 rounded-lg border bg-white px-2 text-sm">{common("cancel")}</button><button type="button" onClick={() => void revoke()} className="min-h-11 rounded-lg bg-rose-700 px-2 text-sm text-white">{t("revokeAccess")}</button></div>
+      </div>}
+      <button type="button" onClick={onClose} className="min-h-11 w-full rounded-xl border px-4 text-sm">{t("closeAccess")}</button>
+    </fieldset>
+  </Modal>;
 }

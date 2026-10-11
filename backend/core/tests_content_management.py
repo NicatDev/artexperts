@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 
 from artworks.models import Artwork
 from articles.models import Article
-from books.models import Book
+from books.models import Book, BookAccess
 from users.models import User, ArtistProfile
 
 
@@ -26,9 +26,9 @@ class ContentManagementTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(self.owner)
 
-    def image(self):
+    def image(self, color='red'):
         buffer = io.BytesIO()
-        Image.new('RGB', (20, 20), 'red').save(buffer, format='PNG')
+        Image.new('RGB', (20, 20), color).save(buffer, format='PNG')
         return SimpleUploadedFile('image.png', buffer.getvalue(), content_type='image/png')
 
     def create(self, kind):
@@ -115,3 +115,135 @@ class ContentManagementTests(TestCase):
         }, format='multipart')
         self.assertEqual(result.status_code, 400)
         self.assertFalse(Book.objects.get(pk=item['id']).digital_file)
+
+    def test_all_types_require_rights_only_on_create_and_edit_without_reupload(self):
+        for kind, model in [('artworks', Artwork), ('articles', Article), ('books', Book)]:
+            with self.subTest(kind=kind):
+                invalid = self.client.post(f'/api/v1/{kind}/publish/', {}, format='multipart')
+                self.assertEqual(invalid.status_code, 400)
+                item = self.create(kind)
+                obj = model.objects.get(pk=item['id'])
+                source = 'original_master' if kind == 'artworks' else 'cover_image'
+                old_image = getattr(obj, source).name
+                if kind == 'artworks':
+                    model.objects.filter(pk=obj.pk).update(rights_confirmed=False)
+                data = {'title_az': 'Edited without rights checkbox', 'category': ''}
+                if kind == 'artworks':
+                    data.update(creation_year='', allow_download='true', is_watermarked='true')
+                elif kind == 'books':
+                    data.update(publication_year='', page_count='', price='', availability_mode='FREE')
+                result = self.client.patch(f'/api/v1/{kind}/{obj.pk}/manage/', data, format='multipart')
+                self.assertEqual(result.status_code, 200, result.data)
+                obj.refresh_from_db()
+                self.assertEqual(getattr(obj, source).name, old_image)
+                self.assertIsNone(obj.category)
+                if kind == 'artworks':
+                    self.assertTrue(obj.allow_download)
+                    self.assertTrue(obj.is_watermarked)
+                    self.assertFalse(obj.rights_confirmed)
+                elif kind == 'books':
+                    self.assertEqual(obj.availability_mode, 'FREE')
+                    self.assertIsNone(obj.price)
+
+    def test_all_types_image_replacement_updates_actual_images(self):
+        for kind, model in [('artworks', Artwork), ('articles', Article), ('books', Book)]:
+            item = self.create(kind)
+            obj = model.objects.get(pk=item['id'])
+            source = 'original_master' if kind == 'artworks' else 'cover_image'
+            old_image = getattr(obj, source).name
+            result = self.client.patch(f'/api/v1/{kind}/{obj.pk}/manage/', {source: self.image('blue')}, format='multipart')
+            self.assertEqual(result.status_code, 200, result.data)
+            obj.refresh_from_db()
+            self.assertNotEqual(getattr(obj, source).name, old_image)
+            public = obj.thumbnail_image if kind == 'artworks' else obj.cover_thumbnail if kind == 'articles' else obj.cover_image
+            with public.open('rb') as file, Image.open(file) as image:
+                red, _, blue = image.convert('RGB').getpixel((0, 0))
+                self.assertGreater(blue, red)
+
+    def test_admin_model_image_replacement_regenerates_derivatives(self):
+        for kind, model, source, target in [('artworks', Artwork, 'original_master', 'thumbnail_image'), ('articles', Article, 'cover_image', 'cover_thumbnail')]:
+            item = self.create(kind)
+            obj = model.objects.get(pk=item['id'])
+            previous = getattr(obj, target).name
+            setattr(obj, source, self.image('blue'))
+            obj.save()
+            self.assertNotEqual(getattr(obj, target).name, previous)
+            with getattr(obj, target).open('rb') as file, Image.open(file) as image:
+                red, _, blue = image.convert('RGB').getpixel((0, 0))
+                self.assertGreater(blue, red)
+
+    def test_profile_phone_is_normalized_private_and_clearable(self):
+        response = self.client.patch('/api/v1/auth/me/', {'phone_number': '+994 (50) 123-45-67'}, format='multipart')
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['artist_profile']['phone_number'], '+994501234567')
+        self.client.force_authenticate(self.other)
+        public = self.client.get('/api/v1/artists/owner/')
+        self.assertEqual(public.status_code, 200, public.data)
+        self.assertNotIn('phone_number', public.data)
+        self.client.force_authenticate(self.owner)
+        bad = self.client.patch('/api/v1/auth/me/', {'phone_number': 'invalid'})
+        self.assertEqual(bad.status_code, 400)
+        self.assertIn('phone_number', bad.data['error']['details'])
+        self.assertEqual(self.client.patch('/api/v1/auth/me/', {'phone_number': ''}).status_code, 200)
+        self.owner.artist_profile.refresh_from_db()
+        self.assertEqual(self.owner.artist_profile.phone_number, '')
+
+    def test_book_contact_exposes_only_selected_channel(self):
+        item = self.create('books')
+        url = f'/api/v1/books/{item["id"]}/manage/'
+        for mode, field, value in [('PHONE', 'contact_phone', '+994501234567'), ('EMAIL', 'contact_email', 'public@example.com'), ('NONE', None, None)]:
+            self.client.force_authenticate(self.owner)
+            result = self.client.patch(url, {'contact_mode': mode, 'contact_phone': '+994501234567', 'contact_email': 'public@example.com'})
+            self.assertEqual(result.status_code, 200, result.data)
+            Book.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED')
+            self.client.force_authenticate(self.other)
+            public = self.client.get(f'/api/v1/books/{item["id"]}/')
+            self.assertEqual(public.status_code, 200, public.data)
+            self.assertEqual(public.data['contact'], {'mode': mode, 'value': value} if field else None)
+            self.assertEqual(public.data['contact_phone'], '')
+            self.assertEqual(public.data['contact_email'], '')
+
+    def test_book_download_mode_grant_revoke_and_restore(self):
+        item = self.create('books')
+        book_id = item['id']
+        manage = f'/api/v1/books/{book_id}/manage/'
+        result = self.client.patch(manage, {'availability_mode': 'FREE', 'digital_file': SimpleUploadedFile('book.pdf', b'%PDF-1.7\nexample', content_type='application/pdf')}, format='multipart')
+        self.assertEqual(result.status_code, 200, result.data)
+        Book.objects.filter(pk=book_id).update(moderation_status='PUBLISHED')
+        self.client.force_authenticate(None)
+        response = self.client.get(f'/api/v1/books/{book_id}/download/')
+        self.assertEqual(response.status_code, 200)
+        response.close()
+        self.client.force_authenticate(self.owner)
+        self.assertEqual(self.client.patch(manage, {'availability_mode': 'PRIVATE_ACCESS'}).status_code, 200)
+        Book.objects.filter(pk=book_id).update(moderation_status='PUBLISHED')
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get(f'/api/v1/books/{book_id}/download/').status_code, 403)
+        self.client.force_authenticate(self.owner)
+        granted = self.client.post(f'/api/v1/books/{book_id}/grant-access/', {'email': self.other.email}, format='json')
+        self.assertEqual(granted.status_code, 200, granted.data)
+        revoke = f'/api/v1/books/{book_id}/access-grants/{granted.data["id"]}/'
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.delete(revoke).status_code, 404)
+        response = self.client.get(f'/api/v1/books/{book_id}/download/')
+        self.assertEqual(response.status_code, 200)
+        response.close()
+        self.client.force_authenticate(self.owner)
+        self.assertEqual(self.client.delete(revoke).status_code, 204)
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get(f'/api/v1/books/{book_id}/download/').status_code, 403)
+        self.client.force_authenticate(self.owner)
+        renewed = self.client.post(f'/api/v1/books/{book_id}/grant-access/', {'email': self.other.email}, format='json')
+        self.assertEqual(renewed.status_code, 200)
+        self.assertTrue(BookAccess.objects.get(pk=granted.data['id']).is_active)
+
+    def test_artwork_download_permission_toggle(self):
+        item = self.create('artworks')
+        for allowed in (True, False):
+            result = self.client.patch(f'/api/v1/artworks/{item["id"]}/manage/', {'allow_download': str(allowed).lower()}, format='multipart')
+            self.assertEqual(result.status_code, 200, result.data)
+            self.assertEqual(result.data['allow_download'], allowed)
+            Artwork.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED')
+            response = self.client.get(f'/api/v1/artworks/{item["id"]}/download/')
+            self.assertEqual(response.status_code, 200 if allowed else 403)
+            response.close()

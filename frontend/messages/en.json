@@ -89,7 +89,12 @@
     "contact_phone": "Phone number",
     "contact_email": "Contact email",
     "contactHint": "Visitors without download permission will see only your selected contact method on this book’s detail page. Selecting “None” keeps your phone and email private.",
-    "phoneHint": "Include the country code, e.g. +994501234567. This number will be public for calls and WhatsApp."
+    "phoneHint": "Include the country code, e.g. +994501234567. This number will be public for calls and WhatsApp.",
+    "phone_number": "Mobile number",
+    "profilePhoneHint": "Include the country code, e.g. +994501234567. Your profile number stays private; it is shown separately when phone contact is selected for a book.",
+    "downloadPermission": "Book download permission",
+    "downloadPermissionHint": "“Free access” makes the PDF available to everyone. “Individual permission” allows you to grant and revoke access for specific users.",
+    "manageBookAccess": "Manage download permissions"
   },
   "nav": {
     "home": "Home",
@@ -183,7 +188,18 @@
     "empty": "No books published yet.",
     "contactForAccess": "Contact the book owner to obtain this book.",
     "restrictedAccessNotice": "Individual permission is required to download this book.",
-    "whatsappContact": "Contact on WhatsApp"
+    "whatsappContact": "Contact on WhatsApp",
+    "accessEmail": "User’s email address",
+    "checkUser": "Check user",
+    "accessList": "Granted permissions",
+    "accessListError": "Could not load permissions.",
+    "noAccessGrants": "No individual download permissions have been granted.",
+    "accessActive": "Active permission",
+    "accessInactive": "Revoked or expired permission",
+    "revokeAccess": "Revoke permission",
+    "revokePrompt": "Are you sure you want to revoke download permission for {email}?",
+    "revokeSuccess": "Download permission revoked.",
+    "closeAccess": "Close"
   },
   "articles": {
     "title": "Editorial & Essays",
@@ -344,6 +360,7 @@
     "emailDelivery": "We could not send the email. Please try again shortly.",
     "imageDimensions": "Image width and height must not exceed 10000 pixels.",
     "pdfSize": "PDF files must be no larger than 300 MB.",
-    "phoneInvalid": "Enter a valid number including the country code, e.g. +994501234567."
+    "phoneInvalid": "Enter a valid number including the country code, e.g. +994501234567.",
+    "urlInvalid": "Enter a valid website URL, e.g. https://example.com."
   }
 }

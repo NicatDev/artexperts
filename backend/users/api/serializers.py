@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from users.models import User, ArtistProfile, EmailVerificationToken
+from core.validators import normalize_phone_number
 
 
 class ArtistProfileSerializer(serializers.ModelSerializer):
@@ -13,9 +14,23 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'full_name', 'username', 'avatar', 'avatar_thumbnail',
             'short_bio', 'artist_statement', 'website', 'social_links',
-            'location', 'specialties', 'is_featured', 'is_founder', 'created_at', 'remove_avatar'
+            'location', 'specialties', 'is_featured', 'is_founder', 'created_at', 'remove_avatar', 'phone_number'
         ]
         read_only_fields = ['id', 'avatar_thumbnail', 'is_featured', 'is_founder', 'created_at']
+
+    def validate_phone_number(self, value):
+        try:
+            return normalize_phone_number(value)
+        except ValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not self.context.get('include_private') or not user or not user.is_authenticated or (user != instance.user and not user.is_staff):
+            data.pop('phone_number', None)
+        return data
 
     def validate_username(self, value):
         value = value.lower().strip()

@@ -136,6 +136,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, expires_in_days: expiresInDays }),
     }),
+  getBookAccessGrants: (bookId: string, page = 1) =>
+    request<any>(`/books/${bookId}/access-grants/?page=${page}`, { cache: "no-store" }),
+  revokeBookAccess: (bookId: string, grantId: string) =>
+    request<void>(`/books/${bookId}/access-grants/${grantId}/`, { method: "DELETE" }),
 
   // Artists
   getArtists: (params: Record<string, string> = {}) => {

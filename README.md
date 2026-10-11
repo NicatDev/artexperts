@@ -94,6 +94,13 @@ WhatsApp links), email (mailto link), or none (default). Only the selected chann
 is published; other saved contact fields are returned only to the owner/staff.
 Visitors without download permission see the selected contact channel on the detail page.
 
+Profile settings include a private mobile number (international format). It
+prefills the book contact phone field; publishing a phone number still requires
+selecting phone contact for that book. Rights confirmation is required only when
+creating content, across all three types, and is preserved during edits.
+Book download mode is editable, and the profile book tab and edit form both offer
+individual permission management, including a grant list and confirmed revocation.
+
 Article and artwork derivatives are generated whenever the source image changes,
 including Django admin uploads. Cards fall back to another image of the same item;
 failed images show a retry state instead of an unrelated stock image.

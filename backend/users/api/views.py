@@ -146,7 +146,7 @@ class VerifyAndRegisterView(views.APIView):
             return Response({"error": {"message": "Registration could not be completed. Please try again.", "details": fields}}, status=400)
 
         login(request, user)
-        response = Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        response = Response(UserSerializer(user, context={'request': request, 'include_private': True}).data, status=status.HTTP_201_CREATED)
         response['Cache-Control'] = 'no-store'
         get_token(request)
         return response
@@ -163,7 +163,7 @@ class LoginView(views.APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         login(request, user)
-        response = Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+        response = Response(UserSerializer(user, context={'request': request, 'include_private': True}).data, status=status.HTTP_200_OK)
         response['Cache-Control'] = 'no-store'
         get_token(request)
         return response
@@ -248,7 +248,7 @@ class CurrentUserView(views.APIView):
 
     @extend_schema(responses={200: UserSerializer})
     def get(self, request):
-        response = Response(UserSerializer(request.user).data)
+        response = Response(UserSerializer(request.user, context={'request': request, 'include_private': True}).data)
         response['Cache-Control'] = 'no-store'
         return response
 
@@ -262,7 +262,7 @@ class CurrentUserView(views.APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        response = Response(UserSerializer(request.user).data)
+        response = Response(UserSerializer(request.user, context={'request': request, 'include_private': True}).data)
         response['Cache-Control'] = 'no-store'
         return response
 

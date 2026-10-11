@@ -175,6 +175,32 @@ class ListBookAccessGrantsView(generics.ListAPIView):
 
         return BookAccess.objects.filter(book=book).order_by('-granted_at')
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+
+class RevokeBookAccessView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, id, grant_id):
+        books = Book.objects.all()
+        if not request.user.is_staff:
+            books = books.filter(owner=request.user)
+        if not books.filter(pk=id).exists():
+            raise Http404('Book not found.')
+        with transaction.atomic():
+            grant = BookAccess.objects.select_for_update().filter(pk=grant_id, book_id=id).first()
+            if not grant:
+                raise Http404('Access grant not found.')
+            if grant.revoked_at is None:
+                grant.revoked_at = timezone.now()
+                grant.save(update_fields=['revoked_at', 'updated_at'])
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
 
 class BookDownloadView(views.APIView):
     """

@@ -9,6 +9,7 @@ import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { focusFirstError, readFieldErrors, type FieldErrors } from "@/lib/form-errors";
 import { useAuth } from "@/features/auth/AuthContext";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
+import { GrantAccessModal } from "@/features/books/GrantAccessModal";
 
 export type ContentKind = "artworks" | "books" | "articles";
 type Contributor = { name: string; role: string; bio: string };
@@ -16,7 +17,7 @@ const translatedFields: Record<ContentKind, string[]> = {
   artworks: ["title", "description"], articles: ["title", "excerpt", "content"],
   books: ["title", "short_description", "full_description", "table_of_contents"],
 };
-const inputClass = "w-full min-w-0 rounded-xl border border-stone-200 bg-stone-50 px-3 py-3 text-sm focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:opacity-60";
+const inputClass = "w-full min-w-0 rounded-xl border border-stone-200 bg-stone-50 px-3 py-3 text-base focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:opacity-60 sm:text-sm";
 
 export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
   kind: ContentKind; initial?: any; isStaff: boolean; onSaved: () => void; onCancel: () => void;
@@ -41,6 +42,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
     result.currency ||= "AZN";
     result.languages ||= "AZ";
     result.contact_mode ||= "NONE";
+    result.contact_phone ||= user?.artist_profile?.phone_number || "";
     result.contact_email ||= user?.email || "";
     const translation = initial?.translations?.find((row: any) => row.language === "az") || initial?.translations?.[0];
     for (const field of translatedFields[kind]) result[`${field}_az`] = translation?.[field] ?? initial?.[field] ?? "";
@@ -60,6 +62,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
 
   useEffect(() => {
     if (!busy && !confirmOpen && focusPending.current) {
@@ -103,7 +106,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
       else if (input.validity.badInput || input.validity.stepMismatch || input.validity.rangeUnderflow || input.validity.rangeOverflow) next[input.name] = v("numberInvalid");
       else if (input.validity.tooLong) next[input.name] = v("tooLong");
     }
-    if (!rights) next.rights_confirmed = v("rights");
+    if (!initial && !rights) next.rights_confirmed = v("rights");
     if (image && image.size > 25 * 1024 * 1024) next[kind === "artworks" ? "original_master" : "cover_image"] = v("fileSize");
     else if (image && !["image/jpeg", "image/png", "image/webp"].includes(image.type)) next[kind === "artworks" ? "original_master" : "cover_image"] = v("imageInvalid");
     if (pdf && pdf.size > 300 * 1024 * 1024) next.digital_file = v("pdfSize");
@@ -141,7 +144,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
       const form = new FormData();
       for (const field of translatedFields[kind]) form.append(`${field}_az`, values[`${field}_az`].trim());
       form.append("category", values.category);
-      form.append("rights_confirmed", "true");
+      if (!initial) form.append("rights_confirmed", "true");
       if (kind === "artworks") {
         for (const field of ["artist_attribution", "medium", "dimensions"]) form.append(field, values[field]);
         form.append("creation_year", values.creation_year);
@@ -219,9 +222,14 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
           <div><label className="flex items-start gap-3 text-sm"><input {...inputProps("is_watermarked")} type="checkbox" className="mt-1 h-4 w-4 accent-amber-700" checked={watermarked} onChange={event => { clearError("is_watermarked"); setWatermarked(event.target.checked); }} />{publish("watermarkLabel")}</label>{errorBelow("is_watermarked")}</div>
         </>}
         {kind === "books" && <>
+          <div className="space-y-3 rounded-xl bg-stone-50 p-4 text-sm">
+            <h3 className="font-medium">{t("downloadPermission")}</h3>
+            <p className="text-xs leading-6 text-stone-600">{t("downloadPermissionHint")}</p>
+            {initial && <button type="button" onClick={() => setAccessOpen(true)} className="min-h-11 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm text-amber-900">{t("manageBookAccess")}</button>}
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {field("publication_year", "number")}{field("publisher", "text", false, 150)}{field("isbn", "text", false, 50)}{field("page_count", "number")}{field("languages", "text", true, 100)}
-            <label className="block space-y-2 text-sm"><span>{t("availability_mode")}</span><select {...inputProps("availability_mode")} className={inputClass} value={values.availability_mode} onChange={event => set("availability_mode", event.target.value)}>{["FREE", "PRIVATE_ACCESS", "NOT_FOR_SALE", "FUTURE_PAID"].map(mode => <option key={mode} value={mode}>{t(mode)}</option>)}</select>{errorBelow("availability_mode")}</label>
+            <label className="block space-y-2 text-sm"><span>{t("downloadPermission")}</span><select {...inputProps("availability_mode")} className={inputClass} value={values.availability_mode} onChange={event => set("availability_mode", event.target.value)}>{["FREE", "PRIVATE_ACCESS", "NOT_FOR_SALE", "FUTURE_PAID"].map(mode => <option key={mode} value={mode}>{t(mode)}</option>)}</select>{errorBelow("availability_mode")}</label>
             {field("price", "number", values.availability_mode === "FUTURE_PAID")}{field("currency", "text", true, 10)}
           </div>
           <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4 sm:p-5">
@@ -269,11 +277,12 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
           <span className="block text-xs text-stone-500">{t("pdfHint")}</span>
           {initial?.has_digital_file && <span className="flex items-start gap-3"><input {...inputProps("remove_digital_file")} type="checkbox" disabled={!!pdf} className="mt-1 h-4 w-4" checked={removePdf} onChange={event => { clearError("digital_file"); setRemovePdf(event.target.checked); }} />{t("removePdf")}</span>}
         </label>}
-        <div><label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6"><input {...inputProps("rights_confirmed")} type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-amber-700" checked={rights} required onChange={event => { clearError("rights_confirmed"); setRights(event.target.checked); }} />{common("rightsNotice")}</label>{errorBelow("rights_confirmed")}</div>
+        {!initial && <div><label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6"><input {...inputProps("rights_confirmed")} type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-amber-700" checked={rights} required onChange={event => { clearError("rights_confirmed"); setRights(event.target.checked); }} />{common("rightsNotice")}</label>{errorBelow("rights_confirmed")}</div>}
         <p className="text-xs leading-6 text-stone-500">{isStaff ? t("staffPublish") : t("reviewNotice")}</p>
         <button type="submit" disabled={busy || loadingCategories || categoryError} className="min-h-12 w-full rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-50 sm:w-auto">{busy ? common("loading") : initial ? common("save") : t("add")}</button>
       </fieldset>
     </form>
+    {kind === "books" && initial && <GrantAccessModal bookId={initial.id} isOpen={accessOpen} onClose={() => setAccessOpen(false)} onSuccess={() => {}} />}
     <Modal open={confirmOpen} title={initial ? t("confirmEdit") : publish("modalNoticeTitle")} busy={busy} onClose={() => setConfirmOpen(false)}>
       <p className="mt-4 text-sm leading-7 text-stone-600">{isStaff ? t("staffPublish") : t("reviewNotice")}</p>
       <div className="mt-6 grid grid-cols-2 gap-3">

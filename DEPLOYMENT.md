@@ -12,6 +12,11 @@ Kitabın profil üzərindən əlavə/redaktə formasında “Kitab sahibi ilə �
 var: telefon və WhatsApp, email, yaxud heç biri. Yeni və mövcud kitablarda ilkin
 seçim “Heç biri”dir. Seçilməyən əlaqə məlumatları ziyarətçilərə qaytarılmır.
 
+“Profil məlumatları” bölməsində mobil nömrə saxlanıla bilər; bu nömrə açıq profilə
+çıxmır və kitabın telefon sahəsi üçün ilkin dəyər kimi istifadə olunur. Kitablar
+tabında və redaktə formasında fərdi yükləmə icazəsi vermək/ləğv etmək mümkündür.
+Müəllif hüquqları təsdiqi kitab, məqalə və qalereyada yalnız yeni paylaşımda tələb olunur.
+
 Əvvəllər admin panelindən əlavə edilən məqalə və qalereya şəkillərinin kiçik
 versiyaları boş və ya köhnə qalıbsa, yeniləmədən sonra bir dəfə işlədin:
 

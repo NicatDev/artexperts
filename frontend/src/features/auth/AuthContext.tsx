@@ -7,6 +7,7 @@ export interface ArtistProfile {
   id: string;
   full_name: string;
   username: string;
+  phone_number?: string;
   avatar?: string;
   avatar_thumbnail?: string;
   short_bio?: string;

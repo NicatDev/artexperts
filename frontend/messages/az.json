@@ -89,7 +89,12 @@
     "contact_phone": "Telefon nömrəsi",
     "contact_email": "Əlaqə emaili",
     "contactHint": "Yükləmə icazəsi olmayan ziyarətçilər kitabın detail səhifəsində yalnız seçdiyiniz əlaqə üsulunu görəcəklər. “Heç biri” seçdikdə telefon və email gizli qalır.",
-    "phoneHint": "Ölkə kodu ilə daxil edin: +994501234567. Bu nömrə zəng və WhatsApp üçün açıq görünəcək."
+    "phoneHint": "Ölkə kodu ilə daxil edin: +994501234567. Bu nömrə zəng və WhatsApp üçün açıq görünəcək.",
+    "phone_number": "Mobil nömrə",
+    "profilePhoneHint": "Ölkə kodu ilə daxil edin: +994501234567. Profil nömrəsi gizlidir; kitabda telefonla əlaqəni seçdikdə ayrıca göstərilir.",
+    "downloadPermission": "Kitabın yükləmə icazəsi",
+    "downloadPermissionHint": "“Sərbəst giriş” seçdikdə PDF hamı üçün açıqdır. “Fərdi icazə ilə” seçdikdə konkret istifadəçilərə icazə verə və verilmiş icazəni ləğv edə bilərsiniz.",
+    "manageBookAccess": "Yükləmə icazələrini idarə et"
   },
   "nav": {
     "home": "Ana Səhifə",
@@ -183,7 +188,18 @@
     "empty": "Hələlik heç bir kitab dərc olunmayıb.",
     "contactForAccess": "Kitabı əldə etmək üçün kitab sahibi ilə əlaqə saxlayın.",
     "restrictedAccessNotice": "Bu kitabın yüklənməsi üçün fərdi icazə tələb olunur.",
-    "whatsappContact": "WhatsApp ilə əlaqə"
+    "whatsappContact": "WhatsApp ilə əlaqə",
+    "accessEmail": "İstifadəçinin email ünvanı",
+    "checkUser": "İstifadəçini yoxla",
+    "accessList": "Verilmiş icazələr",
+    "accessListError": "İcazələrin siyahısı yüklənmədi.",
+    "noAccessGrants": "Hələ fərdi yükləmə icazəsi verilməyib.",
+    "accessActive": "Aktiv icazə",
+    "accessInactive": "Ləğv edilmiş və ya vaxtı bitmiş icazə",
+    "revokeAccess": "İcazəni ləğv et",
+    "revokePrompt": "{email} istifadəçisinin yükləmə icazəsini ləğv etmək istədiyinizdən əminsiniz?",
+    "revokeSuccess": "Yükləmə icazəsi ləğv edildi.",
+    "closeAccess": "Bağla"
   },
   "articles": {
     "title": "Sənət Redaksiyası və Məqalələr",
@@ -344,6 +360,7 @@
     "emailDelivery": "Email göndərilə bilmədi. Bir az sonra yenidən cəhd edin.",
     "imageDimensions": "Şəklin eni və hündürlüyü 10000 pikseldən çox olmamalıdır.",
     "pdfSize": "PDF faylı 300 MB-dan böyük olmamalıdır.",
-    "phoneInvalid": "Nömrəni ölkə kodu ilə düzgün daxil edin. Məsələn: +994501234567."
+    "phoneInvalid": "Nömrəni ölkə kodu ilə düzgün daxil edin. Məsələn: +994501234567.",
+    "urlInvalid": "Düzgün veb ünvan daxil edin. Məsələn: https://example.com."
   }
 }

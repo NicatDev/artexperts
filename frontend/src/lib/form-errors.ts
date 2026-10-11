@@ -50,7 +50,7 @@ export function readFieldErrors(error: unknown, t: Translate): FieldErrors {
 export function focusFirstError(form: HTMLFormElement | null, errors: FieldErrors) {
   requestAnimationFrame(() => {
     const input = Array.from(form?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("[name]") || [])
-      .find(element => (errors[element.name] || (element.name.startsWith("authors.") && errors.authors)) && !element.disabled);
+      .find(element => (errors[element.name] || Object.keys(errors).some(key => element.name.startsWith(`${key}.`))) && !element.disabled);
     if (input) {
       input.scrollIntoView({ behavior: "smooth", block: "center" });
       input.focus({ preventScroll: true });
