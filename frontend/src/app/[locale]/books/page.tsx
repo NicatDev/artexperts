@@ -25,6 +25,7 @@ export default async function BooksPage({
   const sp = await searchParams;
   setRequestLocale(locale);
 
+  const tAccess = await getTranslations({ locale, namespace: "editor" });
   const tBooks = await getTranslations({ locale, namespace: "books" });
   const tCommon = await getTranslations({ locale, namespace: "common" });
 
@@ -93,7 +94,7 @@ export default async function BooksPage({
                   watermarkText="Art Experts"
                 />
                 <div className="absolute bottom-2 left-2 z-20 px-2.5 py-1 rounded bg-white/90 backdrop-blur text-[10px] font-mono text-stone-800 border border-stone-200 shadow-2xs">
-                  {book.availability_mode === "FREE" ? tBooks("freeAccess") : tBooks("privateAccess")}
+                  {tAccess(book.availability_mode === "CONTACT" ? "CONTACT" : book.availability_mode === "FREE" ? "FREE" : "PRIVATE_ACCESS")}
                 </div>
               </div>
 

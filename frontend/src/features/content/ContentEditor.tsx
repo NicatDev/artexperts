@@ -9,7 +9,6 @@ import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { focusFirstError, readFieldErrors, type FieldErrors } from "@/lib/form-errors";
 import { useAuth } from "@/features/auth/AuthContext";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
-import { GrantAccessModal } from "@/features/books/GrantAccessModal";
 
 export type ContentKind = "artworks" | "books" | "articles";
 type Contributor = { name: string; role: string; bio: string };
@@ -48,7 +47,6 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
     for (const field of translatedFields[kind]) result[`${field}_az`] = translation?.[field] ?? initial?.[field] ?? "";
     return result;
   });
-  const [allowDownload, setAllowDownload] = useState(initial?.allow_download ?? false);
   const [watermarked, setWatermarked] = useState(initial?.is_watermarked ?? false);
   const [rights, setRights] = useState(false);
   const [removePdf, setRemovePdf] = useState(false);
@@ -62,7 +60,6 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [accessOpen, setAccessOpen] = useState(false);
 
   useEffect(() => {
     if (!busy && !confirmOpen && focusPending.current) {
@@ -111,10 +108,11 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
     else if (image && !["image/jpeg", "image/png", "image/webp"].includes(image.type)) next[kind === "artworks" ? "original_master" : "cover_image"] = v("imageInvalid");
     if (pdf && pdf.size > 300 * 1024 * 1024) next.digital_file = v("pdfSize");
     else if (pdf && !/\.pdf$/i.test(pdf.name)) next.digital_file = v("pdfInvalid");
-    if (kind === "books") {
+    if (kind !== "articles" && values.availability_mode === "CONTACT") {
       if (values.contact_mode === "PHONE" && !/^\+[1-9]\d{6,14}$/.test(values.contact_phone.replace(/[\s().-]/g, ""))) next.contact_phone = v("phoneInvalid");
       if (values.contact_mode === "EMAIL" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.contact_email.trim())) next.contact_email = v("emailInvalid");
-      if (values.availability_mode === "FUTURE_PAID" && !(Number(values.price) > 0)) next.price = v("positivePrice");
+    }
+    if (kind === "books") {
       const seen = new Set<string>();
       contributors.forEach((row, index) => {
         const key = `${row.name.trim().toLowerCase()}|${row.role}`;
@@ -148,17 +146,20 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
       if (kind === "artworks") {
         for (const field of ["artist_attribution", "medium", "dimensions"]) form.append(field, values[field]);
         form.append("creation_year", values.creation_year);
-        form.append("allow_download", String(allowDownload));
         form.append("is_watermarked", String(watermarked));
       }
       if (kind === "books") {
-        for (const field of ["availability_mode", "price", "currency", "publication_year", "isbn", "publisher", "languages", "page_count"]) form.append(field, values[field]);
-        form.append("contact_mode", values.contact_mode);
-        if (values.contact_mode === "PHONE") form.append("contact_phone", values.contact_phone.trim());
-        if (values.contact_mode === "EMAIL") form.append("contact_email", values.contact_email.trim());
+        for (const field of ["publication_year", "isbn", "publisher", "languages", "page_count"]) form.append(field, values[field]);
         form.append("authors", JSON.stringify(contributors.map(row => ({ ...row, name: row.name.trim() }))));
         if (removePdf) form.append("remove_digital_file", "true");
         if (pdf) form.append("digital_file", pdf);
+      }
+      if (kind !== "articles") {
+        form.append("availability_mode", values.availability_mode);
+        const contactMode = values.availability_mode === "CONTACT" ? values.contact_mode : "NONE";
+        form.append("contact_mode", contactMode);
+        form.append("contact_phone", contactMode === "PHONE" ? values.contact_phone.trim() : "");
+        form.append("contact_email", contactMode === "EMAIL" ? values.contact_email.trim() : "");
       }
       if (image) form.append(kind === "artworks" ? "original_master" : "cover_image", image);
       await api.saveContent(kind, form, initial?.id);
@@ -218,24 +219,17 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
         {kind === "artworks" && <>
           {field("artist_attribution", "text", false, 200)}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{field("creation_year", "number")}{field("medium", "text", false, 150)}{field("dimensions", "text", false, 100)}</div>
-          <div><label className="flex items-start gap-3 text-sm"><input {...inputProps("allow_download")} type="checkbox" className="mt-1 h-4 w-4 accent-amber-700" checked={allowDownload} onChange={event => { clearError("allow_download"); setAllowDownload(event.target.checked); }} />{publish("allowDownloadLabel")}</label>{errorBelow("allow_download")}</div>
           <div><label className="flex items-start gap-3 text-sm"><input {...inputProps("is_watermarked")} type="checkbox" className="mt-1 h-4 w-4 accent-amber-700" checked={watermarked} onChange={event => { clearError("is_watermarked"); setWatermarked(event.target.checked); }} />{publish("watermarkLabel")}</label>{errorBelow("is_watermarked")}</div>
         </>}
-        {kind === "books" && <>
-          <div className="space-y-3 rounded-xl bg-stone-50 p-4 text-sm">
+        {kind !== "articles" && <section className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4 sm:p-5">
             <h3 className="font-medium">{t("downloadPermission")}</h3>
             <p className="text-xs leading-6 text-stone-600">{t("downloadPermissionHint")}</p>
-            {initial && <button type="button" onClick={() => setAccessOpen(true)} className="min-h-11 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm text-amber-900">{t("manageBookAccess")}</button>}
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {field("publication_year", "number")}{field("publisher", "text", false, 150)}{field("isbn", "text", false, 50)}{field("page_count", "number")}{field("languages", "text", true, 100)}
-            <label className="block space-y-2 text-sm"><span>{t("downloadPermission")}</span><select {...inputProps("availability_mode")} className={inputClass} value={values.availability_mode} onChange={event => set("availability_mode", event.target.value)}>{["FREE", "PRIVATE_ACCESS", "NOT_FOR_SALE", "FUTURE_PAID"].map(mode => <option key={mode} value={mode}>{t(mode)}</option>)}</select>{errorBelow("availability_mode")}</label>
-            {field("price", "number", values.availability_mode === "FUTURE_PAID")}{field("currency", "text", true, 10)}
-          </div>
-          <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4 sm:p-5">
+            <label className="block space-y-2 text-sm"><span>{t("availability_mode")}</span><select {...inputProps("availability_mode")} className={`${inputClass} cursor-pointer`} value={values.availability_mode} onChange={event => { clearError("contact_phone"); clearError("contact_email"); clearError("contact_mode"); set("availability_mode", event.target.value); }}>{["FREE", "CONTACT", "PRIVATE_ACCESS"].map(mode => <option key={mode} value={mode}>{t(mode)}</option>)}</select>{errorBelow("availability_mode")}</label>
+            <p className="text-sm leading-6 text-stone-700">{t(`modeHint${values.availability_mode}`)}</p>
+          {values.availability_mode === "CONTACT" && <div className="space-y-4 border-t border-amber-200 pt-4">
             <label className="block space-y-2 text-sm">
               <span>{t("contact_mode")}</span>
-              <select {...inputProps("contact_mode")} className={inputClass} value={values.contact_mode} onChange={event => { clearError("contact_phone"); clearError("contact_email"); set("contact_mode", event.target.value); }}>
+              <select {...inputProps("contact_mode")} className={`${inputClass} cursor-pointer`} value={values.contact_mode} onChange={event => { clearError("contact_phone"); clearError("contact_email"); set("contact_mode", event.target.value); }}>
                 {["NONE", "PHONE", "EMAIL"].map(mode => <option key={mode} value={mode}>{t(`contact${mode}`)}</option>)}
               </select>
               {errorBelow("contact_mode")}
@@ -243,6 +237,11 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
             <p className="text-xs leading-6 text-stone-600">{t("contactHint")}</p>
             {values.contact_mode === "PHONE" && <div className="space-y-2">{field("contact_phone", "tel", true, 25)}<p className="text-xs text-stone-600">{t("phoneHint")}</p></div>}
             {values.contact_mode === "EMAIL" && field("contact_email", "email", true, 254)}
+          </div>}
+        </section>}
+        {kind === "books" && <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {field("publication_year", "number")}{field("publisher", "text", false, 150)}{field("isbn", "text", false, 50)}{field("page_count", "number")}{field("languages", "text", true, 100)}
           </div>
           <div className="space-y-3">
             <h3 className="font-medium">{t("contributors")}</h3>
@@ -282,7 +281,6 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
         <button type="submit" disabled={busy || loadingCategories || categoryError} className="min-h-12 w-full rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-50 sm:w-auto">{busy ? common("loading") : initial ? common("save") : t("add")}</button>
       </fieldset>
     </form>
-    {kind === "books" && initial && <GrantAccessModal bookId={initial.id} isOpen={accessOpen} onClose={() => setAccessOpen(false)} onSuccess={() => {}} />}
     <Modal open={confirmOpen} title={initial ? t("confirmEdit") : publish("modalNoticeTitle")} busy={busy} onClose={() => setConfirmOpen(false)}>
       <p className="mt-4 text-sm leading-7 text-stone-600">{isStaff ? t("staffPublish") : t("reviewNotice")}</p>
       <div className="mt-6 grid grid-cols-2 gap-3">

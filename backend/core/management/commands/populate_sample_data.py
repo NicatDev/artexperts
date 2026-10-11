@@ -290,7 +290,7 @@ class Command(BaseCommand):
                     'owner': item['owner'],
                     'is_founder_piece': item['is_founder_piece'],
                     'is_featured': True,
-                    'allow_download': True,
+                    'availability_mode': 'FREE',
                     'medium': item['medium'],
                     'dimensions': item['dimensions'],
                     'moderation_status': ModerationStatus.PUBLISHED,

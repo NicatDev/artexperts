@@ -5,7 +5,9 @@ import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
-import { Download, ShieldAlert, ArrowLeft, Palette, Calendar, Maximize, User } from "lucide-react";
+import { ShieldAlert, ArrowLeft, Palette, Calendar, Maximize, User } from "lucide-react";
+
+import { DownloadAccess } from "@/features/content/DownloadAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -162,22 +164,8 @@ export default async function ArtworkDetailPage({
 
           {/* Download Action Controlled by Artist */}
           <div className="pt-2">
-            {artwork.allow_download ? (
-              <a
-                href={`${siteConfig.apiUrl}/artworks/${artwork.id}/download/`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-stone-900 hover:bg-black text-white font-medium text-sm transition-all shadow-md hover:shadow-lg"
-              >
-                <Download className="w-4 h-4 text-amber-300" />
-                <span>{tArtworks("downloadAllowed")}</span>
-              </a>
-            ) : (
-              <div className="w-full p-4 rounded-2xl bg-white border border-stone-200 text-center text-xs text-stone-500 flex items-center justify-center gap-2 shadow-2xs">
-                <ShieldAlert className="w-4 h-4 text-amber-700" />
-                <span>{tArtworks("downloadRestricted")}</span>
-              </div>
-            )}
+            <DownloadAccess kind="artworks" mode={artwork.availability_mode} contact={artwork.contact}
+              downloadUrl={`${siteConfig.apiUrl}/artworks/${artwork.id}/download/`} hasFile={!!artwork.detail_image} />
           </div>
         </div>
       </div>

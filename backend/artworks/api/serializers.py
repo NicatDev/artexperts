@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from artworks.models import Artwork, ArtworkTranslation, ArtworkCategory, ModerationStatus
 from users.api.serializers import ArtistProfileSerializer
+from core.access_serializers import ContactDetailMixin, ContactWriteMixin
 
 
 class ArtworkCategorySerializer(serializers.ModelSerializer):
@@ -34,7 +35,7 @@ class ArtworkListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'artist_attribution', 'artist_username',
             'category_slug', 'category_name', 'creation_year', 'medium', 'dimensions',
-            'thumbnail_image', 'detail_image', 'allow_download', 'is_featured',
+            'thumbnail_image', 'detail_image', 'allow_download', 'availability_mode', 'is_featured',
             'is_founder_piece', 'views_count', 'created_at'
         ]
 
@@ -66,7 +67,7 @@ class ArtworkListSerializer(serializers.ModelSerializer):
         return getattr(obj.category, f'name_{lang}', obj.category.name_az)
 
 
-class ArtworkDetailSerializer(serializers.ModelSerializer):
+class ArtworkDetailSerializer(ContactDetailMixin, serializers.ModelSerializer):
     translations = ArtworkTranslationSerializer(many=True, read_only=True)
     category = ArtworkCategorySerializer(read_only=True)
     artist_profile = serializers.SerializerMethodField()
@@ -80,7 +81,8 @@ class ArtworkDetailSerializer(serializers.ModelSerializer):
             'category', 'moderation_status', 'rejection_reason', 'creation_year',
             'medium', 'dimensions', 'allow_download', 'is_watermarked',
             'detail_image', 'thumbnail_image', 'views_count', 'is_featured',
-            'is_founder_piece', 'translations', 'created_at'
+            'is_founder_piece', 'translations', 'created_at', 'availability_mode',
+            'contact_mode', 'contact', 'contact_phone', 'contact_email'
         ]
 
     def get_artist_profile(self, obj):
@@ -101,7 +103,8 @@ class ArtworkDetailSerializer(serializers.ModelSerializer):
         return t.description if t else ""
 
 
-class ArtworkCreateUpdateSerializer(serializers.ModelSerializer):
+class ArtworkCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializer):
+    allow_download = serializers.BooleanField(read_only=True)
     title_az = serializers.CharField(write_only=True, required=True, max_length=250)
     description_az = serializers.CharField(write_only=True, required=False, allow_blank=True)
     title_en = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -115,6 +118,7 @@ class ArtworkCreateUpdateSerializer(serializers.ModelSerializer):
             'id', 'category', 'artist_attribution', 'creation_year', 'medium',
             'dimensions', 'allow_download', 'is_watermarked', 'original_master',
             'rights_confirmed', 'title_az', 'description_az', 'title_en',
-            'description_en', 'title_ru', 'description_ru'
+            'description_en', 'title_ru', 'description_ru',
+            'availability_mode', 'contact_mode', 'contact_phone', 'contact_email'
         ]
         read_only_fields = ['id']

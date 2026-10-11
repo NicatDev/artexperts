@@ -31,7 +31,7 @@ class ContentManagementTests(TestCase):
         Image.new('RGB', (20, 20), color).save(buffer, format='PNG')
         return SimpleUploadedFile('image.png', buffer.getvalue(), content_type='image/png')
 
-    def create(self, kind):
+    def create(self, kind, **extra):
         data = {'title_az': 'Same title', 'rights_confirmed': 'true'}
         if kind == 'artworks':
             data.update(original_master=self.image(), description_az='Description')
@@ -39,6 +39,7 @@ class ContentManagementTests(TestCase):
             data.update(cover_image=self.image(), excerpt_az='Excerpt', content_az='Body')
         else:
             data.update(cover_image=self.image(), short_description_az='Short', full_description_az='Full', authors=json.dumps([{'name': 'Owner', 'role': 'AUTHOR'}]))
+        data.update(extra)
         result = self.client.post(f'/api/v1/{kind}/publish/', data, format='multipart')
         self.assertEqual(result.status_code, 201, result.data)
         return result.data
@@ -129,7 +130,7 @@ class ContentManagementTests(TestCase):
                     model.objects.filter(pk=obj.pk).update(rights_confirmed=False)
                 data = {'title_az': 'Edited without rights checkbox', 'category': ''}
                 if kind == 'artworks':
-                    data.update(creation_year='', allow_download='true', is_watermarked='true')
+                    data.update(creation_year='', availability_mode='FREE', is_watermarked='true')
                 elif kind == 'books':
                     data.update(publication_year='', page_count='', price='', availability_mode='FREE')
                 result = self.client.patch(f'/api/v1/{kind}/{obj.pk}/manage/', data, format='multipart')
@@ -188,62 +189,101 @@ class ContentManagementTests(TestCase):
         self.owner.artist_profile.refresh_from_db()
         self.assertEqual(self.owner.artist_profile.phone_number, '')
 
-    def test_book_contact_exposes_only_selected_channel(self):
-        item = self.create('books')
-        url = f'/api/v1/books/{item["id"]}/manage/'
-        for mode, field, value in [('PHONE', 'contact_phone', '+994501234567'), ('EMAIL', 'contact_email', 'public@example.com'), ('NONE', None, None)]:
+    def test_contact_modes_are_identical_for_books_and_gallery(self):
+        for kind, model in [('books', Book), ('artworks', Artwork)]:
             self.client.force_authenticate(self.owner)
-            result = self.client.patch(url, {'contact_mode': mode, 'contact_phone': '+994501234567', 'contact_email': 'public@example.com'})
-            self.assertEqual(result.status_code, 200, result.data)
-            Book.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED')
-            self.client.force_authenticate(self.other)
-            public = self.client.get(f'/api/v1/books/{item["id"]}/')
-            self.assertEqual(public.status_code, 200, public.data)
-            self.assertEqual(public.data['contact'], {'mode': mode, 'value': value} if field else None)
-            self.assertEqual(public.data['contact_phone'], '')
-            self.assertEqual(public.data['contact_email'], '')
+            item = self.create(kind)
+            url = f'/api/v1/{kind}/{item["id"]}/manage/'
+            for channel, field, value in [('PHONE', 'contact_phone', '+994501234567'), ('EMAIL', 'contact_email', 'public@example.com'), ('NONE', None, None)]:
+                self.client.force_authenticate(self.owner)
+                result = self.client.patch(url, {'availability_mode': 'CONTACT', 'contact_mode': channel, 'contact_phone': '+994501234567', 'contact_email': 'public@example.com'})
+                self.assertEqual(result.status_code, 200, result.data)
+                model.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED')
+                self.client.force_authenticate(self.other)
+                public = self.client.get(f'/api/v1/{kind}/{item["id"]}/')
+                self.assertEqual(public.status_code, 200, public.data)
+                self.assertEqual(public.data['contact'], {'mode': channel, 'value': value} if field else None)
+                self.assertEqual(public.data['contact_phone'], '')
+                self.assertEqual(public.data['contact_email'], '')
+            for mode in ['FREE', 'PRIVATE_ACCESS']:
+                self.client.force_authenticate(self.owner)
+                result = self.client.patch(url, {'availability_mode': mode, 'contact_mode': 'EMAIL', 'contact_email': 'hidden@example.com'})
+                self.assertEqual(result.status_code, 200, result.data)
+                self.assertIsNone(result.data['contact'])
+                self.assertEqual(result.data['contact_mode'], 'NONE')
+                self.assertEqual(result.data['contact_email'], '')
+                self.assertEqual(result.data['contact_phone'], '')
 
-    def test_book_download_mode_grant_revoke_and_restore(self):
-        item = self.create('books')
-        book_id = item['id']
-        manage = f'/api/v1/books/{book_id}/manage/'
-        result = self.client.patch(manage, {'availability_mode': 'FREE', 'digital_file': SimpleUploadedFile('book.pdf', b'%PDF-1.7\nexample', content_type='application/pdf')}, format='multipart')
-        self.assertEqual(result.status_code, 200, result.data)
-        Book.objects.filter(pk=book_id).update(moderation_status='PUBLISHED')
-        self.client.force_authenticate(None)
-        response = self.client.get(f'/api/v1/books/{book_id}/download/')
-        self.assertEqual(response.status_code, 200)
-        response.close()
-        self.client.force_authenticate(self.owner)
-        self.assertEqual(self.client.patch(manage, {'availability_mode': 'PRIVATE_ACCESS'}).status_code, 200)
-        Book.objects.filter(pk=book_id).update(moderation_status='PUBLISHED')
-        self.client.force_authenticate(self.other)
-        self.assertEqual(self.client.get(f'/api/v1/books/{book_id}/download/').status_code, 403)
-        self.client.force_authenticate(self.owner)
-        granted = self.client.post(f'/api/v1/books/{book_id}/grant-access/', {'email': self.other.email}, format='json')
-        self.assertEqual(granted.status_code, 200, granted.data)
-        revoke = f'/api/v1/books/{book_id}/access-grants/{granted.data["id"]}/'
-        self.client.force_authenticate(self.other)
-        self.assertEqual(self.client.delete(revoke).status_code, 404)
-        response = self.client.get(f'/api/v1/books/{book_id}/download/')
-        self.assertEqual(response.status_code, 200)
-        response.close()
-        self.client.force_authenticate(self.owner)
-        self.assertEqual(self.client.delete(revoke).status_code, 204)
-        self.client.force_authenticate(self.other)
-        self.assertEqual(self.client.get(f'/api/v1/books/{book_id}/download/').status_code, 403)
-        self.client.force_authenticate(self.owner)
-        renewed = self.client.post(f'/api/v1/books/{book_id}/grant-access/', {'email': self.other.email}, format='json')
-        self.assertEqual(renewed.status_code, 200)
-        self.assertTrue(BookAccess.objects.get(pk=granted.data['id']).is_active)
+    def test_all_three_modes_can_be_selected_when_creating(self):
+        for kind in ['books', 'artworks']:
+            for mode in ['FREE', 'CONTACT', 'PRIVATE_ACCESS']:
+                item = self.create(kind, availability_mode=mode, contact_mode='PHONE', contact_phone='+994 50 123 45 67')
+                self.assertEqual(item['availability_mode'], mode)
+                self.assertEqual(item['contact'], {'mode': 'PHONE', 'value': '+994501234567'} if mode == 'CONTACT' else None)
 
-    def test_artwork_download_permission_toggle(self):
-        item = self.create('artworks')
-        for allowed in (True, False):
-            result = self.client.patch(f'/api/v1/artworks/{item["id"]}/manage/', {'allow_download': str(allowed).lower()}, format='multipart')
+    def test_contact_validation_for_both_types(self):
+        for kind in ['books', 'artworks']:
+            item = self.create(kind)
+            url = f'/api/v1/{kind}/{item["id"]}/manage/'
+            for channel, field, value in [('PHONE', 'contact_phone', 'invalid'), ('EMAIL', 'contact_email', 'invalid')]:
+                result = self.client.patch(url, {'availability_mode': 'CONTACT', 'contact_mode': channel, field: value})
+                self.assertEqual(result.status_code, 400)
+                self.assertIn(field, result.data['error']['details'])
+                result = self.client.patch(url, {'availability_mode': 'CONTACT', 'contact_mode': channel, field: ''})
+                self.assertEqual(result.status_code, 400)
+                self.assertIn(field, result.data['error']['details'])
+            result = self.client.patch(url, {'availability_mode': 'CONTACT', 'contact_mode': 'NONE'})
             self.assertEqual(result.status_code, 200, result.data)
-            self.assertEqual(result.data['allow_download'], allowed)
-            Artwork.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED')
-            response = self.client.get(f'/api/v1/artworks/{item["id"]}/download/')
-            self.assertEqual(response.status_code, 200 if allowed else 403)
-            response.close()
+            self.assertEqual(self.client.patch(url, {'availability_mode': 'FUTURE_PAID'}).status_code, 400)
+
+    def test_download_policy_has_no_owner_staff_or_legacy_grant_bypass(self):
+        staff = User.objects.create_user(email='staff@example.com', password='testingPassword42', is_staff=True)
+        for kind, model in [('books', Book), ('artworks', Artwork)]:
+            self.client.force_authenticate(self.owner)
+            item = self.create(kind)
+            url = f'/api/v1/{kind}/{item["id"]}/manage/'
+            if kind == 'books':
+                uploaded = self.client.patch(url, {'digital_file': SimpleUploadedFile('book.pdf', b'%PDF-1.7\nexample', content_type='application/pdf')}, format='multipart')
+                self.assertEqual(uploaded.status_code, 200, uploaded.data)
+                BookAccess.objects.create(book_id=item['id'], user=self.other, granted_by=self.owner)
+            for mode in ['FREE', 'CONTACT', 'PRIVATE_ACCESS', 'FREE']:
+                self.client.force_authenticate(self.owner)
+                result = self.client.patch(url, {'availability_mode': mode, 'contact_mode': 'NONE'})
+                self.assertEqual(result.status_code, 200, result.data)
+                model.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED')
+                for viewer in [None, self.other, self.owner, staff]:
+                    with self.subTest(kind=kind, mode=mode, viewer=viewer):
+                        self.client.force_authenticate(viewer)
+                        detail = self.client.get(f'/api/v1/{kind}/{item["id"]}/')
+                        if kind == 'books':
+                            self.assertEqual(detail.data['has_download_access'], mode == 'FREE')
+                        else:
+                            self.assertEqual(detail.data['allow_download'], mode == 'FREE')
+                        response = self.client.get(f'/api/v1/{kind}/{item["id"]}/download/')
+                        self.assertEqual(response.status_code, 200 if mode == 'FREE' else 403)
+                        if mode == 'FREE':
+                            self.assertEqual(response['Cache-Control'], 'private, no-store')
+                            if kind == 'artworks':
+                                self.assertIn('.png', response['Content-Disposition'])
+                                self.assertTrue(b''.join(response.streaming_content).startswith(b'\x89PNG'))
+                        response.close()
+            self.client.force_authenticate(self.owner)
+            if kind == 'books':
+                result = self.client.post(f'/api/v1/books/{item["id"]}/grant-access/', {'email': self.other.email}, format='json')
+                self.assertEqual(result.status_code, 400)
+            else:
+                # The obsolete checkbox cannot unlock a restricted item.
+                result = self.client.patch(url, {'availability_mode': 'PRIVATE_ACCESS', 'allow_download': 'true'})
+                self.assertEqual(result.status_code, 200)
+                self.assertFalse(result.data['allow_download'])
+
+    def test_restricted_contacts_hidden_even_for_legacy_saved_values(self):
+        for kind, model in [('books', Book), ('artworks', Artwork)]:
+            self.client.force_authenticate(self.owner)
+            item = self.create(kind)
+            model.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED', availability_mode='PRIVATE_ACCESS', contact_mode='EMAIL', contact_email='hidden@example.com')
+            self.client.force_authenticate(None)
+            detail = self.client.get(f'/api/v1/{kind}/{item["id"]}/')
+            self.assertIsNone(detail.data['contact'])
+            self.assertEqual(detail.data['contact_email'], '')
+            self.assertEqual(detail.data['contact_phone'], '')

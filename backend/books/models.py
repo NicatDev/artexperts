@@ -1,25 +1,11 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.core.exceptions import ValidationError
 from core.models import SoftDeletableModel, TimestampedModel
 from artworks.models import ModerationStatus
 from core.validators import validate_pdf_file
 from core.services.media import validate_new_image
-from books.contact import normalize_contact_phone, validate_contact
-
-
-class BookContactMode(models.TextChoices):
-    NONE = 'NONE', 'Hide contact details'
-    PHONE = 'PHONE', 'Phone and WhatsApp'
-    EMAIL = 'EMAIL', 'Email'
-
-
-class AvailabilityMode(models.TextChoices):
-    NOT_FOR_SALE = 'NOT_FOR_SALE', 'Not For Sale'
-    FREE = 'FREE', 'Free Public Access'
-    PRIVATE_ACCESS = 'PRIVATE_ACCESS', 'Private Granted Access'
-    FUTURE_PAID = 'FUTURE_PAID', 'Future Paid Edition'
+from core.content_access import AvailabilityMode, ContactMode as BookContactMode, clean_contact
 
 
 class ContributorRole(models.TextChoices):
@@ -100,11 +86,7 @@ class Book(SoftDeletableModel):
     def clean(self):
         super().clean()
         validate_new_image(self, 'cover_image')
-        try:
-            self.contact_phone = normalize_contact_phone(self.contact_phone)
-        except ValidationError as exc:
-            raise ValidationError({'contact_phone': exc.messages})
-        validate_contact(self.contact_mode, self.contact_phone, self.contact_email)
+        clean_contact(self)
 
     class Meta:
         verbose_name = 'Book'
@@ -163,7 +145,7 @@ class BookTranslation(TimestampedModel):
 
 class BookAccess(TimestampedModel):
     """
-    Granular permission grant: allows an individual registered user to access and download a book.
+    Legacy grant retained for audit/revocation. It cannot override availability_mode.
     """
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='access_grants')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='book_accesses')

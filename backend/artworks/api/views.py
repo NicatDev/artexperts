@@ -1,5 +1,6 @@
 from core.content_management import ContentCreateView, ContentManageView, ContentOwnerListView
 from django.http import FileResponse, Http404
+from pathlib import Path
 from django.db import models
 from django.db import transaction
 from django.db.models import F
@@ -8,6 +9,7 @@ from rest_framework.response import Response
 
 from artworks.models import Artwork, ArtworkCategory, ArtworkView, ModerationStatus
 from core.pagination import StandardResultsSetPagination
+from core.content_access import AvailabilityMode
 from artworks.api.serializers import ArtworkListSerializer, ArtworkDetailSerializer, ArtworkCategorySerializer
 
 
@@ -90,6 +92,7 @@ class ArtworkDetailView(generics.RetrieveAPIView):
         response.set_cookie('art_experts_visitor', visitor_id, max_age=60 * 60 * 24 * 365 * 2,
                             httponly=True, secure=request.is_secure(), samesite='Lax', path='/')
         response['X-Art-Experts-Visitor'] = visitor_id
+        response['Cache-Control'] = 'private, no-store'
         return response
 
 
@@ -104,7 +107,7 @@ class ArtworkUpdateDeleteView(ContentManageView):
 class ArtworkDownloadView(views.APIView):
     """
     Controlled download endpoint.
-    If the artist selected allow_download=False, this returns 403 Forbidden.
+    Only the explicit public download mode permits downloads.
     """
     permission_classes = [permissions.AllowAny]
 
@@ -114,17 +117,24 @@ class ArtworkDownloadView(views.APIView):
         except Artwork.DoesNotExist:
             raise Http404("Artwork not found.")
 
-        if not artwork.allow_download:
+        if artwork.availability_mode != AvailabilityMode.FREE:
             return Response(
-                {"error": {"message": "The artist has restricted downloads for this artwork."}},
+                {"error": {"message": "Əsəri əldə etmək üçün müəlliflə əlaqə saxlayın." if artwork.availability_mode == AvailabilityMode.CONTACT else "Bu əsərin paylaşılması müəllif tərəfindən məhdudlaşdırılıb."}},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        if not artwork.detail_image:
+        if not artwork.original_master:
             raise Http404("High-resolution file not available.")
 
-        response = FileResponse(artwork.detail_image.open('rb'), as_attachment=True)
-        response['Content-Disposition'] = f'attachment; filename="artwork-{artwork.id}.webp"'
+        # Previews remain public, while the original is served only through this policy.
+        filename = f'artwork-{artwork.id}{Path(artwork.original_master.name).suffix.lower()}'
+        response = FileResponse(artwork.original_master.open('rb'), as_attachment=True, filename=filename)
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        response['Cache-Control'] = 'private, no-store'
         return response
 
 

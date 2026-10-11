@@ -106,7 +106,7 @@ export const api = {
   },
   getBookCategories: (lang: string = "az") => request<any>(`/books/categories/?lang=${lang}`),
   getArtworkCategories: (lang: string = "az") => request<any>(`/artworks/categories/?lang=${lang}`),
-  getArtworkDetail: (id: string, lang: string = "az") => request<any>(`/artworks/${id}/?lang=${lang}`),
+  getArtworkDetail: (id: string, lang: string = "az") => request<any>(`/artworks/${id}/?lang=${lang}`, { cache: "no-store" }),
   publishArtwork: (formData: FormData) => request<any>(`/artworks/publish/`, { method: "POST", body: formData }),
   getMyArtworks: () => request<any>(`/artworks/my/`),
   deleteArtwork: (id: string) => request<any>(`/artworks/${id}/manage/`, { method: "DELETE" }),

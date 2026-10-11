@@ -44,7 +44,7 @@ class BookAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'owner', 'category', 'availability_mode', 'moderation_status', 'is_featured', 'is_founder_book', 'views_count', 'downloads_count', 'created_at')
     list_filter = ('moderation_status', 'availability_mode', 'contact_mode', 'is_featured', 'is_founder_book', 'category')
     search_fields = ('translations__title', 'isbn', 'publisher')
-    inlines = [BookContributorLinkInline, BookTranslationInline, BookAccessInline]
+    inlines = [BookContributorLinkInline, BookTranslationInline]
     actions = ['approve_books', 'reject_books', 'feature_books']
 
     @admin.action(description="Approve selected books (PUBLISH)")
@@ -64,6 +64,11 @@ class BookAdmin(admin.ModelAdmin):
 
 @admin.register(BookAccess)
 class BookAccessAdmin(admin.ModelAdmin):
+    # Historical grants are audit records; the three-mode policy controls downloads.
+    readonly_fields = ('book', 'user', 'granted_by', 'granted_at', 'expires_at', 'revoked_at')
     list_display = ('book', 'user', 'granted_by', 'is_active', 'granted_at', 'expires_at', 'revoked_at')
     list_filter = ('revoked_at',)
     search_fields = ('book__translations__title', 'user__email', 'granted_by__email')
+
+    def has_add_permission(self, request):
+        return False

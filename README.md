@@ -89,17 +89,19 @@ Profile settings support avatar, username, biography, statement, website and soc
 Artist edits return content to moderation. Ownership, moderation flags and view counters
 are controlled by the server.
 
-Each book's add/edit form has three contact visibility options: phone (call +
-WhatsApp links), email (mailto link), or none (default). Only the selected channel
-is published; other saved contact fields are returned only to the owner/staff.
-Visitors without download permission see the selected contact channel on the detail page.
+Books and gallery items share three editable download modes: public (`FREE`),
+contact the author (`CONTACT`), and fully restricted (`PRIVATE_ACCESS`). Only public
+mode permits downloads, including for owners and administrators. Contact mode offers
+phone + WhatsApp, email, or none; only the selected channel is published. Restricted
+mode displays the author's restriction notice and no contact details. Legacy per-user
+grants do not override these modes. Private PDF/master storage is never served by Nginx.
+Public gallery previews remain visible; a displayed preview can still be saved by a browser.
 
-Profile settings include a private mobile number (international format). It
-prefills the book contact phone field; publishing a phone number still requires
-selecting phone contact for that book. Rights confirmation is required only when
-creating content, across all three types, and is preserved during edits.
-Book download mode is editable, and the profile book tab and edit form both offer
-individual permission management, including a grant list and confirmed revocation.
+Profile settings include a private mobile number (international format). It prefills
+contact phone inputs for books and gallery items. Rights confirmation is required only
+when creating content across all three types and is preserved during edits.
+Migrations preserve public gallery downloads and convert old book modes without
+making previously restricted files public. Rebuild the backend and frontend to apply them.
 
 Article and artwork derivatives are generated whenever the source image changes,
 including Django admin uploads. Cards fall back to another image of the same item;

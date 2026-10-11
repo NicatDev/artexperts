@@ -8,14 +8,18 @@ PDF limiti API, Django admin və frontenddə 300 MB-dır; şəkil limiti 25 MB-d
 Nginx PDF, üz qabığı və digər sahələr üçün ümumi 330 MB sorğu qəbul edir.
 Böyük fayllar Django tərəfindən müvəqqəti disk fayllarında saxlanılır.
 
-Kitabın profil üzərindən əlavə/redaktə formasında “Kitab sahibi ilə əlaqə” sahəsi
-var: telefon və WhatsApp, email, yaxud heç biri. Yeni və mövcud kitablarda ilkin
-seçim “Heç biri”dir. Seçilməyən əlaqə məlumatları ziyarətçilərə qaytarılmır.
+Kitab və qalereyanın əlavə/redaktə formasında üç yükləmə rejimi var:
+“Hamıya açıq”, “Yalnız müəlliflə əlaqə”, “Tam məhdud”. Yalnız açıq rejimdə fayl
+endirilir; sahib/admin hesabı və köhnə fərdi icazələr məhdudiyyəti keçmir.
+Əlaqə rejimində telefon/WhatsApp, email və ya heç biri seçilir. Tam məhdud rejimdə
+əlaqə məlumatları göstərilmir. Açıq qalereya önizləməsini brauzerdə saxlamaq mümkündür;
+PDF və original şəkillərin private media yolları Nginx tərəfindən bloklanır.
 
 “Profil məlumatları” bölməsində mobil nömrə saxlanıla bilər; bu nömrə açıq profilə
-çıxmır və kitabın telefon sahəsi üçün ilkin dəyər kimi istifadə olunur. Kitablar
-tabında və redaktə formasında fərdi yükləmə icazəsi vermək/ləğv etmək mümkündür.
+çıxmır və paylaşımın telefon sahəsi üçün ilkin dəyər kimi istifadə olunur.
 Müəllif hüquqları təsdiqi kitab, məqalə və qalereyada yalnız yeni paylaşımda tələb olunur.
+Yeniləmə zamanı backend migration-ları avtomatik işləyir; köhnə açıq qalereya
+faylları açıq qalır, digər fayllar avtomatik hamıya açılmır.
 
 Əvvəllər admin panelindən əlavə edilən məqalə və qalereya şəkillərinin kiçik
 versiyaları boş və ya köhnə qalıbsa, yeniləmədən sonra bir dəfə işlədin:

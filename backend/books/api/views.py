@@ -1,5 +1,4 @@
 from core.content_management import ContentCreateView, ContentManageView, ContentOwnerListView
-from datetime import timedelta
 from django.utils import timezone
 from django.http import FileResponse, Http404
 from django.db.models import Count, F, Q
@@ -10,7 +9,6 @@ from drf_spectacular.utils import extend_schema
 
 from books.models import Book, BookAccess, BookView, BookCategory, AvailabilityMode
 from artworks.models import ModerationStatus
-from users.models import User
 from core.pagination import StandardResultsSetPagination
 from books.api.serializers import BookListSerializer, BookDetailSerializer, GrantBookAccessSerializer, BookAccessRecordSerializer, BookCategorySerializer
 
@@ -122,12 +120,10 @@ class BookUpdateDeleteView(ContentManageView):
 
 
 class GrantBookAccessView(views.APIView):
-    """
-    Owner or Admin grants private download permission to a specific registered user.
-    """
+    """Legacy grants cannot override the author's selected download mode."""
     permission_classes = [permissions.IsAuthenticated]
 
-    @extend_schema(request=GrantBookAccessSerializer, responses={200: BookAccessRecordSerializer})
+    @extend_schema(request=GrantBookAccessSerializer, responses={400: None})
     def post(self, request, id):
         try:
             book = Book.objects.get(id=id)
@@ -137,25 +133,7 @@ class GrantBookAccessView(views.APIView):
         if request.user != book.owner and not request.user.is_staff:
             return Response({"error": {"message": "Only the book owner or admin can grant access."}}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = GrantBookAccessSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data['email']
-        target_user = User.objects.get(email=email)
-
-        expires_in_days = serializer.validated_data.get('expires_in_days')
-        expires_at = timezone.now() + timedelta(days=expires_in_days) if expires_in_days else None
-
-        access, created = BookAccess.objects.update_or_create(
-            book=book,
-            user=target_user,
-            defaults={
-                'granted_by': request.user,
-                'expires_at': expires_at,
-                'revoked_at': None
-            }
-        )
-
-        return Response(BookAccessRecordSerializer(access).data, status=status.HTTP_200_OK)
+        return Response({'error': {'message': 'Yükləmə rejimini paylaşımın redaktə səhifəsində seçin. Fərdi icazələr məhdudiyyəti keçmir.'}}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ListBookAccessGrantsView(generics.ListAPIView):
@@ -218,21 +196,10 @@ class BookDownloadView(views.APIView):
         if not book.digital_file:
             raise Http404("Digital edition is not currently available for this book.")
 
-        # Authorization checks
-        has_access = False
-        if book.availability_mode == AvailabilityMode.FREE:
-            has_access = True
-        elif request.user and request.user.is_authenticated:
-            if request.user == book.owner or request.user.is_staff:
-                has_access = True
-            else:
-                grant = BookAccess.objects.filter(book=book, user=request.user, revoked_at__isnull=True).first()
-                if grant and grant.is_active:
-                    has_access = True
-
-        if not has_access:
+        # No implicit owner/admin or legacy per-user grant bypass.
+        if book.availability_mode != AvailabilityMode.FREE:
             return Response(
-                {"error": {"message": "You do not have permission to download this digital book. Please request access from the book author or platform owner."}},
+                {"error": {"message": "Kitabı əldə etmək üçün müəlliflə əlaqə saxlayın." if book.availability_mode == AvailabilityMode.CONTACT else "Bu kitabın paylaşılması müəllif tərəfindən məhdudlaşdırılıb."}},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -241,6 +208,12 @@ class BookDownloadView(views.APIView):
         response = FileResponse(book.digital_file.open('rb'), as_attachment=True)
         filename = f"book-{book.id}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        response['Cache-Control'] = 'private, no-store'
         return response
 
 

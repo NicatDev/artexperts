@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from core.models import SoftDeletableModel, TimestampedModel
 from core.services.media import refresh_image_derivatives, validate_new_image
+from core.content_access import AvailabilityMode, ContactMode, clean_contact
 
 
 class ModerationStatus(models.TextChoices):
@@ -46,7 +47,12 @@ class Artwork(SoftDeletableModel):
     medium = models.CharField(max_length=150, blank=True, default='', help_text="e.g. Oil on Canvas")
     dimensions = models.CharField(max_length=100, blank=True, default='', help_text="e.g. 100 x 80 cm")
 
-    allow_download = models.BooleanField(default=False, help_text="Allows public visitors to download high-res detail")
+    # Kept as a read-only compatibility flag; availability_mode controls downloads.
+    allow_download = models.BooleanField(default=False, editable=False)
+    availability_mode = models.CharField(max_length=25, choices=AvailabilityMode.choices, default=AvailabilityMode.PRIVATE_ACCESS, db_index=True)
+    contact_mode = models.CharField(max_length=10, choices=ContactMode.choices, default=ContactMode.NONE)
+    contact_phone = models.CharField(max_length=25, blank=True, default='')
+    contact_email = models.EmailField(blank=True, default='')
     is_watermarked = models.BooleanField(default=False)
 
     # Master original remains private; only derivatives are served publicly
@@ -60,8 +66,12 @@ class Artwork(SoftDeletableModel):
     def clean(self):
         super().clean()
         validate_new_image(self, 'original_master')
+        clean_contact(self)
 
     def save(self, *args, **kwargs):
+        self.allow_download = self.availability_mode == AvailabilityMode.FREE
+        if kwargs.get('update_fields') and 'availability_mode' in kwargs['update_fields']:
+            kwargs['update_fields'] = set(kwargs['update_fields']) | {'allow_download'}
         kwargs['update_fields'] = refresh_image_derivatives(
             self, 'original_master', ('detail_image', 'thumbnail_image'), kwargs.get('update_fields')
         )

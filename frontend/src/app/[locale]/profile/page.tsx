@@ -8,7 +8,6 @@ import { ProfileSettings } from "@/features/auth/ProfileSettings";
 import { ContentEditor, type ContentKind } from "@/features/content/ContentEditor";
 import { Modal } from "@/components/shared/Modal";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
-import { GrantAccessModal } from "@/features/books/GrantAccessModal";
 import { api } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { Palette, BookOpen, FileText, Settings, Plus, Edit3, Trash2 } from "lucide-react";
@@ -36,7 +35,6 @@ export default function ProfileDashboardPage() {
   const [deleting, setDeleting] = useState<{ kind: ContentKind; item: any } | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [accessBook, setAccessBook] = useState<any | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => { if (!isLoading && !user) router.replace("/login"); }, [isLoading, user, router]);
@@ -105,7 +103,6 @@ export default function ProfileDashboardPage() {
                 <span className={`self-start rounded-full px-3 py-1 text-xs ${item.moderation_status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : item.moderation_status === "REJECTED" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-900"}`}>{statusText(item.moderation_status)}</span>
                 {item.rejection_reason && <p className="break-words text-xs text-rose-700">{profile("rejectionReason")} {item.rejection_reason}</p>}
                 <p className="text-xs text-stone-500">{item.views_count || 0} {common("views")}</p>
-                {tab === "books" && <button type="button" onClick={() => setAccessBook(item)} className="min-h-11 rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm text-amber-900">{t("manageBookAccess")}</button>}
                 <div className="mt-auto grid grid-cols-2 gap-2 border-t border-stone-100 pt-4"><button disabled={editing} onClick={() => void edit(item)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border text-sm disabled:opacity-50"><Edit3 className="h-4 w-4" />{common("edit")}</button><button onClick={() => { setDeleteError(""); setDeleting({ kind: tab, item }); }} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 text-sm text-rose-700"><Trash2 className="h-4 w-4" />{common("delete")}</button></div>
               </div>
             </article>)}
@@ -114,7 +111,6 @@ export default function ProfileDashboardPage() {
         </>}
       </div>}
     </section>
-    {accessBook && <GrantAccessModal key={accessBook.id} bookId={accessBook.id} isOpen onClose={() => setAccessBook(null)} onSuccess={() => void load()} />}
     <Modal open={!!deleting} title={t("deleteTitle")} busy={deleteBusy} onClose={() => setDeleting(null)}>
       <p className="mt-4 break-words text-sm leading-7 text-stone-600">{t("deletePrompt", { title: deleting?.item.title || "" })}</p>
       {deleteError && <p role="alert" className="mt-3 break-words text-sm text-rose-700">{deleteError}</p>}
