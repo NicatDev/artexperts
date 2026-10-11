@@ -8,6 +8,7 @@ import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapp
 import { ShieldAlert, ArrowLeft, Palette, Calendar, Maximize, User } from "lucide-react";
 
 import { DownloadAccess } from "@/features/content/DownloadAccess";
+import { ContentViews } from "@/features/content/ContentViews";
 
 export const dynamic = "force-dynamic";
 
@@ -106,7 +107,7 @@ export default async function ArtworkDetailPage({
               <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
               {tArtworks("copyRestricted")}
             </span>
-            <span>{artwork.views_count || 0} {tCommon("views")}</span>
+            <ContentViews kind="artworks" id={artwork.id} initialCount={artwork.views_count || 0} />
           </div>
         </div>
 

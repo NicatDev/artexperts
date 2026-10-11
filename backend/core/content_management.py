@@ -68,10 +68,12 @@ def save_content(kind, request, instance=None, partial=False):
         if kind == 'artwork' and instance is None and not data.get('artist_attribution'):
             profile = getattr(request.user, 'artist_profile', None)
             data['artist_attribution'] = profile.full_name if profile else request.user.email
-        # Any artist edit returns to review; only staff can keep content published.
-        data['moderation_status'] = 'PUBLISHED' if request.user.is_staff else 'PENDING_REVIEW'
-        data['rejection_reason'] = ''
         if instance is None:
+            # First publication requires approval. Editing preserves the locked
+            # current status, so approved content stays public and pending content
+            # cannot be approved by an owner edit.
+            data['moderation_status'] = 'PENDING_REVIEW'
+            data['rejection_reason'] = ''
             instance = model.objects.create(**{owner_field: request.user}, **data)
         else:
             for field, value in data.items():

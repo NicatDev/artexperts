@@ -1,11 +1,10 @@
 from core.content_management import ContentCreateView, ContentManageView, ContentOwnerListView
-from django.db.models import Count, F, Q
-from django.db import transaction
+from django.db.models import Count, Q
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
-from articles.models import Article, ArticleCategory, ArticleView, ModerationStatus
+from articles.models import Article, ArticleCategory, ModerationStatus
 from core.pagination import StandardResultsSetPagination
 from articles.api.serializers import ArticleListSerializer, ArticleDetailSerializer, ArticleCategorySerializer
 
@@ -77,22 +76,8 @@ class ArticleDetailView(views.APIView):
             if not request.user or not request.user.is_authenticated or (request.user != article.author and not request.user.is_staff):
                 return Response({"error": {"message": "Article not found or pending review."}}, status=status.HTTP_404_NOT_FOUND)
 
-        visitor_id = request.COOKIES.get('art_experts_visitor') or request.headers.get('X-Art-Experts-Visitor')
-        if not visitor_id:
-            import uuid
-            visitor_id = uuid.uuid4().hex
-        should_count = not ArticleView.objects.filter(article=article, visitor_id=visitor_id).exists()
-        if should_count:
-            with transaction.atomic():
-                _, created = ArticleView.objects.get_or_create(article=article, visitor_id=visitor_id)
-            should_count = created
-        if should_count:
-            Article.objects.filter(id=article.id).update(views_count=F('views_count') + 1)
-        article.refresh_from_db()
         response = Response(ArticleDetailSerializer(article, context={'request': request}).data)
-        response.set_cookie('art_experts_visitor', visitor_id, max_age=60 * 60 * 24 * 365 * 2,
-                            httponly=True, secure=request.is_secure(), samesite='Lax', path='/')
-        response['X-Art-Experts-Visitor'] = visitor_id
+        response['Cache-Control'] = 'private, no-store'
         return response
 
 

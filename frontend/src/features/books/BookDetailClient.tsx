@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { siteConfig } from "@/config/site";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { DownloadAccess } from "@/features/content/DownloadAccess";
+import { ContentViews } from "@/features/content/ContentViews";
 import { FileText } from "lucide-react";
 
 export function BookDetailClient({ book }: { book: any }) {
@@ -50,6 +51,7 @@ export function BookDetailClient({ book }: { book: any }) {
         </div>
 
         <div className="mt-6 space-y-3">
+          <p className="text-center text-xs text-stone-500"><ContentViews kind="books" id={book.id} initialCount={book.views_count || 0} /></p>
           {checkingAccess ? <p role="status" className="p-4 text-center text-sm text-stone-500">{tCommon("loading")}</p> : <DownloadAccess
             kind="books" mode={currentBook.availability_mode} contact={currentBook.contact}
             downloadUrl={downloadUrl} hasFile={!!currentBook.has_digital_file}

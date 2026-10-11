@@ -86,8 +86,17 @@ PDF uploads allow up to 300 MB in both the API and Django admin. Images remain
 limited to 25 MB. Nginx allows 330 MB multipart requests for the PDF, cover and
 metadata together. Django streams large files to temporary disk storage.
 Profile settings support avatar, username, biography, statement, website and social links.
-Artist edits return content to moderation. Ownership, moderation flags and view counters
-are controlled by the server.
+New posts require admin approval. Edits preserve the current moderation status:
+approved posts stay public, while pending/rejected posts cannot bypass first approval.
+Edits save immediately without a second confirmation modal. Ownership, moderation
+flags and view counters are controlled by the server.
+
+Only browser POSTs to `/{kind}/{id}/view/` record views; detail GETs, SSR, metadata
+and prefetch requests are read-only. Accounts are deduplicated across devices, while
+anonymous visitors use a UUID stored in localStorage and a first-party cookie.
+Account/device aliases also prevent login/logout from recounting the same visit.
+The unique view row, aliases and counter update commit in one locked transaction.
+Existing browser IDs are migrated without resetting historical view counts.
 
 Books and gallery items share three editable download modes: public (`FREE`),
 contact the author (`CONTACT`), and fully restricted (`PRIVATE_ACCESS`). Only public

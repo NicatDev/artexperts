@@ -18,6 +18,14 @@ PDF və original şəkillərin private media yolları Nginx tərəfindən blokla
 “Profil məlumatları” bölməsində mobil nömrə saxlanıla bilər; bu nömrə açıq profilə
 çıxmır və paylaşımın telefon sahəsi üçün ilkin dəyər kimi istifadə olunur.
 Müəllif hüquqları təsdiqi kitab, məqalə və qalereyada yalnız yeni paylaşımda tələb olunur.
+Yeni paylaşım admin təsdiqini gözləyir. Dərc olunmuş paylaşımın redaktəsi dərhal
+tətbiq olunur və yenidən təsdiqə göndərilmir. Təsdiqlənməmiş məzmunun redaktəsi
+onun mövcud statusunu saxlayır.
+
+Baxış yalnız brauzerdə detail səhifəsi açıldıqda hesablanır; SSR, metadata və
+prefetch baxış artırmır. Hesab müxtəlif cihazlarda bir dəfə, anonim ziyarətçi isə
+sabit brauzer UUID-si ilə sayılır. Login/logout təkrar baxış yaratmır. Yeni migration
+köhnə cihaz identifikatorlarını saxlayır, mövcud baxış saylarını sıfırlamır.
 Yeniləmə zamanı backend migration-ları avtomatik işləyir; köhnə açıq qalereya
 faylları açıq qalır, digər fayllar avtomatik hamıya açılmır.
 

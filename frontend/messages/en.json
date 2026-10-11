@@ -53,7 +53,7 @@
     "pdfHint": "PDF, up to 300 MB. Leave empty to keep the existing file.",
     "removePdf": "Remove existing PDF",
     "staffPublish": "Content is published when saved.",
-    "reviewNotice": "New and edited content is published after admin approval.",
+    "reviewNotice": "New content is published after admin approval.",
     "confirmEdit": "Confirm your changes?",
     "saveError": "Could not save.",
     "saved": "Content saved.",
@@ -98,7 +98,9 @@
     "CONTACT": "Contact the author only",
     "modeHintFREE": "Anyone can download the file from this site.",
     "modeHintCONTACT": "Downloads are disabled. Choose a contact channel or hide all contact information.",
-    "modeHintPRIVATE_ACCESS": "The author has restricted sharing. Downloads and contact details are unavailable."
+    "modeHintPRIVATE_ACCESS": "The author has restricted sharing. Downloads and contact details are unavailable.",
+    "editPublishedNotice": "Changes take effect immediately. Further admin approval is not required.",
+    "editUnpublishedNotice": "Changes will be saved. The current status is preserved; first publication requires admin approval."
   },
   "nav": {
     "home": "Home",

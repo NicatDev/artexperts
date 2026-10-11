@@ -7,7 +7,7 @@ from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
-from books.models import Book, BookAccess, BookView, BookCategory, AvailabilityMode
+from books.models import Book, BookAccess, BookCategory, AvailabilityMode
 from artworks.models import ModerationStatus
 from core.pagination import StandardResultsSetPagination
 from books.api.serializers import BookListSerializer, BookDetailSerializer, GrantBookAccessSerializer, BookAccessRecordSerializer, BookCategorySerializer
@@ -91,22 +91,7 @@ class BookDetailView(views.APIView):
             if not request.user or not request.user.is_authenticated or (request.user != book.owner and not request.user.is_staff):
                 return Response({"error": {"message": "Book not found or pending review."}}, status=status.HTTP_404_NOT_FOUND)
 
-        visitor_id = request.COOKIES.get('art_experts_visitor') or request.headers.get('X-Art-Experts-Visitor')
-        if not visitor_id:
-            import uuid
-            visitor_id = uuid.uuid4().hex
-        should_count = not BookView.objects.filter(book=book, visitor_id=visitor_id).exists()
-        if should_count:
-            with transaction.atomic():
-                _, created = BookView.objects.get_or_create(book=book, visitor_id=visitor_id)
-            should_count = created
-        if should_count:
-            Book.objects.filter(id=book.id).update(views_count=F('views_count') + 1)
-        book.refresh_from_db()
         response = Response(BookDetailSerializer(book, context={'request': request}).data)
-        response.set_cookie('art_experts_visitor', visitor_id, max_age=60 * 60 * 24 * 365 * 2,
-                            httponly=True, secure=request.is_secure(), samesite='Lax', path='/')
-        response['X-Art-Experts-Visitor'] = visitor_id
         response['Cache-Control'] = 'private, no-store'
         return response
 

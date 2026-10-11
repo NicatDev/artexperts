@@ -18,7 +18,7 @@ const translatedFields: Record<ContentKind, string[]> = {
 };
 const inputClass = "w-full min-w-0 rounded-xl border border-stone-200 bg-stone-50 px-3 py-3 text-base focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:opacity-60 sm:text-sm";
 
-export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
+export function ContentEditor({ kind, initial, onSaved, onCancel }: {
   kind: ContentKind; initial?: any; isStaff: boolean; onSaved: () => void; onCancel: () => void;
 }) {
   const t = useTranslations("editor");
@@ -131,6 +131,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
     const next = validate();
     setFieldErrors(next);
     if (Object.keys(next).length) { focusPending.current = true; return; }
+    if (initial) { void save(); return; }
     setConfirmOpen(true);
   }
 
@@ -277,12 +278,12 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
           {initial?.has_digital_file && <span className="flex items-start gap-3"><input {...inputProps("remove_digital_file")} type="checkbox" disabled={!!pdf} className="mt-1 h-4 w-4" checked={removePdf} onChange={event => { clearError("digital_file"); setRemovePdf(event.target.checked); }} />{t("removePdf")}</span>}
         </label>}
         {!initial && <div><label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6"><input {...inputProps("rights_confirmed")} type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-amber-700" checked={rights} required onChange={event => { clearError("rights_confirmed"); setRights(event.target.checked); }} />{common("rightsNotice")}</label>{errorBelow("rights_confirmed")}</div>}
-        <p className="text-xs leading-6 text-stone-500">{isStaff ? t("staffPublish") : t("reviewNotice")}</p>
+        <p className="text-xs leading-6 text-stone-500">{initial ? t(initial.moderation_status === "PUBLISHED" ? "editPublishedNotice" : "editUnpublishedNotice") : t("reviewNotice")}</p>
         <button type="submit" disabled={busy || loadingCategories || categoryError} className="min-h-12 w-full rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-50 sm:w-auto">{busy ? common("loading") : initial ? common("save") : t("add")}</button>
       </fieldset>
     </form>
-    <Modal open={confirmOpen} title={initial ? t("confirmEdit") : publish("modalNoticeTitle")} busy={busy} onClose={() => setConfirmOpen(false)}>
-      <p className="mt-4 text-sm leading-7 text-stone-600">{isStaff ? t("staffPublish") : t("reviewNotice")}</p>
+    <Modal open={confirmOpen} title={publish("modalNoticeTitle")} busy={busy} onClose={() => setConfirmOpen(false)}>
+      <p className="mt-4 text-sm leading-7 text-stone-600">{t("reviewNotice")}</p>
       <div className="mt-6 grid grid-cols-2 gap-3">
         <button type="button" autoFocus disabled={busy} onClick={() => setConfirmOpen(false)} className="min-h-12 rounded-xl border px-3 py-3 text-sm disabled:opacity-50">{common("cancel")}</button>
         <button type="button" disabled={busy} onClick={save} className="min-h-12 rounded-xl bg-stone-900 px-3 py-3 text-sm text-white disabled:opacity-50">{busy ? common("loading") : common("submit")}</button>

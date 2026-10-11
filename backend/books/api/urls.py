@@ -1,4 +1,5 @@
 from django.urls import path
+from core.content_views import ContentViewRecordView
 from books.api.views import (
     BookCategoryListView,
     BookListView,
@@ -19,6 +20,7 @@ urlpatterns = [
     path('books/my/', UserBooksListView.as_view(), name='my-books'),
     path('books/<str:slug_or_id>/', BookDetailView.as_view(), name='book-detail'),
     path('books/<uuid:id>/manage/', BookUpdateDeleteView.as_view(), name='book-manage'),
+    path('books/<uuid:id>/view/', ContentViewRecordView.as_view(content_kind='book'), name='book-record-view'),
     path('books/<uuid:id>/access-grants/', ListBookAccessGrantsView.as_view(), name='book-access-grants'),
     path('books/<uuid:id>/access-grants/<uuid:grant_id>/', RevokeBookAccessView.as_view(), name='book-revoke-access'),
     path('books/<uuid:id>/grant-access/', GrantBookAccessView.as_view(), name='book-grant-access'),

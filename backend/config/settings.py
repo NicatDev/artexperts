@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = BASE_DIR.parent
@@ -134,6 +135,7 @@ if DEBUG:
         if origin not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(origin)
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [*default_headers, 'x-art-experts-visitor']
 CSRF_TRUSTED_ORIGINS = list(dict.fromkeys([
     *CORS_ALLOWED_ORIGINS,
     *[origin.strip().rstrip('/') for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()],

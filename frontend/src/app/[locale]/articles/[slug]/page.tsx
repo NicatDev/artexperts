@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { ArrowLeft, Clock, Calendar, User, Share2 } from "lucide-react";
+import { ContentViews } from "@/features/content/ContentViews";
 
 export async function generateMetadata({
   params,
@@ -103,6 +104,8 @@ export default async function ArticleDetailPage({
             <Calendar className="w-4 h-4 text-stone-500" />
             <span>{new Date(article.created_at).toLocaleDateString()}</span>
           </div>
+          <span>•</span>
+          <ContentViews kind="articles" id={article.id} initialCount={article.views_count || 0} />
         </div>
       </div>
 

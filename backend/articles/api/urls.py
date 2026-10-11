@@ -1,4 +1,5 @@
 from django.urls import path
+from core.content_views import ContentViewRecordView
 from articles.api.views import (
     ArticleListView,
     ArticleDetailView,
@@ -15,4 +16,5 @@ urlpatterns = [
     path('articles/my/', UserArticlesListView.as_view(), name='my-articles'),
     path('articles/<str:slug_or_id>/', ArticleDetailView.as_view(), name='article-detail'),
     path('articles/<uuid:id>/manage/', ArticleUpdateDeleteView.as_view(), name='article-manage'),
+    path('articles/<uuid:id>/view/', ContentViewRecordView.as_view(content_kind='article'), name='article-record-view'),
 ]

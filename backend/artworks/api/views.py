@@ -2,12 +2,10 @@ from core.content_management import ContentCreateView, ContentManageView, Conten
 from django.http import FileResponse, Http404
 from pathlib import Path
 from django.db import models
-from django.db import transaction
-from django.db.models import F
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 
-from artworks.models import Artwork, ArtworkCategory, ArtworkView, ModerationStatus
+from artworks.models import Artwork, ArtworkCategory, ModerationStatus
 from core.pagination import StandardResultsSetPagination
 from core.content_access import AvailabilityMode
 from artworks.api.serializers import ArtworkListSerializer, ArtworkDetailSerializer, ArtworkCategorySerializer
@@ -74,24 +72,7 @@ class ArtworkDetailView(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        # A stable first-party browser id survives SSR fetches and prevents refreshes adding views.
-        visitor_id = request.COOKIES.get('art_experts_visitor') or request.headers.get('X-Art-Experts-Visitor')
-        if not visitor_id:
-            import uuid
-            visitor_id = uuid.uuid4().hex
-        should_count = not ArtworkView.objects.filter(artwork=instance, visitor_id=visitor_id).exists()
-        if should_count:
-            with transaction.atomic():
-                _, created = ArtworkView.objects.get_or_create(artwork=instance, visitor_id=visitor_id)
-            should_count = created
-        if should_count:
-            Artwork.objects.filter(id=instance.id).update(views_count=F('views_count') + 1)
-        instance.refresh_from_db()
-        serializer = self.get_serializer(instance)
-        response = Response(serializer.data)
-        response.set_cookie('art_experts_visitor', visitor_id, max_age=60 * 60 * 24 * 365 * 2,
-                            httponly=True, secure=request.is_secure(), samesite='Lax', path='/')
-        response['X-Art-Experts-Visitor'] = visitor_id
+        response = Response(self.get_serializer(instance).data)
         response['Cache-Control'] = 'private, no-store'
         return response
 

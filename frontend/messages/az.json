@@ -53,7 +53,7 @@
     "pdfHint": "PDF, maksimum 300 MB. Yeni fayl seçilməsə, mövcud fayl saxlanılır.",
     "removePdf": "Mövcud PDF faylını sil",
     "staffPublish": "Məlumatlar yadda saxlanıldıqda dərc ediləcək.",
-    "reviewNotice": "Əlavə etdiyiniz və ya redaktə etdiyiniz məzmun admin təsdiqindən sonra dərc ediləcək.",
+    "reviewNotice": "Yeni paylaşım admin təsdiqindən sonra dərc ediləcək.",
     "confirmEdit": "Dəyişiklikləri təsdiqləyirsiniz?",
     "saveError": "Yadda saxlamaq mümkün olmadı.",
     "saved": "Məlumatlar yadda saxlanıldı.",
@@ -98,7 +98,9 @@
     "CONTACT": "Yalnız müəlliflə əlaqə",
     "modeHintFREE": "Hər kəs faylı saytdan endirə bilər.",
     "modeHintCONTACT": "Saytdan endirmək mümkün deyil. Müəlliflə əlaqə üçün bir kanal seçin və ya heç birini göstərməyin.",
-    "modeHintPRIVATE_ACCESS": "Paylaşılması müəllif tərəfindən məhdudlaşdırılıb. Endirmə və əlaqə məlumatları göstərilmir."
+    "modeHintPRIVATE_ACCESS": "Paylaşılması müəllif tərəfindən məhdudlaşdırılıb. Endirmə və əlaqə məlumatları göstərilmir.",
+    "editPublishedNotice": "Dəyişikliklər dərhal tətbiq olunur. Yenidən admin təsdiqi tələb edilmir.",
+    "editUnpublishedNotice": "Dəyişikliklər saxlanılacaq. Paylaşımın mövcud statusu dəyişmir; ilk dərc üçün admin təsdiqi tələb olunur."
   },
   "nav": {
     "home": "Ana Səhifə",

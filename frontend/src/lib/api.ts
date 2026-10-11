@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { getVisitorId, rememberVisitorId } from "@/lib/visitor";
 
 export interface ApiResponse<T> {
   data?: T;
@@ -57,8 +58,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   for (const [key, value] of Object.entries(defaultHeaders)) {
     if (!headers.has(key)) headers.set(key, value);
   }
-  const visitorId = typeof window !== "undefined" ? window.localStorage.getItem("art-experts-visitor") : null;
-  if (visitorId && !headers.has("X-Art-Experts-Visitor")) headers.set("X-Art-Experts-Visitor", visitorId);
 
   const response = await fetch(url, {
     ...options,
@@ -68,8 +67,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     ...(options.cache === "no-store" || !isSafeMethod || isPrivateEndpoint ? { cache: "no-store" as const } : { next: { revalidate: 30 } }),
   });
 
-  const newVisitorId = response.headers.get("X-Art-Experts-Visitor");
-  if (newVisitorId && typeof window !== "undefined") window.localStorage.setItem("art-experts-visitor", newVisitorId);
 
   if (!response.ok) {
     let errorData: any = {};
@@ -86,6 +83,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  recordContentView: async (kind: "artworks" | "articles" | "books", id: string) => {
+    const result = await request<{ counted: boolean; views_count: number; visitor_id: string }>(`/${kind}/${id}/view/`, {
+      method: "POST", body: JSON.stringify({}), headers: { "X-Art-Experts-Visitor": getVisitorId() },
+    });
+    rememberVisitorId(result.visitor_id);
+    return result;
+  },
   getMyContent: (kind: "artworks" | "articles" | "books", page: number = 1, lang: string = "az") =>
     request<any>(`/${kind}/my/?page=${page}&lang=${lang}`),
   getManagedContent: (kind: "artworks" | "articles" | "books", id: string) =>
@@ -117,7 +121,7 @@ export const api = {
     return request<any>(`/articles/${qs ? `?${qs}` : ""}`);
   },
   getArticleCategories: (lang: string = "az") => request<any>(`/articles/categories/?lang=${lang}`),
-  getArticleDetail: (slugOrId: string, lang: string = "az") => request<any>(`/articles/${slugOrId}/?lang=${lang}`),
+  getArticleDetail: (slugOrId: string, lang: string = "az") => request<any>(`/articles/${slugOrId}/?lang=${lang}`, { cache: "no-store" }),
   publishArticle: (formData: FormData) => request<any>(`/articles/publish/`, { method: "POST", body: formData }),
   getMyArticles: () => request<any>(`/articles/my/`),
   deleteArticle: (id: string) => request<any>(`/articles/${id}/manage/`, { method: "DELETE" }),

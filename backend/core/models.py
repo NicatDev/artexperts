@@ -15,6 +15,16 @@ class TimestampedModel(models.Model):
         abstract = True
 
 
+class ContentViewIdentity(TimestampedModel):
+    """Account/device aliases for deduplication, separate from counted view rows."""
+    content_kind = models.CharField(max_length=10, choices=[('artwork', 'Artwork'), ('book', 'Book'), ('article', 'Article')])
+    content_id = models.UUIDField()
+    visitor_id = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['content_kind', 'content_id', 'visitor_id'], name='unique_content_view_identity')]
+
+
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
         return self.update(deleted_at=timezone.now())
