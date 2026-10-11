@@ -4,11 +4,19 @@ import Image from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
 import { FontSize, TextStyle } from "@tiptap/extension-text-style";
 import TextAlign from "@tiptap/extension-text-align";
+import { articleClipboard, validArticleImage } from "./article-clipboard";
+import type { ClipboardImage } from "./article-clipboard";
 
 const labels = {
   az: { toolbar: "Mətn formatı", paragraph: "Paraqraf", heading: "Başlıq", size: "Mətn ölçüsü", normal: "Standart", bold: "Qalın", italic: "Kursiv", underline: "Altıxətli", strike: "Üstündən xətt", bullets: "İşarəli siyahı", numbers: "Nömrəli siyahı", quote: "Sitat", rule: "Ayırıcı xətt", undo: "Geri al", redo: "Təkrar et", clear: "Formatı təmizlə", image: "Şəkil əlavə et", table: "Cədvəl əlavə et", tableActions: "Cədvəl əməliyyatları", row: "Sətir əlavə et", column: "Sütun əlavə et", deleteRow: "Sətiri sil", deleteColumn: "Sütunu sil", deleteTable: "Cədvəli sil", merge: "Xanaları birləşdir", split: "Xananı ayır", header: "Başlıq sətri", alignment: "Düzülüş", left: "Sola", center: "Mərkəzə", right: "Sağa", justify: "Hər iki tərəfə", uploading: "Şəkil yüklənir…", uploadError: "Şəkli yükləmək mümkün olmadı. Yenidən cəhd edin.", imageInvalid: "JPEG, PNG və ya WebP seçin, maksimum 25 MB.", alt: "Şəklin təsviri", choose: "Şəkil seçin", insert: "Əlavə et", cancel: "Ləğv et", link: "Link əlavə et", url: "Link ünvanı (https://)", linkInvalid: "Düzgün http, https və ya email linki daxil edin.", removeLink: "Linki sil" },
   en: { toolbar: "Text formatting", paragraph: "Paragraph", heading: "Heading", size: "Text size", normal: "Default", bold: "Bold", italic: "Italic", underline: "Underline", strike: "Strikethrough", bullets: "Bullet list", numbers: "Numbered list", quote: "Quote", rule: "Horizontal rule", undo: "Undo", redo: "Redo", clear: "Clear formatting", image: "Add image", table: "Insert table", tableActions: "Table actions", row: "Add row", column: "Add column", deleteRow: "Delete row", deleteColumn: "Delete column", deleteTable: "Delete table", merge: "Merge cells", split: "Split cell", header: "Header row", alignment: "Alignment", left: "Left", center: "Center", right: "Right", justify: "Justify", uploading: "Uploading image…", uploadError: "Could not upload the image. Please try again.", imageInvalid: "Choose JPEG, PNG or WebP, up to 25 MB.", alt: "Image description", choose: "Choose image", insert: "Insert", cancel: "Cancel", link: "Add link", url: "Link address (https://)", linkInvalid: "Enter a valid http, https or email link.", removeLink: "Remove link" },
   ru: { toolbar: "Форматирование", paragraph: "Абзац", heading: "Заголовок", size: "Размер текста", normal: "Стандартный", bold: "Жирный", italic: "Курсив", underline: "Подчёркнутый", strike: "Зачёркнутый", bullets: "Маркированный список", numbers: "Нумерованный список", quote: "Цитата", rule: "Разделитель", undo: "Отменить", redo: "Повторить", clear: "Очистить формат", image: "Добавить изображение", table: "Добавить таблицу", tableActions: "Действия с таблицей", row: "Добавить строку", column: "Добавить столбец", deleteRow: "Удалить строку", deleteColumn: "Удалить столбец", deleteTable: "Удалить таблицу", merge: "Объединить ячейки", split: "Разделить ячейку", header: "Строка заголовка", alignment: "Выравнивание", left: "Слева", center: "По центру", right: "Справа", justify: "По ширине", uploading: "Загрузка изображения…", uploadError: "Не удалось загрузить изображение. Попробуйте ещё раз.", imageInvalid: "Выберите JPEG, PNG или WebP, до 25 МБ.", alt: "Описание изображения", choose: "Выберите изображение", insert: "Добавить", cancel: "Отмена", link: "Добавить ссылку", url: "Адрес ссылки (https://)", linkInvalid: "Введите корректную http, https или email ссылку.", removeLink: "Удалить ссылку" },
+};
+
+const pasteHints = {
+  az: "Word bəzi şəkilləri brauzerə ötürmədi. Şəkli ayrıca kopyalayıb yapışdırın və ya «Şəkil əlavə et» ilə yükləyin.",
+  en: "Word did not provide some images to the browser. Copy and paste each image separately, or upload it with “Add image”.",
+  ru: "Word не передал некоторые изображения браузеру. Скопируйте каждое изображение отдельно или загрузите его через «Добавить изображение».",
 };
 
 export type ArticleEditorOptions = {
@@ -32,6 +40,7 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
   host.append(toolbar, body, status);
   let disposed = false;
   let uploading = false;
+  let editable = true;
   const controls: HTMLButtonElement[] = [];
   const states: Array<() => void> = [];
   const editor = new Editor({
@@ -39,7 +48,19 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
     extensions: [StarterKit.configure({ link: { openOnClick: false } }), Image, TextStyle, FontSize,
       TextAlign.configure({ types: ["heading", "paragraph"] }), TableKit.configure({ table: { resizable: false } })],
     content: options.value || "<p></p>",
-    editorProps: { attributes: { id: options.id, role: "textbox", "aria-multiline": "true", "aria-required": "true", ...(options.labelledBy ? { "aria-labelledby": options.labelledBy } : {}) } },
+    editorProps: {
+      attributes: { id: options.id, role: "textbox", "aria-multiline": "true", "aria-required": "true", ...(options.labelledBy ? { "aria-labelledby": options.labelledBy } : {}) },
+      handlePaste: (_view, event) => {
+        if (!editor.isEditable || uploading || !event.clipboardData) return false;
+        const pasted = articleClipboard(event.clipboardData);
+        if (!pasted.handled) return false;
+        const messages = [];
+        if (pasted.missing) messages.push(pasteHints[options.locale?.split("-")[0] as keyof typeof pasteHints] || pasteHints.az);
+        if (pasted.invalid) messages.push(t.imageInvalid);
+        void insertImages(pasted.body, pasted.uploads, messages);
+        return true;
+      },
+    },
     onUpdate: ({ editor }) => options.onChange(editor.isEmpty ? "" : editor.getHTML()),
     onTransaction: () => states.forEach(update => update()),
   });
@@ -148,9 +169,13 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
   imageDialog.append(imageError);
   actions(imageDialog, () => {
     const file = imageInput.files?.[0];
-    if (!file || file.size > 25 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) { imageError.textContent = t.imageInvalid; return; }
+    if (!file || !validArticleImage(file)) { imageError.textContent = t.imageInvalid; return; }
     imageDialog.close();
-    void upload(file, altInput.value || file.name);
+    const container = document.createElement("div");
+    const image = document.createElement("img");
+    image.alt = altInput.value || file.name;
+    container.append(image);
+    void insertImages(container, [{ file, elements: [image] }]);
   });
   button(t.image, t.image, () => { imageError.textContent = ""; imageInput.value = ""; altInput.value = ""; imageDialog.showModal(); });
   const linkDialog = dialog(t.link);
@@ -173,26 +198,54 @@ export function createArticleEditor(host: HTMLElement, options: ArticleEditorOpt
     toolbar.querySelectorAll("select").forEach(control => { control.disabled = !editor.isEditable || uploading; });
     states.forEach(update => update());
   }
-  async function upload(file: File, alt: string) {
+  async function insertImages(container: HTMLElement, images: ClipboardImage[], messages: string[] = []) {
     if (uploading || !editor.isEditable) return;
-    uploading = true;
-    options.onUploading?.(true);
-    updateDisabled();
-    status.textContent = t.uploading;
+    const selection = { from: editor.state.selection.from, to: editor.state.selection.to };
+    if (images.length) {
+      uploading = true;
+      editor.setEditable(false);
+      editor.view.dom.setAttribute("aria-busy", "true");
+      options.onUploading?.(true);
+      updateDisabled();
+    }
     try {
-      const url = await options.uploadImage(file);
-      if (!disposed) { editor.chain().focus().setImage({ src: url, alt }).run(); status.textContent = ""; }
-    } catch {
-      if (!disposed) status.textContent = t.uploadError;
+      let failed = false;
+      for (let index = 0; index < images.length; index++) {
+        if (disposed) return;
+        status.textContent = `${t.uploading} (${index + 1}/${images.length})`;
+        const { file, elements } = images[index];
+        try {
+          const url = await options.uploadImage(file);
+          elements.forEach(image => {
+            image.setAttribute("src", url);
+            image.removeAttribute("srcset");
+            image.removeAttribute("sizes");
+          });
+        } catch {
+          elements.forEach(image => image.remove());
+          failed = true;
+        }
+      }
+      if (!disposed) {
+        // Insert text and its uploaded pictures together, keeping their document order.
+        if (container.innerHTML) editor.commands.insertContentAt(selection, container.innerHTML);
+        if (failed) messages.push(t.uploadError);
+        status.textContent = messages.join(" ");
+      }
     } finally {
       uploading = false;
-      if (!disposed) { options.onUploading?.(false); updateDisabled(); }
+      if (!disposed) {
+        editor.setEditable(editable);
+        editor.view.dom.removeAttribute("aria-busy");
+        options.onUploading?.(false);
+        updateDisabled();
+      }
     }
   }
   updateDisabled();
   return {
     editor,
-    setEditable(value: boolean) { editor.setEditable(value); updateDisabled(); },
+    setEditable(value: boolean) { editable = value; editor.setEditable(value && !uploading); updateDisabled(); },
     setInvalid(value: boolean, describedBy?: string) {
       editor.view.dom.setAttribute("aria-invalid", String(value));
       host.dataset.invalid = String(value);
