@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { Modal } from "@/components/shared/Modal";
-import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, ArrowUp, ArrowDown, Download } from "lucide-react";
 import { focusFirstError, readFieldErrors, type FieldErrors } from "@/lib/form-errors";
 import { useAuth } from "@/features/auth/AuthContext";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
@@ -270,13 +270,23 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
           {errorBelow(kind === "artworks" ? "original_master" : "cover_image")}
           <span className="block text-xs text-stone-500">{initial ? t("keepImage") : t("imageHint")}</span>
         </label>
-        {kind === "books" && <label className="block space-y-2 text-sm">
-          <span>{t("pdf")}</span>
-          <input {...inputProps("digital_file")} className={inputClass} type="file" accept="application/pdf,.pdf" disabled={removePdf} onChange={event => { clearError("digital_file"); setPdf(event.target.files?.[0] || null); }} />
+        {kind === "books" && <div className="min-w-0 space-y-2 text-sm">
+          <label htmlFor={`${formId}-digital_file`} className="block">{t("pdf")}</label>
+          <input {...inputProps("digital_file")} id={`${formId}-digital_file`} className={inputClass} type="file" accept="application/pdf,.pdf" disabled={removePdf} onChange={event => { clearError("digital_file"); setPdf(event.target.files?.[0] || null); }} />
+          {initial?.current_pdf && <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2">
+            <p className="mb-1 text-xs text-stone-500">{t("currentPdf")}</p>
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <a href={`${siteConfig.apiUrl}/books/${initial.id}/manage/file/`} aria-label={t("downloadCurrentPdf", { name: initial.current_pdf.name })} className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md text-amber-800 underline decoration-amber-300 underline-offset-4 hover:text-amber-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600">
+                <Download aria-hidden="true" className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 break-all">{initial.current_pdf.name}</span>
+              </a>
+              {typeof initial.current_pdf.size_bytes === "number" && <span className="flex min-h-11 shrink-0 items-center text-xs tabular-nums text-stone-600">{new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(initial.current_pdf.size_bytes / (1024 * 1024))} MB</span>}
+            </div>
+          </div>}
           {errorBelow("digital_file")}
           <span className="block text-xs text-stone-500">{t("pdfHint")}</span>
-          {initial?.has_digital_file && <span className="flex items-start gap-3"><input {...inputProps("remove_digital_file")} type="checkbox" disabled={!!pdf} className="mt-1 h-4 w-4" checked={removePdf} onChange={event => { clearError("digital_file"); setRemovePdf(event.target.checked); }} />{t("removePdf")}</span>}
-        </label>}
+          {initial?.has_digital_file && <label className="flex items-start gap-3"><input {...inputProps("remove_digital_file")} type="checkbox" disabled={!!pdf} className="mt-1 h-4 w-4" checked={removePdf} onChange={event => { clearError("digital_file"); setRemovePdf(event.target.checked); }} />{t("removePdf")}</label>}
+        </div>}
         {!initial && <div><label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6"><input {...inputProps("rights_confirmed")} type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-amber-700" checked={rights} required onChange={event => { clearError("rights_confirmed"); setRights(event.target.checked); }} />{common("rightsNotice")}</label>{errorBelow("rights_confirmed")}</div>}
         <p className="text-xs leading-6 text-stone-500">{initial ? t(initial.moderation_status === "PUBLISHED" ? "editPublishedNotice" : "editUnpublishedNotice") : t("reviewNotice")}</p>
         <button type="submit" disabled={busy || loadingCategories || categoryError} className="min-h-12 w-full rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-50 sm:w-auto">{busy ? common("loading") : initial ? common("save") : t("add")}</button>

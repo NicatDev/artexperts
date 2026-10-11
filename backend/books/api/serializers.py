@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import json
+from pathlib import PurePosixPath
 from core.access_serializers import ContactDetailMixin, ContactWriteMixin
 from books.models import Book, BookTranslation, BookContributor, BookContributorLink, BookAccess, BookCategory, AvailabilityMode
 from users.models import User
@@ -102,6 +103,7 @@ class BookDetailSerializer(ContactDetailMixin, serializers.ModelSerializer):
     contributors = BookContributorSerializer(source='contributor_links', many=True, read_only=True)
 
     has_digital_file = serializers.SerializerMethodField()
+    current_pdf = serializers.SerializerMethodField()
     has_download_access = serializers.SerializerMethodField()
     can_manage_access = serializers.SerializerMethodField()
 
@@ -113,7 +115,7 @@ class BookDetailSerializer(ContactDetailMixin, serializers.ModelSerializer):
             'price', 'currency', 'publication_year', 'isbn', 'publisher',
             'languages', 'page_count', 'is_featured', 'is_founder_book',
             'views_count', 'downloads_count', 'moderation_status', 'rejection_reason',
-            'has_digital_file', 'has_download_access', 'can_manage_access',
+            'has_digital_file', 'current_pdf', 'has_download_access', 'can_manage_access',
             'category', 'translations', 'created_at', 'contact_mode', 'contact', 'contact_phone', 'contact_email'
         ]
 
@@ -144,6 +146,16 @@ class BookDetailSerializer(ContactDetailMixin, serializers.ModelSerializer):
 
     def get_has_digital_file(self, obj):
         return bool(obj.digital_file)
+
+    def get_current_pdf(self, obj):
+        # File metadata is only needed by the owner/admin editor, never public visitors.
+        if not obj.digital_file or not self.get_can_manage_access(obj):
+            return None
+        try:
+            size = obj.digital_file.size
+        except OSError:
+            size = None
+        return {'name': PurePosixPath(obj.digital_file.name).name, 'size_bytes': size}
 
     def get_has_download_access(self, obj):
         return bool(obj.digital_file and obj.availability_mode == AvailabilityMode.FREE)

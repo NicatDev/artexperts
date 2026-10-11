@@ -1,4 +1,5 @@
 from core.content_management import ContentCreateView, ContentManageView, ContentOwnerListView
+from pathlib import PurePosixPath
 from django.utils import timezone
 from django.http import FileResponse, Http404
 from django.db.models import Count, F, Q
@@ -161,6 +162,35 @@ class RevokeBookAccessView(views.APIView):
                 grant.revoked_at = timezone.now()
                 grant.save(update_fields=['revoked_at', 'updated_at'])
         response = Response(status=status.HTTP_204_NO_CONTENT)
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+
+class BookManagedFileDownloadView(views.APIView):
+    """Download an existing PDF from the authenticated owner/admin editor."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, id):
+        books = Book.objects.all()
+        if not request.user.is_staff:
+            books = books.filter(owner=request.user)
+        book = books.filter(pk=id).first()
+        if not book or not book.digital_file:
+            raise Http404('PDF not found.')
+        try:
+            file = book.digital_file.open('rb')
+        except OSError:
+            raise Http404('PDF not found.')
+        response = FileResponse(
+            file, as_attachment=True,
+            filename=PurePosixPath(book.digital_file.name).name,
+            content_type='application/pdf',
+        )
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
         response['Cache-Control'] = 'private, no-store'
         return response
 

@@ -50,6 +50,8 @@
     "imageHint": "JPEG, PNG or WebP, up to 25 MB.",
     "keepImage": "Leave empty to keep the current image. Up to 25 MB.",
     "pdf": "Book file (PDF)",
+    "currentPdf": "Current PDF file",
+    "downloadCurrentPdf": "Download {name}",
     "pdfHint": "PDF, up to 300 MB. Leave empty to keep the existing file.",
     "removePdf": "Remove existing PDF",
     "staffPublish": "Content is published when saved.",

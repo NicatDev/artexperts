@@ -50,6 +50,8 @@
     "imageHint": "JPEG, PNG və ya WebP, maksimum 25 MB.",
     "keepImage": "Yeni şəkil seçməsəniz, mövcud şəkil saxlanılır. Maksimum 25 MB.",
     "pdf": "Kitab faylı (PDF)",
+    "currentPdf": "Mövcud PDF faylı",
+    "downloadCurrentPdf": "{name} faylını endir",
     "pdfHint": "PDF, maksimum 300 MB. Yeni fayl seçilməsə, mövcud fayl saxlanılır.",
     "removePdf": "Mövcud PDF faylını sil",
     "staffPublish": "Məlumatlar yadda saxlanıldıqda dərc ediləcək.",
