@@ -91,9 +91,6 @@ export function Navbar() {
               <span className="block font-serif text-lg sm:text-xl font-medium tracking-wider text-stone-900 uppercase">
                 {tCommon("siteName")}
               </span>
-              <span className="block text-[10px] tracking-widest uppercase text-stone-500 -mt-1 font-sans font-medium">
-                Fine Art & Author Archive
-              </span>
             </div>
           </Link>
 
