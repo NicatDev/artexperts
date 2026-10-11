@@ -81,7 +81,15 @@
     "addSocial": "Sosial keçid əlavə et",
     "socialDuplicate": "Sosial şəbəkə adları boş və ya təkrar ola bilməz.",
     "profileSaved": "Profil məlumatları yeniləndi.",
-    "noProfile": "Rəssam profili tapılmadı."
+    "noProfile": "Rəssam profili tapılmadı.",
+    "contact_mode": "Kitab sahibi ilə əlaqə",
+    "contactNONE": "Heç biri — əlaqə məlumatlarını göstərmə",
+    "contactPHONE": "Telefon nömrəsi və WhatsApp",
+    "contactEMAIL": "Email ünvanı",
+    "contact_phone": "Telefon nömrəsi",
+    "contact_email": "Əlaqə emaili",
+    "contactHint": "Yükləmə icazəsi olmayan ziyarətçilər kitabın detail səhifəsində yalnız seçdiyiniz əlaqə üsulunu görəcəklər. “Heç biri” seçdikdə telefon və email gizli qalır.",
+    "phoneHint": "Ölkə kodu ilə daxil edin: +994501234567. Bu nömrə zəng və WhatsApp üçün açıq görünəcək."
   },
   "nav": {
     "home": "Ana Səhifə",
@@ -116,7 +124,9 @@
     "views": "baxış",
     "downloads": "yükləmə",
     "rightsNotice": "Bu əsərin/məzmunun müəllif hüquqlarına sahib olduğumu və ya dərc etməyə icazəmin olduğunu təsdiqləyirəm.",
-    "approvalNotice": "Təqdim etdiyiniz məzmun sayt sahibi/admin təsdiqindən sonra ictimaiyyətə görünəcəkdir."
+    "approvalNotice": "Təqdim etdiyiniz məzmun sayt sahibi/admin təsdiqindən sonra ictimaiyyətə görünəcəkdir.",
+    "imageUnavailable": "Şəkil yüklənə bilmədi",
+    "retryImage": "Şəkli yenidən yüklə"
   },
   "home": {
     "featuredArtworks": "Ən çox baxılan əsərlər",
@@ -170,7 +180,10 @@
     "emailVerified": "İstifadəçi platformada tapıldı və təsdiqləndi",
     "emailNotFound": "Bu e-poçt ilə qeydiyyatdan keçmiş istifadəçi tapılmadı",
     "grantSuccess": "Kitaba giriş icazəsi uğurla verildi!",
-    "empty": "Hələlik heç bir kitab dərc olunmayıb."
+    "empty": "Hələlik heç bir kitab dərc olunmayıb.",
+    "contactForAccess": "Kitabı əldə etmək üçün kitab sahibi ilə əlaqə saxlayın.",
+    "restrictedAccessNotice": "Bu kitabın yüklənməsi üçün fərdi icazə tələb olunur.",
+    "whatsappContact": "WhatsApp ilə əlaqə"
   },
   "articles": {
     "title": "Sənət Redaksiyası və Məqalələr",
@@ -330,6 +343,7 @@
     "waitBeforeRetry": "Yenidən cəhd etməzdən əvvəl 1 dəqiqə gözləyin.",
     "emailDelivery": "Email göndərilə bilmədi. Bir az sonra yenidən cəhd edin.",
     "imageDimensions": "Şəklin eni və hündürlüyü 10000 pikseldən çox olmamalıdır.",
-    "pdfSize": "PDF faylı 300 MB-dan böyük olmamalıdır."
+    "pdfSize": "PDF faylı 300 MB-dan böyük olmamalıdır.",
+    "phoneInvalid": "Nömrəni ölkə kodu ilə düzgün daxil edin. Məsələn: +994501234567."
   }
 }

@@ -8,6 +8,20 @@ PDF limiti API, Django admin və frontenddə 300 MB-dır; şəkil limiti 25 MB-d
 Nginx PDF, üz qabığı və digər sahələr üçün ümumi 330 MB sorğu qəbul edir.
 Böyük fayllar Django tərəfindən müvəqqəti disk fayllarında saxlanılır.
 
+Kitabın profil üzərindən əlavə/redaktə formasında “Kitab sahibi ilə əlaqə” sahəsi
+var: telefon və WhatsApp, email, yaxud heç biri. Yeni və mövcud kitablarda ilkin
+seçim “Heç biri”dir. Seçilməyən əlaqə məlumatları ziyarətçilərə qaytarılmır.
+
+Əvvəllər admin panelindən əlavə edilən məqalə və qalereya şəkillərinin kiçik
+versiyaları boş və ya köhnə qalıbsa, yeniləmədən sonra bir dəfə işlədin:
+
+```sh
+sudo docker compose exec -T backend python manage.py repair_content_images --regenerate
+```
+
+Əmr mənbə şəkillərdən yeni versiyalar yaradır. Mənbə fayl diskdə yoxdursa,
+paylaşımın ID-si göstərilir; həmin şəkli ehtiyat nüsxədən bərpa edin və ya yenidən yükləyin.
+
 Cloudflare proxy istifadə edilirsə, onun plan limiti də tətbiq olunur: Free/Pro
 100 MB, Business 200 MB. Bu planlarda 300 MB PDF yükləmək üçün Cloudflare DNS-də
 `app` qeydini **DNS only** (boz bulud) edin. Backend birbaşa serverə yönələcək;

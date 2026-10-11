@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from core.models import SoftDeletableModel, TimestampedModel
+from core.services.media import refresh_image_derivatives, validate_new_image
 
 
 class ModerationStatus(models.TextChoices):
@@ -55,6 +56,16 @@ class Artwork(SoftDeletableModel):
 
     views_count = models.PositiveIntegerField(default=0)
     rights_confirmed = models.BooleanField(default=True, help_text="Uploader confirms ownership or publishing rights")
+
+    def clean(self):
+        super().clean()
+        validate_new_image(self, 'original_master')
+
+    def save(self, *args, **kwargs):
+        kwargs['update_fields'] = refresh_image_derivatives(
+            self, 'original_master', ('detail_image', 'thumbnail_image'), kwargs.get('update_fields')
+        )
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Artwork'

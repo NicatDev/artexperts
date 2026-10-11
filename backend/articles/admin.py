@@ -28,6 +28,7 @@ class ArticleViewAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
+    readonly_fields = ('cover_thumbnail',)
     list_display = ('__str__', 'author', 'category', 'moderation_status', 'reading_time_minutes', 'is_featured', 'is_founder_article', 'created_at')
     list_filter = ('moderation_status', 'is_featured', 'is_founder_article', 'category')
     search_fields = ('translations__title', 'author__email')

@@ -47,15 +47,8 @@ def save_content(kind, request, instance=None, partial=False):
     if image:
         try:
             media_service.validate_image(image)
-            if kind != 'book':
-                detail, thumbnail = media_service.process_artwork_derivatives(image)
         except DjangoValidationError as exc:
             raise ValidationError({image_field: exc.messages})
-        if kind == 'artwork':
-            data['detail_image'] = detail
-            data['thumbnail_image'] = thumbnail
-        elif kind == 'article':
-            data['cover_thumbnail'] = thumbnail
         image.seek(0)
     pdf = data.get('digital_file')
     if pdf:

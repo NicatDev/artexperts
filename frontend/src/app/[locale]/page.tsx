@@ -128,6 +128,7 @@ export default async function HomePage({
                 <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
                   <ImageProtectionWrapper
                     src={art.thumbnail_image || art.detail_image}
+                    fallbackSrc={art.detail_image}
                     alt={art.title}
                     fill
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -209,6 +210,7 @@ export default async function HomePage({
                 <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
                   <ImageProtectionWrapper
                     src={book.cover_image}
+                    imageClassName="object-contain"
                     alt={book.title}
                     fill
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -281,6 +283,7 @@ export default async function HomePage({
                 <div className="relative aspect-[16/9] bg-stone-100 overflow-hidden">
                   <ImageProtectionWrapper
                     src={art.cover_thumbnail || art.cover_image}
+                    fallbackSrc={art.cover_image}
                     alt={art.title}
                     fill
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

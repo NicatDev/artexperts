@@ -89,6 +89,23 @@ Profile settings support avatar, username, biography, statement, website and soc
 Artist edits return content to moderation. Ownership, moderation flags and view counters
 are controlled by the server.
 
+Each book's add/edit form has three contact visibility options: phone (call +
+WhatsApp links), email (mailto link), or none (default). Only the selected channel
+is published; other saved contact fields are returned only to the owner/staff.
+Visitors without download permission see the selected contact channel on the detail page.
+
+Article and artwork derivatives are generated whenever the source image changes,
+including Django admin uploads. Cards fall back to another image of the same item;
+failed images show a retry state instead of an unrelated stock image.
+For older admin uploads with missing or stale derivatives, run:
+
+```sh
+sudo docker compose exec -T backend python manage.py repair_content_images --regenerate
+```
+
+This rebuilds public images from their existing sources. Missing source files
+must be restored from backup or uploaded again; this command reports their IDs.
+
 Registration validates email/username availability and Django password rules via
 `POST /api/v1/auth/register/validate/` after a short typing pause. Clicking the
 registration button then sends the email code and reveals the verification field.

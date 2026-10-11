@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { ProfileSettings } from "@/features/auth/ProfileSettings";
 import { ContentEditor, type ContentKind } from "@/features/content/ContentEditor";
 import { Modal } from "@/components/shared/Modal";
+import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { api } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { Palette, BookOpen, FileText, Settings, Plus, Edit3, Trash2 } from "lucide-react";
@@ -97,7 +98,7 @@ export default function ProfileDashboardPage() {
         {loading ? <p className="py-12 text-center text-sm text-stone-500">{common("loading")}</p> : !error && rows.length === 0 ? <p className="rounded-2xl border border-dashed bg-white p-8 text-center text-sm text-stone-500">{profile("emptyContent")}</p> : !error && <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {rows.map(item => <article key={item.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white">
-              <img src={siteConfig.mediaUrl(item.thumbnail_image || item.cover_thumbnail || item.cover_image)} alt={item.title} className={`h-44 w-full bg-stone-100 ${tab === "books" ? "object-contain p-3" : "object-cover"}`} />
+              <ImageProtectionWrapper src={item.thumbnail_image || item.cover_thumbnail || item.cover_image || item.detail_image} fallbackSrc={item.cover_image || item.detail_image} alt={item.title} fill className="h-44 w-full bg-stone-100" imageClassName={tab === "books" ? "object-contain p-3" : "object-cover"} />
               <div className="flex flex-1 flex-col space-y-3 p-4 sm:p-5"><h3 className="break-words font-serif text-lg">{item.title}</h3><p className="line-clamp-3 break-words text-sm leading-6 text-stone-600">{item.description || item.excerpt || item.short_description}</p>
                 <span className={`self-start rounded-full px-3 py-1 text-xs ${item.moderation_status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : item.moderation_status === "REJECTED" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-900"}`}>{statusText(item.moderation_status)}</span>
                 {item.rejection_reason && <p className="break-words text-xs text-rose-700">{profile("rejectionReason")} {item.rejection_reason}</p>}

@@ -1,9 +1,18 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from core.models import SoftDeletableModel, TimestampedModel
 from artworks.models import ModerationStatus
 from core.validators import validate_pdf_file
+from core.services.media import validate_new_image
+from books.contact import normalize_contact_phone, validate_contact
+
+
+class BookContactMode(models.TextChoices):
+    NONE = 'NONE', 'Hide contact details'
+    PHONE = 'PHONE', 'Phone and WhatsApp'
+    EMAIL = 'EMAIL', 'Email'
 
 
 class AvailabilityMode(models.TextChoices):
@@ -64,6 +73,10 @@ class Book(SoftDeletableModel):
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=10, default='AZN')
 
+    contact_mode = models.CharField(max_length=10, choices=BookContactMode.choices, default=BookContactMode.NONE)
+    contact_phone = models.CharField(max_length=25, blank=True, default='')
+    contact_email = models.EmailField(blank=True, default='')
+
     publication_year = models.PositiveIntegerField(null=True, blank=True)
     isbn = models.CharField(max_length=50, blank=True, default='')
     publisher = models.CharField(max_length=150, blank=True, default='')
@@ -83,6 +96,15 @@ class Book(SoftDeletableModel):
 
     views_count = models.PositiveIntegerField(default=0)
     downloads_count = models.PositiveIntegerField(default=0)
+
+    def clean(self):
+        super().clean()
+        validate_new_image(self, 'cover_image')
+        try:
+            self.contact_phone = normalize_contact_phone(self.contact_phone)
+        except ValidationError as exc:
+            raise ValidationError({'contact_phone': exc.messages})
+        validate_contact(self.contact_mode, self.contact_phone, self.contact_email)
 
     class Meta:
         verbose_name = 'Book'

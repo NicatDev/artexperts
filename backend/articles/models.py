@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from core.models import SoftDeletableModel, TimestampedModel
 from artworks.models import ModerationStatus
+from core.services.media import refresh_image_derivatives, validate_new_image
 
 
 class ArticleCategory(TimestampedModel):
@@ -39,6 +40,16 @@ class Article(SoftDeletableModel):
 
     reading_time_minutes = models.PositiveIntegerField(default=3)
     views_count = models.PositiveIntegerField(default=0)
+
+    def clean(self):
+        super().clean()
+        validate_new_image(self, 'cover_image')
+
+    def save(self, *args, **kwargs):
+        kwargs['update_fields'] = refresh_image_derivatives(
+            self, 'cover_image', (None, 'cover_thumbnail'), kwargs.get('update_fields')
+        )
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Article'

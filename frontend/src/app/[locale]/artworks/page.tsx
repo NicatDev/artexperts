@@ -112,6 +112,7 @@ export default async function ArtworksPage({
               <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
                 <ImageProtectionWrapper
                   src={art.thumbnail_image || art.detail_image}
+                    fallbackSrc={art.detail_image}
                   alt={art.title}
                   fill
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

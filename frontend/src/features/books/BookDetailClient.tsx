@@ -1,21 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
+import React, { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { api } from "@/lib/api";
+import { useAuth } from "@/features/auth/AuthContext";
 import { siteConfig } from "@/config/site";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { GrantAccessModal } from "@/features/books/GrantAccessModal";
-import { 
-  Download, Lock, UserPlus, BookOpen, FileText, 
-  Calendar, Building, Layers, CheckCircle2 
-} from "lucide-react";
+import { Download, Lock, UserPlus, FileText, Phone, Mail, MessageCircle } from "lucide-react";
 
 export function BookDetailClient({ book }: { book: any }) {
   const tBooks = useTranslations("books");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const { user, isLoading } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentBook, setCurrentBook] = useState(book);
+  const [resolved, setResolved] = useState<{ key: string; data: any } | null>(null);
+  const requestKey = `${book.id}:${locale}:${user?.id || "anonymous"}`;
+  const currentBook = resolved?.key === requestKey ? resolved.data : book;
+  const checkingAccess = isLoading || (!!user && resolved?.key !== requestKey);
+  const contact = currentBook.contact;
+
+  useEffect(() => {
+    if (isLoading) return;
+    let active = true;
+    // SSR has no browser session: fetch the visitor's actual download permissions.
+    api.getBookDetail(book.id, locale)
+      .then(data => { if (active) setResolved({ key: requestKey, data }); })
+      .catch(() => { if (active) setResolved({ key: requestKey, data: book }); });
+    return () => { active = false; };
+  }, [book, locale, requestKey, isLoading]);
 
   const downloadUrl = `${siteConfig.apiUrl}/books/${currentBook.id}/download/`;
 
@@ -29,13 +44,14 @@ export function BookDetailClient({ book }: { book: any }) {
             alt={currentBook.title}
             fill
             className="w-full h-full object-cover"
+            imageClassName="object-contain"
             priority={true}
             watermarkText="Art Experts"
           />
         </div>
 
         <div className="mt-6 space-y-3">
-          {currentBook.has_download_access ? (
+          {checkingAccess ? <p role="status" className="p-4 text-center text-sm text-stone-500">{tCommon("loading")}</p> : currentBook.has_download_access ? (
             <a
               href={downloadUrl}
               target="_blank"
@@ -52,12 +68,17 @@ export function BookDetailClient({ book }: { book: any }) {
                 <span>{tBooks("privateAccess")}</span>
               </div>
               <p className="text-[11px] text-stone-600 leading-relaxed">
-                {tBooks("accessDeniedNotice")}
+                {contact ? tBooks("contactForAccess") : tBooks("restrictedAccessNotice")}
               </p>
+              {contact?.mode === "PHONE" && /^\+[1-9]\d{6,14}$/.test(contact.value) && <div className="space-y-2 pt-2">
+                <a href={`tel:${contact.value}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm text-amber-950"><Phone className="h-4 w-4 shrink-0" /><span dir="ltr">{contact.value}</span></a>
+                <a href={`https://wa.me/${contact.value.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800"><MessageCircle className="h-4 w-4 shrink-0" />{tBooks("whatsappContact")}</a>
+              </div>}
+              {contact?.mode === "EMAIL" && <a href={`mailto:${encodeURIComponent(contact.value)}`} className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm text-amber-950"><Mail className="h-4 w-4 shrink-0" /><span className="min-w-0 break-all">{contact.value}</span></a>}
             </div>
           )}
 
-          {currentBook.can_manage_access && (
+          {!checkingAccess && currentBook.can_manage_access && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 text-xs font-medium transition-colors shadow-2xs"
@@ -142,7 +163,7 @@ export function BookDetailClient({ book }: { book: any }) {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
-          setCurrentBook((prev: any) => ({ ...prev, has_download_access: true }));
+          api.getBookDetail(book.id, locale).then(data => setResolved({ key: requestKey, data })).catch(() => {});
         }}
       />
     </div>

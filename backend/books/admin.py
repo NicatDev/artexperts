@@ -42,7 +42,7 @@ class BookContributorAdmin(admin.ModelAdmin):
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'owner', 'category', 'availability_mode', 'moderation_status', 'is_featured', 'is_founder_book', 'views_count', 'downloads_count', 'created_at')
-    list_filter = ('moderation_status', 'availability_mode', 'is_featured', 'is_founder_book', 'category')
+    list_filter = ('moderation_status', 'availability_mode', 'contact_mode', 'is_featured', 'is_founder_book', 'category')
     search_fields = ('translations__title', 'isbn', 'publisher')
     inlines = [BookContributorLinkInline, BookTranslationInline, BookAccessInline]
     actions = ['approve_books', 'reject_books', 'feature_books']

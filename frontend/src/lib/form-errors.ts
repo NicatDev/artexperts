@@ -12,6 +12,7 @@ export function friendlyError(message: string, t: Translate): string {
     [/entirely numeric/i, "passwordNumeric"],
     [/password.*short|at least 8|min.*8/i, "passwordShort"],
     [/email.*valid|valid.*email/i, "emailInvalid"],
+    [/valid.*phone|international phone/i, "phoneInvalid"],
     [/slug|lowercase|username can/i, "usernameInvalid"],
     [/invalid.*category|invalid pk|object does not exist|not a valid choice/i, "choiceInvalid"],
     [/throttled|wait.*60|before requesting another/i, "waitBeforeRetry"],

@@ -1,5 +1,7 @@
 from rest_framework import serializers
 import json
+from django.core.exceptions import ValidationError as DjangoValidationError
+from books.contact import normalize_contact_phone, validate_contact
 from books.models import Book, BookTranslation, BookContributor, BookContributorLink, BookAccess, BookCategory, AvailabilityMode
 from users.models import User
 
@@ -103,6 +105,9 @@ class BookDetailSerializer(serializers.ModelSerializer):
     has_digital_file = serializers.SerializerMethodField()
     has_download_access = serializers.SerializerMethodField()
     can_manage_access = serializers.SerializerMethodField()
+    contact = serializers.SerializerMethodField()
+    contact_phone = serializers.SerializerMethodField()
+    contact_email = serializers.SerializerMethodField()
 
     class Meta:
         model = Book
@@ -113,7 +118,7 @@ class BookDetailSerializer(serializers.ModelSerializer):
             'languages', 'page_count', 'is_featured', 'is_founder_book',
             'views_count', 'downloads_count', 'moderation_status', 'rejection_reason',
             'has_digital_file', 'has_download_access', 'can_manage_access',
-            'category', 'translations', 'created_at'
+            'category', 'translations', 'created_at', 'contact_mode', 'contact', 'contact_phone', 'contact_email'
         ]
 
     def _get_translation(self, obj):
@@ -163,6 +168,20 @@ class BookDetailSerializer(serializers.ModelSerializer):
         if not request or not request.user or not request.user.is_authenticated:
             return False
         return request.user == obj.owner or request.user.is_staff
+
+    def get_contact_phone(self, obj):
+        return obj.contact_phone if self.get_can_manage_access(obj) else ''
+
+    def get_contact_email(self, obj):
+        return obj.contact_email if self.get_can_manage_access(obj) else ''
+
+    def get_contact(self, obj):
+        # Publish only the channel explicitly selected by this book's owner.
+        if obj.contact_mode == 'PHONE' and obj.contact_phone:
+            return {'mode': 'PHONE', 'value': obj.contact_phone}
+        if obj.contact_mode == 'EMAIL' and obj.contact_email:
+            return {'mode': 'EMAIL', 'value': obj.contact_email}
+        return None
 
 
 class GrantBookAccessSerializer(serializers.Serializer):
@@ -219,6 +238,7 @@ class BookCreateUpdateSerializer(serializers.ModelSerializer):
             'id', 'cover_image', 'digital_file', 'availability_mode', 'category', 'price',
             'currency', 'publication_year', 'isbn', 'publisher', 'languages',
             'page_count', 'authors', 'rights_confirmed', 'remove_digital_file',
+            'contact_mode', 'contact_phone', 'contact_email',
             'title_az', 'short_description_az', 'full_description_az', 'table_of_contents_az',
             'title_en', 'short_description_en', 'full_description_en', 'table_of_contents_en',
             'title_ru', 'short_description_ru', 'full_description_ru', 'table_of_contents_ru'
@@ -246,7 +266,21 @@ class BookCreateUpdateSerializer(serializers.ModelSerializer):
             seen.add(key)
         return authors
 
+    def validate_contact_phone(self, value):
+        try:
+            return normalize_contact_phone(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages)
+
     def validate(self, attrs):
+        try:
+            validate_contact(
+                attrs.get('contact_mode', getattr(self.instance, 'contact_mode', 'NONE')),
+                attrs.get('contact_phone', getattr(self.instance, 'contact_phone', '')),
+                attrs.get('contact_email', getattr(self.instance, 'contact_email', '')),
+            )
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message_dict)
         mode = attrs.get('availability_mode', getattr(self.instance, 'availability_mode', 'PRIVATE_ACCESS'))
         price = attrs.get('price', getattr(self.instance, 'price', None))
         if price is not None and price < 0:

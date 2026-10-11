@@ -86,6 +86,7 @@ export default async function BooksPage({
               <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
                 <ImageProtectionWrapper
                   src={book.cover_image}
+                    imageClassName="object-contain"
                   alt={book.title}
                   fill
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

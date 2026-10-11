@@ -27,12 +27,13 @@ class MediaProcessingService:
 
         # Read first 16 bytes for magic bytes sniffing
         initial_pos = uploaded_file.tell()
+        uploaded_file.seek(0)
         header = uploaded_file.read(16)
         uploaded_file.seek(initial_pos)
 
         is_valid_type = False
         for magic, fmt in ALLOWED_IMAGE_MIMES.items():
-            if header.startswith(magic) or (magic == b'RIFF' and len(header) >= 12 and header[8:12] == b'WEBP'):
+            if (magic != b'RIFF' and header.startswith(magic)) or (magic == b'RIFF' and header.startswith(magic) and len(header) >= 12 and header[8:12] == b'WEBP'):
                 is_valid_type = True
                 break
 
@@ -100,3 +101,39 @@ class MediaProcessingService:
 
 
 media_service = MediaProcessingService()
+
+
+def validate_new_image(instance, source):
+    image = getattr(instance, source)
+    if image and not image._committed:
+        try:
+            media_service.validate_image(image)
+        except ValidationError as exc:
+            raise ValidationError({source: exc.messages})
+
+
+def refresh_image_derivatives(instance, source, targets, update_fields=None, force=False):
+    """Keep API, admin and script uploads on the same image processing path."""
+    image = getattr(instance, source)
+    if not image or (update_fields is not None and source not in update_fields and not force):
+        return update_fields
+    changed = not image._committed or instance._state.adding
+    if not changed and not force:
+        previous = type(instance).all_objects.filter(pk=instance.pk).values_list(source, flat=True).first()
+        changed = previous != image.name or any(not getattr(instance, name) for name in targets if name)
+    if changed or force:
+        image.open('rb')
+        try:
+            media_service.validate_image(image)
+            detail, thumbnail = media_service.process_artwork_derivatives(image)
+            for name, file in zip(targets, (detail, thumbnail)):
+                if name:
+                    setattr(instance, name, file)
+            image.seek(0)
+        finally:
+            # Keep a new upload open until Django has saved its source file.
+            if image._committed:
+                image.close()
+        if update_fields is not None:
+            update_fields = set(update_fields) | {name for name in targets if name}
+    return update_fields

@@ -28,8 +28,16 @@ export const siteConfig = {
 
   // Media URL resolver (handles relative media paths returned by Django backend and local public assets)
   mediaUrl(path?: string | null): string {
-    if (!path) return "/placeholder-art.png";
+    if (!path) return "";
+    if (path.startsWith("blob:") || path.startsWith("data:image/")) return path;
     if (path.startsWith("http://") || path.startsWith("https://")) {
+      const url = new URL(path);
+      const publicBackend = new URL(this.backendUrl);
+      // Docker/localhost URLs and HTTP URLs behind TLS proxies must be public in the browser.
+      if (url.pathname.startsWith("/media/") &&
+          (["backend", "localhost", "127.0.0.1", "0.0.0.0"].includes(url.hostname) || url.hostname === publicBackend.hostname)) {
+        return `${publicBackend.origin}${url.pathname}${url.search}`;
+      }
       return path;
     }
     // If it is a local public asset in Next.js public directory
@@ -37,8 +45,7 @@ export const siteConfig = {
       path.startsWith("/placeholder") ||
       path.startsWith("/ilqar_mammadov") ||
       path.startsWith("/images/") ||
-      path.startsWith("/icons/") ||
-      path.endsWith(".svg")
+      path.startsWith("/icons/")
     ) {
       return path;
     }

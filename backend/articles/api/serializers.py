@@ -36,7 +36,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             'id', 'title', 'slug', 'excerpt', 'category_slug', 'category_name',
-            'author_name', 'author_username', 'author_avatar', 'cover_thumbnail',
+            'author_name', 'author_username', 'author_avatar', 'cover_image', 'cover_thumbnail',
             'reading_time_minutes', 'is_featured', 'is_founder_article', 'views_count', 'created_at'
         ]
 

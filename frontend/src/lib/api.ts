@@ -65,7 +65,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     credentials: "include", // Required for HttpOnly session cookies
     headers,
     // Next.js caching control: revalidate after 30 seconds for public feeds
-    ...(isSafeMethod && !isPrivateEndpoint ? { next: { revalidate: 30 } } : { cache: "no-store" as const }),
+    ...(options.cache === "no-store" || !isSafeMethod || isPrivateEndpoint ? { cache: "no-store" as const } : { next: { revalidate: 30 } }),
   });
 
   const newVisitorId = response.headers.get("X-Art-Experts-Visitor");
@@ -127,7 +127,7 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request<any>(`/books/${qs ? `?${qs}` : ""}`);
   },
-  getBookDetail: (slugOrId: string, lang: string = "az") => request<any>(`/books/${slugOrId}/?lang=${lang}`),
+  getBookDetail: (slugOrId: string, lang: string = "az") => request<any>(`/books/${slugOrId}/?lang=${lang}`, { cache: "no-store" }),
   publishBook: (formData: FormData) => request<any>(`/books/publish/`, { method: "POST", body: formData }),
   getMyBooks: () => request<any>(`/books/my/`),
   deleteBook: (id: string) => request<any>(`/books/${id}/manage/`, { method: "DELETE" }),

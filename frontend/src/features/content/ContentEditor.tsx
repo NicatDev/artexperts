@@ -7,6 +7,8 @@ import { siteConfig } from "@/config/site";
 import { Modal } from "@/components/shared/Modal";
 import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { focusFirstError, readFieldErrors, type FieldErrors } from "@/lib/form-errors";
+import { useAuth } from "@/features/auth/AuthContext";
+import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 
 export type ContentKind = "artworks" | "books" | "articles";
 type Contributor = { name: string; role: string; bio: string };
@@ -23,6 +25,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
   const common = useTranslations("common");
   const publish = useTranslations("publish");
   const locale = useLocale();
+  const { user } = useAuth();
   const formId = useId();
   const v = useTranslations("validation");
   const formRef = useRef<HTMLFormElement>(null);
@@ -31,12 +34,14 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [values, setValues] = useState<Record<string, string>>(() => {
     const result: Record<string, string> = {};
-    for (const field of ["artist_attribution", "creation_year", "medium", "dimensions", "availability_mode", "price", "currency", "publication_year", "isbn", "publisher", "languages", "page_count"])
+    for (const field of ["artist_attribution", "creation_year", "medium", "dimensions", "availability_mode", "price", "currency", "publication_year", "isbn", "publisher", "languages", "page_count", "contact_mode", "contact_phone", "contact_email"])
       result[field] = String(initial?.[field] ?? "");
     result.category = String(initial?.category?.id ?? initial?.category ?? "");
     result.availability_mode ||= "PRIVATE_ACCESS";
     result.currency ||= "AZN";
     result.languages ||= "AZ";
+    result.contact_mode ||= "NONE";
+    result.contact_email ||= user?.email || "";
     const translation = initial?.translations?.find((row: any) => row.language === "az") || initial?.translations?.[0];
     for (const field of translatedFields[kind]) result[`${field}_az`] = translation?.[field] ?? initial?.[field] ?? "";
     return result;
@@ -75,7 +80,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
   }, [kind, locale]);
 
   useEffect(() => {
-    if (!image) { setPreview(initial ? siteConfig.mediaUrl(initial.detail_image || initial.cover_image) : ""); return; }
+    if (!image) { setPreview(initial ? siteConfig.mediaUrl(initial.detail_image || initial.cover_image || initial.thumbnail_image || initial.cover_thumbnail) : ""); return; }
     const url = URL.createObjectURL(image);
     setPreview(url);
     return () => URL.revokeObjectURL(url);
@@ -104,6 +109,8 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
     if (pdf && pdf.size > 300 * 1024 * 1024) next.digital_file = v("pdfSize");
     else if (pdf && !/\.pdf$/i.test(pdf.name)) next.digital_file = v("pdfInvalid");
     if (kind === "books") {
+      if (values.contact_mode === "PHONE" && !/^\+[1-9]\d{6,14}$/.test(values.contact_phone.replace(/[\s().-]/g, ""))) next.contact_phone = v("phoneInvalid");
+      if (values.contact_mode === "EMAIL" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.contact_email.trim())) next.contact_email = v("emailInvalid");
       if (values.availability_mode === "FUTURE_PAID" && !(Number(values.price) > 0)) next.price = v("positivePrice");
       const seen = new Set<string>();
       contributors.forEach((row, index) => {
@@ -143,6 +150,9 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
       }
       if (kind === "books") {
         for (const field of ["availability_mode", "price", "currency", "publication_year", "isbn", "publisher", "languages", "page_count"]) form.append(field, values[field]);
+        form.append("contact_mode", values.contact_mode);
+        if (values.contact_mode === "PHONE") form.append("contact_phone", values.contact_phone.trim());
+        if (values.contact_mode === "EMAIL") form.append("contact_email", values.contact_email.trim());
         form.append("authors", JSON.stringify(contributors.map(row => ({ ...row, name: row.name.trim() }))));
         if (removePdf) form.append("remove_digital_file", "true");
         if (pdf) form.append("digital_file", pdf);
@@ -214,6 +224,18 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
             <label className="block space-y-2 text-sm"><span>{t("availability_mode")}</span><select {...inputProps("availability_mode")} className={inputClass} value={values.availability_mode} onChange={event => set("availability_mode", event.target.value)}>{["FREE", "PRIVATE_ACCESS", "NOT_FOR_SALE", "FUTURE_PAID"].map(mode => <option key={mode} value={mode}>{t(mode)}</option>)}</select>{errorBelow("availability_mode")}</label>
             {field("price", "number", values.availability_mode === "FUTURE_PAID")}{field("currency", "text", true, 10)}
           </div>
+          <div className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4 sm:p-5">
+            <label className="block space-y-2 text-sm">
+              <span>{t("contact_mode")}</span>
+              <select {...inputProps("contact_mode")} className={inputClass} value={values.contact_mode} onChange={event => { clearError("contact_phone"); clearError("contact_email"); set("contact_mode", event.target.value); }}>
+                {["NONE", "PHONE", "EMAIL"].map(mode => <option key={mode} value={mode}>{t(`contact${mode}`)}</option>)}
+              </select>
+              {errorBelow("contact_mode")}
+            </label>
+            <p className="text-xs leading-6 text-stone-600">{t("contactHint")}</p>
+            {values.contact_mode === "PHONE" && <div className="space-y-2">{field("contact_phone", "tel", true, 25)}<p className="text-xs text-stone-600">{t("phoneHint")}</p></div>}
+            {values.contact_mode === "EMAIL" && field("contact_email", "email", true, 254)}
+          </div>
           <div className="space-y-3">
             <h3 className="font-medium">{t("contributors")}</h3>
             <p className="text-xs text-stone-500">{t("contributorsHint")}</p>
@@ -235,7 +257,7 @@ export function ContentEditor({ kind, initial, isStaff, onSaved, onCancel }: {
         </>}
         <label className="block space-y-2 text-sm">
           <span>{kind === "artworks" ? t("image") : t("cover")} {!initial && "*"}</span>
-          {preview && <img src={preview} alt={t("preview")} className="max-h-64 max-w-full rounded-xl object-contain" />}
+          {preview && <ImageProtectionWrapper src={preview} alt={t("preview")} fill className="h-64 w-full rounded-xl bg-stone-100" imageClassName="object-contain" />}
           <input {...inputProps(kind === "artworks" ? "original_master" : "cover_image")} className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-2 file:text-xs`} type="file" accept="image/jpeg,image/png,image/webp" required={!initial} onChange={event => { clearError(kind === "artworks" ? "original_master" : "cover_image"); setImage(event.target.files?.[0] || null); }} />
           {errorBelow(kind === "artworks" ? "original_master" : "cover_image")}
           <span className="block text-xs text-stone-500">{initial ? t("keepImage") : t("imageHint")}</span>

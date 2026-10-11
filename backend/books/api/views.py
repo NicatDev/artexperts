@@ -109,6 +109,7 @@ class BookDetailView(views.APIView):
         response.set_cookie('art_experts_visitor', visitor_id, max_age=60 * 60 * 24 * 365 * 2,
                             httponly=True, secure=request.is_secure(), samesite='Lax', path='/')
         response['X-Art-Experts-Visitor'] = visitor_id
+        response['Cache-Control'] = 'private, no-store'
         return response
 
 

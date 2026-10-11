@@ -27,6 +27,7 @@ class ArtworkViewAdmin(admin.ModelAdmin):
 
 @admin.register(Artwork)
 class ArtworkAdmin(admin.ModelAdmin):
+    readonly_fields = ('detail_image', 'thumbnail_image')
     list_display = ('__str__', 'owner', 'category', 'moderation_status', 'is_featured', 'is_founder_piece', 'views_count', 'created_at')
     list_filter = ('moderation_status', 'is_featured', 'is_founder_piece', 'category')
     search_fields = ('artist_attribution', 'translations__title')

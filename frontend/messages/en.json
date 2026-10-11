@@ -81,7 +81,15 @@
     "addSocial": "Add social link",
     "socialDuplicate": "Social network names must be unique and nonempty.",
     "profileSaved": "Profile updated.",
-    "noProfile": "Artist profile not found."
+    "noProfile": "Artist profile not found.",
+    "contact_mode": "Contact the book owner",
+    "contactNONE": "None — hide contact details",
+    "contactPHONE": "Phone number and WhatsApp",
+    "contactEMAIL": "Email address",
+    "contact_phone": "Phone number",
+    "contact_email": "Contact email",
+    "contactHint": "Visitors without download permission will see only your selected contact method on this book’s detail page. Selecting “None” keeps your phone and email private.",
+    "phoneHint": "Include the country code, e.g. +994501234567. This number will be public for calls and WhatsApp."
   },
   "nav": {
     "home": "Home",
@@ -116,7 +124,9 @@
     "views": "views",
     "downloads": "downloads",
     "rightsNotice": "I confirm that I own this content or have explicit permission to publish it.",
-    "approvalNotice": "Submitted content will become publicly visible following approval by the site owner/admin."
+    "approvalNotice": "Submitted content will become publicly visible following approval by the site owner/admin.",
+    "imageUnavailable": "The image could not be loaded",
+    "retryImage": "Retry loading image"
   },
   "home": {
     "featuredArtworks": "Most Viewed Artworks",
@@ -170,7 +180,10 @@
     "emailVerified": "User found and verified on the platform",
     "emailNotFound": "No registered user found with this email",
     "grantSuccess": "Access granted successfully!",
-    "empty": "No books published yet."
+    "empty": "No books published yet.",
+    "contactForAccess": "Contact the book owner to obtain this book.",
+    "restrictedAccessNotice": "Individual permission is required to download this book.",
+    "whatsappContact": "Contact on WhatsApp"
   },
   "articles": {
     "title": "Editorial & Essays",
@@ -330,6 +343,7 @@
     "waitBeforeRetry": "Wait one minute before trying again.",
     "emailDelivery": "We could not send the email. Please try again shortly.",
     "imageDimensions": "Image width and height must not exceed 10000 pixels.",
-    "pdfSize": "PDF files must be no larger than 300 MB."
+    "pdfSize": "PDF files must be no larger than 300 MB.",
+    "phoneInvalid": "Enter a valid number including the country code, e.g. +994501234567."
   }
 }

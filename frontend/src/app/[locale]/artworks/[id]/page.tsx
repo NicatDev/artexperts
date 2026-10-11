@@ -89,6 +89,7 @@ export default async function ArtworkDetailPage({
           <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 flex items-center justify-center">
             <ImageProtectionWrapper
               src={artwork.detail_image || artwork.thumbnail_image}
+                    fallbackSrc={artwork.thumbnail_image}
               alt={artwork.title}
               fill
               className="w-full h-full object-cover"
