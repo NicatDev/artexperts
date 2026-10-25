@@ -56,14 +56,14 @@ export default async function HomePage({
   return (
     <div className="space-y-24 pb-20">
       {/* 1. Hero / Banner Section (Luxury Gallery Light) */}
-      <section className="relative min-h-[72vh] flex items-center justify-center bg-gradient-to-b from-[#FAF6ED] via-[#FAF9F5] to-white px-4 sm:px-6 lg:px-8 border-b border-[#EAE6DF] overflow-hidden">
+      <section className="relative min-h-[72vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 border-b border-[#EAE6DF] overflow-hidden">
         {/* Subtle decorative art canvas glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_25%,rgba(212,175,55,0.12),transparent_65%)] pointer-events-none" />
 
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6 pt-16 pb-20">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-900 text-xs font-serif uppercase tracking-widest shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-amber-700" />
-            <span>Milli & Müasir Təsviri Sənət Ekosistemi</span>
+            <span>Təsviri incəsənət platforması</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif text-stone-900 font-normal tracking-wide leading-tight">
@@ -77,7 +77,7 @@ export default async function HomePage({
           <p className="text-base sm:text-lg text-stone-600 font-sans max-w-2xl mx-auto leading-relaxed">
             {banner?.subtitle && !banner.subtitle.toLowerCase().includes("ilqar") && !banner.subtitle.includes("İlqar")
               ? banner.subtitle
-              : "Təsviri sənət əsərlərinin rəqəmsal arxivi, müəllif incəsənət monoqrafiyaları və sənətkar icması üçün kurasiya olunmuş platforma."}
+              : "Təsviri sənət əsərlərinin rəqəmsal arxivi, müəllif incəsənət monoqrafiyaları və sənətkar icması üçün sistemləşdirilmiş platforma."}
           </p>
 
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">

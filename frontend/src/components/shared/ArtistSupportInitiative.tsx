@@ -5,7 +5,7 @@ export function ArtistSupportInitiative() {
   return (
     <section className="w-full">
       <div className="rounded-3xl border border-amber-300/80 bg-gradient-to-tr from-[#FFFDF8] via-[#FAF6ED] to-[#F5EFE1] p-8 shadow-xs sm:p-12 lg:p-14">
-        <div className="max-w-3xl space-y-6">
+        <div className="max-w-3xl space-y-6 lg:w-full lg:max-w-none">
           <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/60 bg-orange-100/60 px-4 py-1.5 text-xs font-serif font-semibold uppercase tracking-widest text-orange-900">
             <HeartHandshake className="h-4 w-4 text-orange-700" />
             <span>Sənətçilərə Dəstək Təşəbbüsü</span>

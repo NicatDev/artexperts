@@ -59,7 +59,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className="light">
-      <body className="min-h-screen flex flex-col bg-[#FAF9F5] text-[#18181B] antialiased selection:bg-[#D4AF37] selection:text-white">
+      <body className="site-shell min-h-screen flex flex-col bg-[#FAF9F5] text-[#18181B] antialiased selection:bg-[#D4AF37] selection:text-white">
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <Navbar />
