@@ -103,7 +103,18 @@
     "modeHintCONTACT": "Downloads are disabled. Choose a contact channel or hide all contact information.",
     "modeHintPRIVATE_ACCESS": "The author has restricted sharing. Downloads and contact details are unavailable.",
     "editPublishedNotice": "Changes take effect immediately. Further admin approval is not required.",
-    "editUnpublishedNotice": "Changes will be saved. The current status is preserved; first publication requires admin approval."
+    "editUnpublishedNotice": "Changes will be saved. The current status is preserved; first publication requires admin approval.",
+    "onlineReadingPermission": "Read the book on the website",
+    "readingAllowed": "Viewing allowed",
+    "readingNotAllowed": "Viewing not allowed",
+    "onlineReadingHelp": "Viewing is disabled by default. If enabled, visitors can read the book in the website reader without receiving the PDF. Measures restrict copying, printing and file downloads, but cannot guarantee protection against screenshots or reproduction. PDF downloads are controlled separately by the sharing permission above.",
+    "readingRequiresPdf": "Add a PDF file before enabling online reading.",
+    "artworkPublic": "Public sharing",
+    "artworkPublicHint": "The work is visible in the gallery. Control original image downloads with the separate option below.",
+    "artworkDownloadPermission": "Download the image",
+    "downloadAllowed": "Downloads allowed",
+    "downloadNotAllowed": "Downloads not allowed",
+    "artworkDownloadHelp": "Allowing downloads switches sharing to public and shows a download button on the artwork page. Otherwise the original file stays private and previews receive a watermark. Right-click and direct download deterrents cannot guarantee protection against screenshots or reproduction of displayed images."
   },
   "nav": {
     "home": "Home",
@@ -341,6 +352,7 @@
     "artists": "Artists"
   },
   "validation": {
+    "readingRequiresPdf": "Add a PDF file before enabling online reading.",
     "required": "Fill in this field.",
     "emailTaken": "An account already uses this email. Sign in or use another email.",
     "usernameTaken": "This username is taken. Choose another one.",
@@ -382,6 +394,28 @@
     "privateBookNotice": "The author has restricted sharing of this book.",
     "privateArtworkNotice": "The author has restricted sharing of this artwork.",
     "noContact": "The author has not displayed contact information.",
-    "whatsapp": "Contact via WhatsApp"
+    "whatsapp": "Contact via WhatsApp",
+    "downloadDisabled": "Image downloads are disabled",
+    "artworkProtectionNotice": "The author does not allow downloading the original image. Copying deterrents cannot guarantee complete protection.",
+    "privateBookReadingNotice": "PDF downloads are disabled. The author allows reading the book in the protected website reader."
+  },
+  "bookReader": {
+    "open": "Read on the website",
+    "protectedReader": "Protected book reader",
+    "readOnly": "Downloads disabled · Online reading allowed",
+    "close": "Close reader",
+    "previous": "Previous page",
+    "next": "Next page",
+    "page": "Page number",
+    "go": "Go",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "loading": "Preparing page…",
+    "retry": "Try again",
+    "pageLabel": "Book page {page} of {total}",
+    "notice": "Measures restrict copying, printing and downloads. Complete protection against screenshots or reproduction cannot be guaranteed.",
+    "permissionError": "Reading permission has changed or the session has expired. Please try again.",
+    "rateError": "Too many pages opened recently. Wait a minute and try again.",
+    "loadError": "Could not prepare this page. Try again shortly. If the problem persists, contact the author."
   }
 }

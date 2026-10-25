@@ -1,5 +1,6 @@
 from django.urls import path
 from core.content_views import ContentViewRecordView
+from books.reader import BookReaderSessionView, BookReaderPageView
 from books.api.views import (
     BookCategoryListView,
     BookListView,
@@ -27,4 +28,6 @@ urlpatterns = [
     path('books/<uuid:id>/access-grants/<uuid:grant_id>/', RevokeBookAccessView.as_view(), name='book-revoke-access'),
     path('books/<uuid:id>/grant-access/', GrantBookAccessView.as_view(), name='book-grant-access'),
     path('books/<uuid:id>/download/', BookDownloadView.as_view(), name='book-download'),
+    path('books/<uuid:id>/reader/', BookReaderSessionView.as_view(), name='book-reader-session'),
+    path('books/<uuid:id>/reader/pages/<int:page>/', BookReaderPageView.as_view(), name='book-reader-page'),
 ]

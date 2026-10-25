@@ -72,7 +72,7 @@ export default async function ArtworkDetailPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
 
       {/* Back button */}
@@ -166,7 +166,7 @@ export default async function ArtworkDetailPage({
           {/* Download Action Controlled by Artist */}
           <div className="pt-2">
             <DownloadAccess kind="artworks" mode={artwork.availability_mode} contact={artwork.contact}
-              downloadUrl={`${siteConfig.apiUrl}/artworks/${artwork.id}/download/`} hasFile={!!artwork.detail_image} />
+              downloadUrl={`${siteConfig.apiUrl}/artworks/${artwork.id}/download/`} hasFile={!!artwork.detail_image} allowDownload={!!artwork.allow_download} />
           </div>
         </div>
       </div>

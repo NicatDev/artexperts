@@ -103,7 +103,18 @@
     "modeHintCONTACT": "Saytdan endirmək mümkün deyil. Müəlliflə əlaqə üçün bir kanal seçin və ya heç birini göstərməyin.",
     "modeHintPRIVATE_ACCESS": "Paylaşılması müəllif tərəfindən məhdudlaşdırılıb. Endirmə və əlaqə məlumatları göstərilmir.",
     "editPublishedNotice": "Dəyişikliklər dərhal tətbiq olunur. Yenidən admin təsdiqi tələb edilmir.",
-    "editUnpublishedNotice": "Dəyişikliklər saxlanılacaq. Paylaşımın mövcud statusu dəyişmir; ilk dərc üçün admin təsdiqi tələb olunur."
+    "editUnpublishedNotice": "Dəyişikliklər saxlanılacaq. Paylaşımın mövcud statusu dəyişmir; ilk dərc üçün admin təsdiqi tələb olunur.",
+    "onlineReadingPermission": "Kitabı saytda oxumaq",
+    "readingAllowed": "Baxmaq olar",
+    "readingNotAllowed": "Baxmaq olmaz",
+    "onlineReadingHelp": "Standart seçim «Baxmaq olmaz»dır. İcazə versəniz, ziyarətçilər PDF-i ayrıca endirmədən kitabı saytdakı oxuyucuda oxuya bilərlər. Mətni kopyalamağı, çapı və faylı yükləməyi məhdudlaşdıran tədbirlər görülür, lakin ekran görüntüsü və surətin çıxarılmasına qarşı tam zəmanət verilmir. PDF-in yüklənməsi yuxarıdakı paylaşım icazəsindən asılıdır.",
+    "readingRequiresPdf": "Saytda oxumağı açmaq üçün PDF faylı əlavə edin.",
+    "artworkPublic": "Hamıya açıq paylaşım",
+    "artworkPublicHint": "Əsər qalereyada görünür. Orijinal şəklin yüklənməsini aşağıdakı ayrıca seçimlə idarə edin.",
+    "artworkDownloadPermission": "Şəkli yükləmək",
+    "downloadAllowed": "Yükləmək olar",
+    "downloadNotAllowed": "Yükləmək olmaz",
+    "artworkDownloadHelp": "«Yükləmək olar» seçimi paylaşımı hamıya açır və əsərin səhifəsində yükləmə düyməsini göstərir. «Yükləmək olmaz» seçildikdə orijinal fayl bağlı saxlanılır və önizləməyə su nişanı əlavə olunur. Sağ klik və birbaşa yükləməyə qarşı tədbirlər görülür, lakin görünən şəkillərin ekran görüntüsünə və surətinin çıxarılmasına qarşı tam zəmanət verilmir."
   },
   "nav": {
     "home": "Ana Səhifə",
@@ -341,6 +352,7 @@
     "artists": "Rəssamlar"
   },
   "validation": {
+    "readingRequiresPdf": "Saytda oxumağı açmaq üçün PDF faylı əlavə edin.",
     "required": "Bu sahəni doldurun.",
     "emailTaken": "Bu email ünvanı ilə artıq hesab yaradılıb. Daxil olun və ya başqa email istifadə edin.",
     "usernameTaken": "Bu istifadəçi adı artıq seçilib. Başqa ad yazın.",
@@ -382,6 +394,28 @@
     "privateBookNotice": "Bu kitabın paylaşılması müəllif tərəfindən məhdudlaşdırılıb.",
     "privateArtworkNotice": "Bu əsərin paylaşılması müəllif tərəfindən məhdudlaşdırılıb.",
     "noContact": "Müəllif əlaqə məlumatlarını göstərməyib.",
-    "whatsapp": "WhatsApp ilə əlaqə"
+    "whatsapp": "WhatsApp ilə əlaqə",
+    "downloadDisabled": "Şəklin yüklənməsi bağlıdır",
+    "artworkProtectionNotice": "Müəllif orijinal şəklin yüklənməsinə icazə vermir. Kopyalamanı məhdudlaşdıran tədbirlər tam qorunmaya zəmanət vermir.",
+    "privateBookReadingNotice": "PDF faylının yüklənməsi bağlıdır. Müəllif kitabı saytdakı qorunan oxuyucuda oxumağa icazə verib."
+  },
+  "bookReader": {
+    "open": "Kitabı saytda oxu",
+    "protectedReader": "Qorunan kitab oxuyucusu",
+    "readOnly": "Yükləmə bağlıdır · Saytda oxumaq olar",
+    "close": "Oxuyucunu bağla",
+    "previous": "Əvvəlki səhifə",
+    "next": "Növbəti səhifə",
+    "page": "Səhifə nömrəsi",
+    "go": "Keç",
+    "zoomIn": "Böyüt",
+    "zoomOut": "Kiçilt",
+    "loading": "Səhifə hazırlanır…",
+    "retry": "Yenidən cəhd et",
+    "pageLabel": "Kitabın {page} / {total} səhifəsi",
+    "notice": "Kopyalama, çap və yükləməni məhdudlaşdıran tədbirlər tətbiq olunur. Ekran görüntüsü və surətin çıxarılmasına qarşı tam zəmanət verilmir.",
+    "permissionError": "Oxuma icazəsi dəyişib və ya sessiyanın vaxtı bitib. Yenidən cəhd edin.",
+    "rateError": "Qısa müddətdə çox səhifə açılıb. Bir dəqiqə gözləyib yenidən cəhd edin.",
+    "loadError": "Səhifə hazırlana bilmədi. Bir qədər sonra yenidən cəhd edin. Problem davam edərsə, müəllifə bildirin."
   }
 }

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from artworks.models import Artwork, ArtworkCategory, ArtworkTranslation, ArtworkView, ModerationStatus
 
 
@@ -25,11 +26,19 @@ class ArtworkViewAdmin(admin.ModelAdmin):
     search_fields = ('visitor_id', 'artwork__artist_attribution')
 
 
+class ArtworkAdminForm(forms.ModelForm):
+    class Meta:
+        model = Artwork
+        fields = '__all__'
+        widgets = {'allow_download': forms.RadioSelect(choices=[(False, 'Yükləmək olmaz'), (True, 'Yükləmək olar')])}
+
+
 @admin.register(Artwork)
 class ArtworkAdmin(admin.ModelAdmin):
-    readonly_fields = ('detail_image', 'thumbnail_image', 'allow_download')
+    form = ArtworkAdminForm
+    readonly_fields = ('detail_image', 'thumbnail_image')
     list_display = ('__str__', 'owner', 'category', 'moderation_status', 'is_featured', 'is_founder_piece', 'views_count', 'created_at')
-    list_filter = ('moderation_status', 'availability_mode', 'contact_mode', 'is_featured', 'is_founder_piece', 'category')
+    list_filter = ('moderation_status', 'availability_mode', 'allow_download', 'contact_mode', 'is_featured', 'is_founder_piece', 'category')
     search_fields = ('artist_attribution', 'translations__title')
     inlines = [ArtworkTranslationInline]
     actions = ['approve_artworks', 'reject_artworks', 'feature_artworks', 'toggle_founder_piece']

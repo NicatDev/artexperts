@@ -98,7 +98,7 @@ class ArtworkDownloadView(views.APIView):
         except Artwork.DoesNotExist:
             raise Http404("Artwork not found.")
 
-        if artwork.availability_mode != AvailabilityMode.FREE:
+        if artwork.availability_mode != AvailabilityMode.FREE or not artwork.allow_download:
             return Response(
                 {"error": {"message": "Əsəri əldə etmək üçün müəlliflə əlaqə saxlayın." if artwork.availability_mode == AvailabilityMode.CONTACT else "Bu əsərin paylaşılması müəllif tərəfindən məhdudlaşdırılıb."}},
                 status=status.HTTP_403_FORBIDDEN
@@ -111,6 +111,7 @@ class ArtworkDownloadView(views.APIView):
         filename = f'artwork-{artwork.id}{Path(artwork.original_master.name).suffix.lower()}'
         response = FileResponse(artwork.original_master.open('rb'), as_attachment=True, filename=filename)
         response['Cache-Control'] = 'private, no-store'
+        response['X-Content-Type-Options'] = 'nosniff'
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):

@@ -8,3 +8,4 @@ requests>=2.31.0
 psycopg[binary]>=3.2,<4
 gunicorn>=23,<24
 nh3>=0.3.7,<0.4
+pypdfium2>=5.0,<6

@@ -49,6 +49,8 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
     return result;
   });
   const [watermarked, setWatermarked] = useState(initial?.is_watermarked ?? false);
+  const [allowReading, setAllowReading] = useState(initial?.allow_online_reading ?? false);
+  const [allowDownload, setAllowDownload] = useState(initial?.allow_download ?? false);
   const [rights, setRights] = useState(false);
   const [removePdf, setRemovePdf] = useState(false);
   const [contributors, setContributors] = useState<Contributor[]>(() => initial?.contributors?.map((row: any) => ({ name: row.full_name, role: row.role, bio: row.bio || "" })) || []);
@@ -116,6 +118,7 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
       if (values.contact_mode === "EMAIL" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.contact_email.trim())) next.contact_email = v("emailInvalid");
     }
     if (kind === "books") {
+      if (allowReading && (removePdf || (!pdf && !initial?.has_digital_file))) next.allow_online_reading = t("readingRequiresPdf");
       const seen = new Set<string>();
       contributors.forEach((row, index) => {
         const key = `${row.name.trim().toLowerCase()}|${row.role}`;
@@ -151,8 +154,10 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
         for (const field of ["artist_attribution", "medium", "dimensions"]) form.append(field, values[field]);
         form.append("creation_year", values.creation_year);
         form.append("is_watermarked", String(watermarked));
+        form.append("allow_download", String(allowDownload));
       }
       if (kind === "books") {
+        form.append("allow_online_reading", String(allowReading && !removePdf));
         for (const field of ["publication_year", "isbn", "publisher", "languages", "page_count"]) form.append(field, values[field]);
         form.append("authors", JSON.stringify(contributors.map(row => ({ ...row, name: row.name.trim() }))));
         if (removePdf) form.append("remove_digital_file", "true");
@@ -226,13 +231,13 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
         {kind === "artworks" && <>
           {field("artist_attribution", "text", false, 200)}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{field("creation_year", "number")}{field("medium", "text", false, 150)}{field("dimensions", "text", false, 100)}</div>
-          <div><label className="flex items-start gap-3 text-sm"><input {...inputProps("is_watermarked")} type="checkbox" className="mt-1 h-4 w-4 accent-amber-700" checked={watermarked} onChange={event => { clearError("is_watermarked"); setWatermarked(event.target.checked); }} />{publish("watermarkLabel")}</label>{errorBelow("is_watermarked")}</div>
+          {allowDownload && <div><label className="flex items-start gap-3 text-sm"><input {...inputProps("is_watermarked")} type="checkbox" className="mt-1 h-4 w-4 accent-amber-700" checked={watermarked} onChange={event => { clearError("is_watermarked"); setWatermarked(event.target.checked); }} />{publish("watermarkLabel")}</label>{errorBelow("is_watermarked")}</div>}
         </>}
         {kind !== "articles" && <section className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4 sm:p-5">
             <h3 className="font-medium">{t("downloadPermission")}</h3>
             <p className="text-xs leading-6 text-stone-600">{t("downloadPermissionHint")}</p>
-            <label className="block space-y-2 text-sm"><span>{t("availability_mode")}</span><select {...inputProps("availability_mode")} className={`${inputClass} cursor-pointer`} value={values.availability_mode} onChange={event => { clearError("contact_phone"); clearError("contact_email"); clearError("contact_mode"); set("availability_mode", event.target.value); }}>{["FREE", "CONTACT", "PRIVATE_ACCESS"].map(mode => <option key={mode} value={mode}>{t(mode)}</option>)}</select>{errorBelow("availability_mode")}</label>
-            <p className="text-sm leading-6 text-stone-700">{t(`modeHint${values.availability_mode}`)}</p>
+            <label className="block space-y-2 text-sm"><span>{t("availability_mode")}</span><select {...inputProps("availability_mode")} className={`${inputClass} cursor-pointer`} value={values.availability_mode} onChange={event => { clearError("contact_phone"); clearError("contact_email"); clearError("contact_mode"); if (event.target.value !== "FREE") setAllowDownload(false); set("availability_mode", event.target.value); }}>{["FREE", "CONTACT", "PRIVATE_ACCESS"].map(mode => <option key={mode} value={mode}>{t(kind === "artworks" && mode === "FREE" ? "artworkPublic" : mode)}</option>)}</select>{errorBelow("availability_mode")}</label>
+            <p className="text-sm leading-6 text-stone-700">{t(kind === "artworks" && values.availability_mode === "FREE" ? "artworkPublicHint" : `modeHint${values.availability_mode}`)}</p>
           {values.availability_mode === "CONTACT" && <div className="space-y-4 border-t border-amber-200 pt-4">
             <label className="block space-y-2 text-sm">
               <span>{t("contact_mode")}</span>
@@ -245,6 +250,13 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
             {values.contact_mode === "PHONE" && <div className="space-y-2">{field("contact_phone", "tel", true, 25)}<p className="text-xs text-stone-600">{t("phoneHint")}</p></div>}
             {values.contact_mode === "EMAIL" && field("contact_email", "email", true, 254)}
           </div>}
+          {kind === "artworks" && <fieldset className="space-y-3 border-t border-amber-200 pt-4">
+            <legend className="text-sm font-medium">{t("artworkDownloadPermission")}</legend>
+            <div className="grid gap-3 sm:grid-cols-2">{[false, true].map(value => <label key={String(value)} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border bg-white p-3 text-sm ${allowDownload === value ? "border-amber-500 ring-1 ring-amber-200" : "border-stone-200"}`}>
+              <input {...inputProps("allow_download")} type="radio" value={String(value)} checked={allowDownload === value} onChange={() => { clearError("allow_download"); setAllowDownload(value); if (value) set("availability_mode", "FREE"); }} className="h-4 w-4 shrink-0 accent-amber-700" />{t(value ? "downloadAllowed" : "downloadNotAllowed")}
+            </label>)}</div>
+            <p className="text-xs leading-6 text-stone-500">{t("artworkDownloadHelp")}</p>{errorBelow("allow_download")}
+          </fieldset>}
         </section>}
         {kind === "books" && <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -291,7 +303,14 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
           </div>}
           {errorBelow("digital_file")}
           <span className="block text-xs text-stone-500">{t("pdfHint")}</span>
-          {initial?.has_digital_file && <label className="flex items-start gap-3"><input {...inputProps("remove_digital_file")} type="checkbox" disabled={!!pdf} className="mt-1 h-4 w-4" checked={removePdf} onChange={event => { clearError("digital_file"); setRemovePdf(event.target.checked); }} />{t("removePdf")}</label>}
+          {initial?.has_digital_file && <label className="flex items-start gap-3"><input {...inputProps("remove_digital_file")} type="checkbox" disabled={!!pdf} className="mt-1 h-4 w-4" checked={removePdf} onChange={event => { clearError("digital_file"); clearError("allow_online_reading"); setRemovePdf(event.target.checked); if (event.target.checked) setAllowReading(false); }} />{t("removePdf")}</label>}
+          <fieldset className="mt-4 space-y-3 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+            <legend className="text-sm font-medium">{t("onlineReadingPermission")}</legend>
+            <div className="grid gap-3 sm:grid-cols-2">{[false, true].map(value => <label key={String(value)} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border bg-white p-3 text-sm ${allowReading === value ? "border-amber-500 ring-1 ring-amber-200" : "border-stone-200"}`}>
+              <input {...inputProps("allow_online_reading")} type="radio" value={String(value)} checked={allowReading === value} onChange={() => { clearError("allow_online_reading"); setAllowReading(value); }} className="h-4 w-4 shrink-0 accent-amber-700" />{t(value ? "readingAllowed" : "readingNotAllowed")}
+            </label>)}</div>
+            <p className="text-xs leading-6 text-stone-500">{t("onlineReadingHelp")}</p>{errorBelow("allow_online_reading")}
+          </fieldset>
         </div>}
         {!initial && <div><label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm leading-6"><input {...inputProps("rights_confirmed")} type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-amber-700" checked={rights} required onChange={event => { clearError("rights_confirmed"); setRights(event.target.checked); }} />{common("rightsNotice")}</label>{errorBelow("rights_confirmed")}</div>}
         <p className="text-xs leading-6 text-stone-500">{initial ? t(initial.moderation_status === "PUBLISHED" ? "editPublishedNotice" : "editUnpublishedNotice") : t("reviewNotice")}</p>

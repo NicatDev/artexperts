@@ -48,7 +48,7 @@ class BookListSerializer(serializers.ModelSerializer):
         model = Book
         fields = [
             'id', 'title', 'slug', 'short_description', 'cover_image',
-            'contributors', 'availability_mode', 'price', 'currency',
+            'contributors', 'availability_mode', 'allow_online_reading', 'price', 'currency',
             'publication_year', 'publisher', 'page_count',
             'is_featured', 'is_founder_book', 'category_slug', 'category_name', 'views_count', 'created_at'
         ]
@@ -115,7 +115,7 @@ class BookDetailSerializer(ContactDetailMixin, serializers.ModelSerializer):
             'price', 'currency', 'publication_year', 'isbn', 'publisher',
             'languages', 'page_count', 'is_featured', 'is_founder_book',
             'views_count', 'downloads_count', 'moderation_status', 'rejection_reason',
-            'has_digital_file', 'current_pdf', 'has_download_access', 'can_manage_access',
+            'has_digital_file', 'current_pdf', 'has_download_access', 'can_manage_access', 'allow_online_reading',
             'category', 'translations', 'created_at', 'contact_mode', 'contact', 'contact_phone', 'contact_email'
         ]
 
@@ -220,7 +220,7 @@ class BookCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializer)
         fields = [
             'id', 'cover_image', 'digital_file', 'availability_mode', 'category', 'price',
             'currency', 'publication_year', 'isbn', 'publisher', 'languages',
-            'page_count', 'authors', 'rights_confirmed', 'remove_digital_file',
+            'page_count', 'authors', 'rights_confirmed', 'remove_digital_file', 'allow_online_reading',
             'contact_mode', 'contact_phone', 'contact_email',
             'title_az', 'short_description_az', 'full_description_az', 'table_of_contents_az',
             'title_en', 'short_description_en', 'full_description_en', 'table_of_contents_en',
@@ -251,6 +251,11 @@ class BookCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializer)
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        if attrs.get('remove_digital_file'):
+            attrs['allow_online_reading'] = False
+        reading = attrs.get('allow_online_reading', getattr(self.instance, 'allow_online_reading', False))
+        if reading and not attrs.get('digital_file', getattr(self.instance, 'digital_file', None)):
+            raise serializers.ValidationError({'allow_online_reading': 'Saytda oxumağı açmaq üçün PDF faylı əlavə edin.'})
         price = attrs.get('price', getattr(self.instance, 'price', None))
         if price is not None and price < 0:
             raise serializers.ValidationError({'price': 'Price cannot be negative.'})

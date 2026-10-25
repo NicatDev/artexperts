@@ -9,11 +9,13 @@ import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapp
 import { DownloadAccess } from "@/features/content/DownloadAccess";
 import { ContentViews } from "@/features/content/ContentViews";
 import { FileText } from "lucide-react";
+import { BookReader } from "./BookReader";
 
 export function BookDetailClient({ book }: { book: any }) {
   const tBooks = useTranslations("books");
   const tCommon = useTranslations("common");
   const tEditor = useTranslations("editor");
+  const tReader = useTranslations("bookReader");
   const locale = useLocale();
   const { user, isLoading } = useAuth();
 
@@ -55,7 +57,9 @@ export function BookDetailClient({ book }: { book: any }) {
           {checkingAccess ? <p role="status" className="p-4 text-center text-sm text-stone-500">{tCommon("loading")}</p> : <DownloadAccess
             kind="books" mode={currentBook.availability_mode} contact={currentBook.contact}
             downloadUrl={downloadUrl} hasFile={!!currentBook.has_digital_file}
+            allowReading={!!currentBook.allow_online_reading}
           />}
+          {!checkingAccess && currentBook.allow_online_reading && currentBook.has_digital_file && <BookReader key={currentBook.id} bookId={currentBook.id} title={currentBook.title} />}
         </div>
       </div>
 
@@ -63,7 +67,7 @@ export function BookDetailClient({ book }: { book: any }) {
       <div className="lg:col-span-8 space-y-8">
         <div>
           <span className="text-xs font-serif uppercase tracking-widest text-amber-800 font-bold">
-            {tEditor(currentBook.availability_mode === "CONTACT" ? "CONTACT" : currentBook.availability_mode === "FREE" ? "FREE" : "PRIVATE_ACCESS")}
+            {currentBook.availability_mode === "PRIVATE_ACCESS" && currentBook.allow_online_reading ? tReader("readOnly") : tEditor(currentBook.availability_mode === "CONTACT" ? "CONTACT" : currentBook.availability_mode === "FREE" ? "FREE" : "PRIVATE_ACCESS")}
           </span>
           <h1 className="text-3xl sm:text-4xl font-serif text-stone-900 mt-1">
             {currentBook.title}

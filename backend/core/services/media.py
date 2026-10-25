@@ -1,7 +1,7 @@
 import io
 import os
 import uuid
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw, ImageFont
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 
@@ -56,7 +56,7 @@ class MediaProcessingService:
         return True
 
     @staticmethod
-    def process_artwork_derivatives(uploaded_file, apply_watermark=False, watermark_text="Art Expert"):
+    def process_artwork_derivatives(uploaded_file, apply_watermark=False, watermark_text="Art Experts"):
         """
         Processes an uploaded image:
         1. Strips private EXIF GPS metadata.
@@ -84,6 +84,8 @@ class MediaProcessingService:
             # 1. Detail version (max 2048px)
             detail_img = img.copy()
             detail_img.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+            if apply_watermark:
+                detail_img = MediaProcessingService.watermark(detail_img, watermark_text)
 
             detail_io = io.BytesIO()
             detail_img.save(detail_io, format='WEBP', quality=85, method=6)
@@ -92,12 +94,25 @@ class MediaProcessingService:
             # 2. Thumbnail version (max 600px)
             thumb_img = img.copy()
             thumb_img.thumbnail((600, 600), Image.Resampling.LANCZOS)
+            if apply_watermark:
+                thumb_img = MediaProcessingService.watermark(thumb_img, watermark_text)
 
             thumb_io = io.BytesIO()
             thumb_img.save(thumb_io, format='WEBP', quality=80, method=6)
             thumb_file = ContentFile(thumb_io.getvalue(), name=f"thumb_{uuid.uuid4().hex}.webp")
 
         return detail_file, thumb_file
+
+    @staticmethod
+    def watermark(image, label):
+        overlay = Image.new('RGBA', image.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
+        font = ImageFont.load_default(size=max(12, min(60, image.width // 18)))
+        for fraction in (.32, .70):
+            draw.text((image.width // 2, int(image.height * fraction)), label,
+                      font=font, anchor='mm', fill=(255, 255, 255, 95),
+                      stroke_width=1, stroke_fill=(30, 25, 15, 65))
+        return Image.alpha_composite(image.convert('RGBA'), overlay).convert('RGB')
 
 
 media_service = MediaProcessingService()
@@ -125,7 +140,8 @@ def refresh_image_derivatives(instance, source, targets, update_fields=None, for
         image.open('rb')
         try:
             media_service.validate_image(image)
-            detail, thumbnail = media_service.process_artwork_derivatives(image)
+            protected = instance._meta.label_lower == 'artworks.artwork' and (not instance.allow_download or instance.is_watermarked)
+            detail, thumbnail = media_service.process_artwork_derivatives(image, apply_watermark=protected)
             for name, file in zip(targets, (detail, thumbnail)):
                 if name:
                     setattr(instance, name, file)

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.db import transaction
 from core.models import SoftDeletableModel, TimestampedModel
 from core.services.media import refresh_image_derivatives, validate_new_image
 from core.content_access import AvailabilityMode, ContactMode, clean_contact
@@ -47,9 +48,15 @@ class Artwork(SoftDeletableModel):
     medium = models.CharField(max_length=150, blank=True, default='', help_text="e.g. Oil on Canvas")
     dimensions = models.CharField(max_length=100, blank=True, default='', help_text="e.g. 100 x 80 cm")
 
-    # Kept as a read-only compatibility flag; availability_mode controls downloads.
-    allow_download = models.BooleanField(default=False, editable=False)
-    availability_mode = models.CharField(max_length=25, choices=AvailabilityMode.choices, default=AvailabilityMode.PRIVATE_ACCESS, db_index=True)
+    allow_download = models.BooleanField(
+        default=False, verbose_name='Şəkli yükləməyə icazə',
+        help_text='Yükləmə yalnız hamıya açıq paylaşımda aktiv olur. Digər hallarda orijinal fayl bağlı saxlanılır. Görünən şəkillərin surətinin çıxarılmasına qarşı tam zəmanət verilmir.',
+    )
+    availability_mode = models.CharField(max_length=25, choices=[
+        (AvailabilityMode.FREE, 'Hamıya açıq paylaşım'),
+        (AvailabilityMode.CONTACT, 'Yalnız müəlliflə əlaqə'),
+        (AvailabilityMode.PRIVATE_ACCESS, 'Tam məhdud'),
+    ], default=AvailabilityMode.PRIVATE_ACCESS, db_index=True)
     contact_mode = models.CharField(max_length=10, choices=ContactMode.choices, default=ContactMode.NONE)
     contact_phone = models.CharField(max_length=25, blank=True, default='')
     contact_email = models.EmailField(blank=True, default='')
@@ -67,15 +74,36 @@ class Artwork(SoftDeletableModel):
         super().clean()
         validate_new_image(self, 'original_master')
         clean_contact(self)
+        if self.allow_download and self.availability_mode != AvailabilityMode.FREE:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({'allow_download': 'Yükləməyə icazə vermək üçün hamıya açıq paylaşımı seçin.'})
 
     def save(self, *args, **kwargs):
-        self.allow_download = self.availability_mode == AvailabilityMode.FREE
+        refresh = kwargs.pop('refresh_previews', False)
+        previous = None
+        if not self._state.adding:
+            previous = type(self).all_objects.filter(pk=self.pk).values('allow_download', 'is_watermarked', 'detail_image', 'thumbnail_image').first()
+        if self.availability_mode != AvailabilityMode.FREE:
+            self.allow_download = False
         if kwargs.get('update_fields') and 'availability_mode' in kwargs['update_fields']:
             kwargs['update_fields'] = set(kwargs['update_fields']) | {'allow_download'}
+        if previous and (previous['allow_download'] != self.allow_download or previous['is_watermarked'] != self.is_watermarked):
+            refresh = True
         kwargs['update_fields'] = refresh_image_derivatives(
-            self, 'original_master', ('detail_image', 'thumbnail_image'), kwargs.get('update_fields')
+            self, 'original_master', ('detail_image', 'thumbnail_image'), kwargs.get('update_fields'), force=refresh
         )
         super().save(*args, **kwargs)
+        if previous:
+            old_files = [previous[field] for field in ('detail_image', 'thumbnail_image') if previous[field] and previous[field] != getattr(self, field).name]
+            storage = self.detail_image.storage
+            def retire_previews():
+                for name in old_files:
+                    if name.startswith(('artworks/details/', 'artworks/thumbnails/')) and not type(self).all_objects.filter(models.Q(detail_image=name) | models.Q(thumbnail_image=name)).exists():
+                        try:
+                            storage.delete(name)
+                        except OSError:
+                            pass
+            transaction.on_commit(retire_previews)
 
     class Meta:
         verbose_name = 'Artwork'

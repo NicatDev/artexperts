@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from books.models import Book, BookTranslation, BookContributor, BookContributorLink, BookAccess, BookCategory, BookView
 
 
@@ -33,6 +34,13 @@ class BookAccessInline(admin.TabularInline):
     readonly_fields = ('granted_at',)
 
 
+class BookAdminForm(forms.ModelForm):
+    class Meta:
+        model = Book
+        fields = '__all__'
+        widgets = {'allow_online_reading': forms.RadioSelect(choices=[(False, 'Baxmaq olmaz'), (True, 'Baxmaq olar')])}
+
+
 @admin.register(BookContributor)
 class BookContributorAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'linked_user')
@@ -41,8 +49,9 @@ class BookContributorAdmin(admin.ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'owner', 'category', 'availability_mode', 'moderation_status', 'is_featured', 'is_founder_book', 'views_count', 'downloads_count', 'created_at')
-    list_filter = ('moderation_status', 'availability_mode', 'contact_mode', 'is_featured', 'is_founder_book', 'category')
+    form = BookAdminForm
+    list_display = ('__str__', 'owner', 'category', 'availability_mode', 'allow_online_reading', 'moderation_status', 'is_featured', 'is_founder_book', 'views_count', 'downloads_count', 'created_at')
+    list_filter = ('moderation_status', 'availability_mode', 'allow_online_reading', 'contact_mode', 'is_featured', 'is_founder_book', 'category')
     search_fields = ('translations__title', 'isbn', 'publisher')
     inlines = [BookContributorLinkInline, BookTranslationInline]
     actions = ['approve_books', 'reject_books', 'feature_books']

@@ -104,7 +104,7 @@ class ArtworkDetailSerializer(ContactDetailMixin, serializers.ModelSerializer):
 
 
 class ArtworkCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializer):
-    allow_download = serializers.BooleanField(read_only=True)
+    allow_download = serializers.BooleanField(required=False)
     title_az = serializers.CharField(write_only=True, required=True, max_length=250)
     description_az = serializers.CharField(write_only=True, required=False, allow_blank=True)
     title_en = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -122,3 +122,12 @@ class ArtworkCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializ
             'availability_mode', 'contact_mode', 'contact_phone', 'contact_email'
         ]
         read_only_fields = ['id']
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        mode = attrs.get('availability_mode', getattr(self.instance, 'availability_mode', 'PRIVATE_ACCESS'))
+        if mode != 'FREE':
+            if attrs.get('allow_download'):
+                raise serializers.ValidationError({'allow_download': 'Yükləməyə icazə vermək üçün hamıya açıq paylaşımı seçin.'})
+            attrs['allow_download'] = False
+        return attrs

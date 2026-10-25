@@ -6,6 +6,7 @@ import { routing } from "@/i18n/routing";
 import { AuthProvider } from "@/features/auth/AuthContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { ContentProtection } from "@/components/shared/ContentProtection";
 import { siteConfig } from "@/config/site";
 import "@/app/globals.css";
 
@@ -70,6 +71,7 @@ export default async function LocaleLayout({
       <body className="site-shell min-h-screen flex flex-col bg-[#FAF9F5] text-[#18181B] antialiased selection:bg-[#D4AF37] selection:text-white">
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
+            <ContentProtection />
             <Navbar />
             <main className="flex-grow">{children}</main>
             <Footer />

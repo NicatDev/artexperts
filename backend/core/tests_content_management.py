@@ -130,7 +130,7 @@ class ContentManagementTests(TestCase):
                     model.objects.filter(pk=obj.pk).update(rights_confirmed=False)
                 data = {'title_az': 'Edited without rights checkbox', 'category': ''}
                 if kind == 'artworks':
-                    data.update(creation_year='', availability_mode='FREE', is_watermarked='true')
+                    data.update(creation_year='', availability_mode='FREE', allow_download='true', is_watermarked='true')
                 elif kind == 'books':
                     data.update(publication_year='', page_count='', price='', availability_mode='FREE')
                 result = self.client.patch(f'/api/v1/{kind}/{obj.pk}/manage/', data, format='multipart')
@@ -248,7 +248,10 @@ class ContentManagementTests(TestCase):
                 BookAccess.objects.create(book_id=item['id'], user=self.other, granted_by=self.owner)
             for mode in ['FREE', 'CONTACT', 'PRIVATE_ACCESS', 'FREE']:
                 self.client.force_authenticate(self.owner)
-                result = self.client.patch(url, {'availability_mode': mode, 'contact_mode': 'NONE'})
+                policy = {'availability_mode': mode, 'contact_mode': 'NONE'}
+                if kind == 'artworks':
+                    policy['allow_download'] = mode == 'FREE'
+                result = self.client.patch(url, policy)
                 self.assertEqual(result.status_code, 200, result.data)
                 model.objects.filter(pk=item['id']).update(moderation_status='PUBLISHED')
                 for viewer in [None, self.other, self.owner, staff]:
@@ -272,10 +275,10 @@ class ContentManagementTests(TestCase):
                 result = self.client.post(f'/api/v1/books/{item["id"]}/grant-access/', {'email': self.other.email}, format='json')
                 self.assertEqual(result.status_code, 400)
             else:
-                # The obsolete checkbox cannot unlock a restricted item.
+                # Download permission cannot override a restricted sharing mode.
                 result = self.client.patch(url, {'availability_mode': 'PRIVATE_ACCESS', 'allow_download': 'true'})
-                self.assertEqual(result.status_code, 200)
-                self.assertFalse(result.data['allow_download'])
+                self.assertEqual(result.status_code, 400)
+                self.assertIn('allow_download', result.data['error']['details'])
 
     def test_restricted_contacts_hidden_even_for_legacy_saved_values(self):
         for kind, model in [('books', Book), ('artworks', Artwork)]:

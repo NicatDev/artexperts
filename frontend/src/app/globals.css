@@ -101,3 +101,14 @@
   box-shadow: 0 12px 30px -4px rgba(24, 24, 27, 0.08), 0 4px 12px -2px rgba(24, 24, 27, 0.03);
 }
 
+[data-protected-content] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media print {
+  [data-protected-content] { display: none !important; }
+  body:has([data-book-reader]) > * { display: none !important; }
+}
+

@@ -49,6 +49,10 @@ class Book(SoftDeletableModel):
     cover_image = models.ImageField(upload_to='books/covers/')
     # Digital files are strictly stored in private storage
     digital_file = models.FileField(upload_to='private/books/files/', null=True, blank=True, validators=[validate_pdf_file])
+    allow_online_reading = models.BooleanField(
+        default=False, verbose_name='Saytda oxumağa icazə',
+        help_text='Standart olaraq bağlıdır. Səhifələr qorunan oxuyucuda göstərilir. Kopyalama və yükləməni məhdudlaşdıran tədbirlər görülür, lakin tam qorunmaya zəmanət verilmir.',
+    )
 
     availability_mode = models.CharField(
         max_length=25,
@@ -87,6 +91,9 @@ class Book(SoftDeletableModel):
         super().clean()
         validate_new_image(self, 'cover_image')
         clean_contact(self)
+        if self.allow_online_reading and not self.digital_file:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({'allow_online_reading': 'Saytda oxumağı açmaq üçün PDF faylı əlavə edin.'})
 
     class Meta:
         verbose_name = 'Book'

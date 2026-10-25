@@ -22,7 +22,7 @@ interface ImageProtectionWrapperProps {
 }
 
 /**
- * Museum-grade Image Protection & Presentation Wrapper.
+ * Image presentation and casual-copy deterrents.
  * - Prevents native image drag.
  * - Suppresses context-menu clicks as an immediate deterrent against basic asset scraping.
  * - Adds a subtle, elegant watermark badge if requested.
@@ -52,6 +52,7 @@ export function ImageProtectionWrapper({
   return (
     <div
       className={`relative select-none overflow-hidden group ${className}`}
+      data-protected-content="image"
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
     >
