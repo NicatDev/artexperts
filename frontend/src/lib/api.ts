@@ -94,8 +94,10 @@ export const api = {
     request<any>(`/${kind}/my/?page=${page}&lang=${lang}`),
   getManagedContent: (kind: "artworks" | "articles" | "books", id: string) =>
     request<any>(`/${kind}/${id}/manage/`),
-  saveContent: (kind: "artworks" | "articles" | "books", data: FormData, id?: string) =>
-    request<any>(id ? `/${kind}/${id}/manage/` : `/${kind}/publish/`, { method: id ? "PATCH" : "POST", body: data }),
+  saveContent: async (kind: "artworks" | "articles" | "books", data: FormData, id?: string, options?: import("./content-upload").UploadOptions) => {
+    if (options) return (await import("./content-upload")).saveContentUpload(kind, data, id, options);
+    return request<any>(id ? `/${kind}/${id}/manage/` : `/${kind}/publish/`, { method: id ? "PATCH" : "POST", body: data });
+  },
   deleteContent: (kind: "artworks" | "articles" | "books", id: string) =>
     request<void>(`/${kind}/${id}/manage/`, { method: "DELETE" }),
   // Home & Pages
@@ -133,6 +135,7 @@ export const api = {
   deleteArticle: (id: string) => request<any>(`/articles/${id}/manage/`, { method: "DELETE" }),
 
   // Books
+  clearIncompleteBookUploads: () => request<{ removed: number }>("/books/uploads/", { method: "DELETE", signal: AbortSignal.timeout(30000) }),
   startBookReader: (id: string, signal?: AbortSignal) =>
     request<{ token: string; pages: number; expires_in: number }>(`/books/${id}/reader/`, { method: "POST", body: JSON.stringify({}), signal }),
   getBookReaderPage: async (id: string, page: number, token: string, signal?: AbortSignal) => {

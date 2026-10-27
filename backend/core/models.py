@@ -25,6 +25,13 @@ class ContentViewIdentity(TimestampedModel):
         constraints = [models.UniqueConstraint(fields=['content_kind', 'content_id', 'visitor_id'], name='unique_content_view_identity')]
 
 
+class ContentSaveOperation(TimestampedModel):
+    owner = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='content_save_operations')
+    content_kind = models.CharField(max_length=10)
+    target_id = models.UUIDField(null=True, blank=True)
+    result_id = models.UUIDField(null=True, blank=True)
+
+
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
         return self.update(deleted_at=timezone.now())

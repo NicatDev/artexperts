@@ -1,5 +1,12 @@
 """Owner-only content management, including translations and processed uploads."""
 import math
+import os
+import uuid
+import re
+from pathlib import Path
+from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
@@ -28,11 +35,30 @@ def content_spec(kind):
     return Book, BookTranslation, BookCreateUpdateSerializer, BookDetailSerializer, 'owner', ('title', 'short_description', 'full_description', 'table_of_contents')
 
 
+@transaction.atomic
 def save_content(kind, request, instance=None, partial=False):
     model, translation_model, write_serializer, _, owner_field, translated_fields = content_spec(kind)
+    operation = None
+    if request.data.get('submission_id'):
+        from core.models import ContentSaveOperation
+        from rest_framework.exceptions import PermissionDenied
+        try:
+            key = uuid.UUID(str(request.data['submission_id']))
+        except (ValueError, TypeError):
+            raise ValidationError({'submission_id': 'Yanlış sorğu identifikatoru.'})
+        ContentSaveOperation.objects.get_or_create(pk=key, defaults={'owner': request.user, 'content_kind': kind, 'target_id': instance.pk if instance else None})
+        operation = ContentSaveOperation.objects.select_for_update().get(pk=key)
+        if operation.owner_id != request.user.pk or operation.content_kind != kind or operation.target_id != (instance.pk if instance else None):
+            raise PermissionDenied()
+        if operation.result_id:
+            completed = model.objects.filter(pk=operation.result_id).first()
+            if completed and (getattr(completed, f'{owner_field}_id') == request.user.pk or request.user.is_staff):
+                return completed
+            raise ValidationError({'submission_id': 'Bu paylaşım artıq silinib və ya əlçatan deyil.'})
     serializer = write_serializer(instance, data=request.data, partial=partial)
     serializer.is_valid(raise_exception=True)
     data = dict(serializer.validated_data)
+    pdf_upload_id = data.pop('pdf_upload_id', None)
     translated = {f'{field}_{lang}': data.pop(f'{field}_{lang}')
                   for lang in ('az', 'en', 'ru') for field in translated_fields
                   if f'{field}_{lang}' in data}
@@ -53,19 +79,53 @@ def save_content(kind, request, instance=None, partial=False):
         image.seek(0)
     pdf = data.get('digital_file')
     if pdf:
+        if pdf_upload_id:
+            raise ValidationError({'digital_file': 'İki yükləmə üsulundan yalnız birini istifadə edin.'})
         try:
             validate_pdf_file(pdf)
         except DjangoValidationError as exc:
             raise ValidationError({'digital_file': exc.messages})
         pdf.seek(0)
+        data['digital_filename'] = re.sub(r'[\x00-\x1f\x7f]', '', Path(pdf.name.replace('\\', '/')).name)[:250]
     if remove_digital_file:
         if pdf:
             raise ValidationError({'digital_file': 'Choose either replacement or removal.'})
         data['digital_file'] = None
+        data['digital_filename'] = ''
 
     with transaction.atomic():
+        uploaded = None
+        if pdf_upload_id and kind == 'book':
+            from books.models import BookUploadSession
+            from books.uploads import session_path
+            uploaded = BookUploadSession.objects.select_for_update().filter(pk=pdf_upload_id, uploader=request.user, expires_at__gt=timezone.now()).first()
+            if not uploaded or uploaded.target_book_id != (instance.pk if instance else None):
+                raise ValidationError({'digital_file': 'Yükləmə sessiyası etibarlı deyil. Faylı yenidən seçin.'})
+            if uploaded.state == 'CONSUMED':
+                # Recover a lost final response without creating a second book.
+                existing = model.objects.filter(pk=uploaded.consumed_book_id).first()
+                if existing and (existing.owner_id == request.user.pk or request.user.is_staff):
+                    if operation:
+                        operation.result_id = existing.pk
+                        operation.save(update_fields=['result_id', 'updated_at'])
+                    return existing
+                raise ValidationError({'digital_file': 'Bu yükləmə artıq istifadə olunub.'})
+            if uploaded.state != 'READY' or uploaded.uploaded_bytes != uploaded.expected_size:
+                raise ValidationError({'digital_file': 'PDF yüklənməsi hələ tamamlanmayıb.'})
+            path = session_path(uploaded)
+            if not path.is_file() or path.stat().st_size != uploaded.expected_size:
+                raise ValidationError({'digital_file': 'PDF faylı tapılmadı. Yükləməni yenidən başladın.'})
+            destination = Path(settings.MEDIA_ROOT) / 'private' / 'books' / 'files' / f'{uploaded.pk}.pdf'
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if path != destination:
+                os.replace(path, destination)
+            data['digital_file'] = f'private/books/files/{uploaded.pk}.pdf'
+            data['digital_filename'] = uploaded.filename
         if instance is not None:
             instance = model.objects.select_for_update().get(pk=instance.pk)
+            if getattr(instance, f'{owner_field}_id') != request.user.pk and not request.user.is_staff:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied()
         if kind == 'artwork' and instance is None and not data.get('artist_attribution'):
             profile = getattr(request.user, 'artist_profile', None)
             data['artist_attribution'] = profile.full_name if profile else request.user.email
@@ -80,6 +140,11 @@ def save_content(kind, request, instance=None, partial=False):
             for field, value in data.items():
                 setattr(instance, field, value)
             instance.save()
+        if uploaded:
+            uploaded.state = 'CONSUMED'
+            uploaded.consumed_book = instance
+            uploaded.expires_at = timezone.now() + timedelta(days=7)
+            uploaded.save(update_fields=['state', 'consumed_book', 'expires_at', 'updated_at'])
 
         for lang in ('az', 'en', 'ru'):
             existing = instance.translations.filter(language=lang).first()
@@ -130,6 +195,9 @@ def save_content(kind, request, instance=None, partial=False):
                     linked_user=request.user if author['name'] == owner_name else None,
                 )
                 BookContributorLink.objects.create(book=instance, contributor=contributor, role=author['role'], order=order)
+    if operation:
+        operation.result_id = instance.pk
+        operation.save(update_fields=['result_id', 'updated_at'])
     return instance
 
 

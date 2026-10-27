@@ -49,6 +49,7 @@ class Book(SoftDeletableModel):
     cover_image = models.ImageField(upload_to='books/covers/')
     # Digital files are strictly stored in private storage
     digital_file = models.FileField(upload_to='private/books/files/', null=True, blank=True, validators=[validate_pdf_file])
+    digital_filename = models.CharField(max_length=250, blank=True, default='')
     allow_online_reading = models.BooleanField(
         default=False, verbose_name='Saytda oxumağa icazə',
         help_text='Standart olaraq bağlıdır. Səhifələr qorunan oxuyucuda göstərilir. Kopyalama və yükləməni məhdudlaşdıran tədbirlər görülür, lakin tam qorunmaya zəmanət verilmir.',
@@ -112,6 +113,18 @@ class BookView(TimestampedModel):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['book', 'visitor_id'], name='unique_book_visitor_view')]
+
+
+class BookUploadSession(TimestampedModel):
+    uploader = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='book_uploads')
+    target_book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True, blank=True, related_name='pending_uploads')
+    consumed_book = models.ForeignKey(Book, on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_uploads')
+    filename = models.CharField(max_length=250)
+    expected_size = models.PositiveBigIntegerField()
+    uploaded_bytes = models.PositiveBigIntegerField(default=0)
+    chunk_hashes = models.JSONField(default=list)
+    state = models.CharField(max_length=12, choices=[('UPLOADING', 'Uploading'), ('READY', 'Ready'), ('CONSUMED', 'Consumed')], default='UPLOADING')
+    expires_at = models.DateTimeField(db_index=True)
 
 
 class BookContributorLink(TimestampedModel):

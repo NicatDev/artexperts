@@ -39,11 +39,54 @@ sudo docker compose exec -T backend python manage.py repair_content_images --reg
 Əmr mənbə şəkillərdən yeni versiyalar yaradır. Mənbə fayl diskdə yoxdursa,
 paylaşımın ID-si göstərilir; həmin şəkli ehtiyat nüsxədən bərpa edin və ya yenidən yükləyin.
 
-Cloudflare proxy istifadə edilirsə, onun plan limiti də tətbiq olunur: Free/Pro
-100 MB, Business 200 MB. Bu planlarda 300 MB PDF yükləmək üçün Cloudflare DNS-də
-`app` qeydini **DNS only** (boz bulud) edin. Backend birbaşa serverə yönələcək;
-`artexperts.net` proxy arxasında qala bilər. Serverdəki HTTPS sertifikatı işləməlidir.
-Mənbə: https://developers.cloudflare.com/support/troubleshooting/http-status-codes/4xx-client-error/error-413/
+Profil və paylaşım forması PDF-i **8 MiB-lıq hissələrlə** göndərir. Cloudflare-in
+bir sorğu üçün limiti (Free/Pro 100 MB, Business 200 MB) beləliklə böyük PDF-in
+ümumi ölçüsünə tətbiq olunmur; `app` proxy arxasında qala bilər. Django adminin
+standart fayl sahəsi hissəli yükləmir: proxy limitindən böyük PDF üçün profilin
+kitab formasından istifadə edin. [Cloudflare 413 sənədi](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/4xx-client-error/error-413/).
+
+## Böyük PDF yükləməsi və yeniləmə
+
+Bu versiyanı serverdə tətbiq etmək üçün layihənin kök qovluğunda işlədin:
+
+```sh
+cd /opt/artexperts
+git pull origin main
+sudo docker compose up -d --build --wait --wait-timeout 180 backend frontend nginx
+sudo docker compose ps
+```
+
+Backend migration-ları başlanğıcda avtomatik tətbiq edir. Nginx də yenidən
+qurulmalıdır: `/api/v1/books/uploads/` hər hissə üçün multipart məlumatları daxil
+olmaqla 10 MiB sorğu qəbul edir. Köhnə açıq brauzer vərəqini yeniləyin və PDF-i
+yenidən seçin; köhnə, bütöv sorğu ilə başlamış yükləməni davam etdirmək mümkün deyil.
+
+Pəncərə faylın yoxlanmasını, göndərilməsini (faiz, MB, sürət, təxmini qalan vaxt),
+server yoxlamasını və paylaşımın saxlanmasını ayrıca göstərir. 100% göndərilmə
+paylaşımın artıq saxlandığını bildirmir; son server cavabı da gözlənilir.
+Bağlantı qırılarsa məhdud sayda avtomatik cəhd edilir; sonra istifadəçi “Davam et”
+ilə yenidən cəhd edə bilər. Səhifə yenilənərsə eyni hesabla eyni PDF-i seçmək
+təsdiqlənmiş hissələrdən davam edir. Formanın mətn sahələrini ayrıca saxlayın:
+səhifə yeniləndikdə onlar avtomatik bərpa edilmir.
+
+Hər hissənin SHA-256 izi və mövqeyi yoxlanır. Təkrarlanan hissə yenidən əlavə
+edilmir; itmiş son cavab təkrar kitab yaratmır. Müvəqqəti fayllar private media-da
+saxlanır, yalnız həmin hesab onlara çata bilir. Hazır PDF eyni diskdə köçürülərək
+kitaba bağlanır; böyük fayl yenidən tam sorğu ilə göndərilmir və RAM-a yığılmır.
+
+Yarımçıq yükləmə son qəbul edilmiş hissədən sonra 24 saat saxlanır. Hər hesabda
+maksimum 3 yarımçıq yükləmə, sistem üzrə 4 GiB gözləyən fayl rezervi var. Başlanğıcda
+faylın ölçüsünə əlavə 512 MiB, hər hissədə isə əlavə 128 MiB boş disk tələb edilir.
+Yarımçıq yükləmələrin təmizlənməsi əlavə təsdiqlə mümkündür və artıq kitaba bağlanmış
+PDF-ləri silmir. Yeni yükləmə açılarkən vaxtı bitmiş sessiyalar da təmizlənir.
+Gündəlik texniki təmizləmə üçün bu əmri öz server planlayıcınıza əlavə edə bilərsiniz:
+
+```sh
+sudo docker compose exec -T backend python manage.py cleanup_book_uploads
+```
+
+Əmr vaxtı bitmiş yarımçıq faylları və 7 gündən köhnə təkrar sorğu qeydlərini silir;
+kitablara bağlanmış PDF-ləri saxlayır. DB ilə media volume-u birlikdə backup edin.
 
 ## 1. Əvvəl yüklənəcək proqramlar və faylların köçürülməsi
 

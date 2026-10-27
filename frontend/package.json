@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:uploads": "node --test scripts/test-content-upload.mjs"
   },
   "dependencies": {
     "@tiptap/core": "^3.31.4",

@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
+from unittest.mock import patch
 
 from users.models import User, ArtistProfile, EmailVerificationToken
 from artworks.models import Artwork, ArtworkTranslation, ModerationStatus
@@ -48,7 +49,8 @@ class ArtPlatformBackendTests(TestCase):
             is_verified=True
         )
 
-    def test_01_email_verification_and_registration(self):
+    @patch('users.api.views.email_service.send_verification_code', return_value=True)
+    def test_01_email_verification_and_registration(self, send_code):
         # 1. Request verification code
         req_resp = self.client.post('/api/v1/auth/register/request-code/', {'email': 'newartist@art.az'})
         self.assertEqual(req_resp.status_code, status.HTTP_200_OK)
@@ -60,7 +62,7 @@ class ArtPlatformBackendTests(TestCase):
         # 2. Try with wrong code
         fail_resp = self.client.post('/api/v1/auth/register/verify/', {
             'email': 'newartist@art.az',
-            'code': '000000',
+            'code': '000000' if token.code != '000000' else '111111',
             'password': 'strongpassword123',
             'full_name': 'New Artist',
             'username': 'new-artist'
@@ -135,13 +137,13 @@ class ArtPlatformBackendTests(TestCase):
         # Digital file is not yet set or unauthorized
         self.assertIn(anon_resp.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
 
-        # Grant access to visitor
+        # Legacy grants cannot bypass the author's restricted download mode.
         self.client.force_authenticate(user=self.founder)
         grant_resp = self.client.post(f'/api/v1/books/{book.id}/grant-access/', {
             'email': 'visitor@example.com'
         })
-        self.assertEqual(grant_resp.status_code, status.HTTP_200_OK)
-        self.assertTrue(BookAccess.objects.filter(book=book, user=self.visitor).exists())
+        self.assertEqual(grant_resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(BookAccess.objects.filter(book=book, user=self.visitor).exists())
 
     def test_05_dynamic_sitemap_endpoint(self):
         resp = self.client.get('/api/v1/seo/sitemap/')

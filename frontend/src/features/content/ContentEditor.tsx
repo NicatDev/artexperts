@@ -10,6 +10,8 @@ import { focusFirstError, readFieldErrors, type FieldErrors } from "@/lib/form-e
 import { useAuth } from "@/features/auth/AuthContext";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { RichTextEditor } from "@/features/content/RichTextEditor";
+import { UploadStatus } from "./UploadStatus";
+import { UploadError, type UploadProgress } from "@/lib/content-upload";
 
 export type ContentKind = "artworks" | "books" | "articles";
 type Contributor = { name: string; role: string; bio: string };
@@ -25,6 +27,7 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
   const t = useTranslations("editor");
   const common = useTranslations("common");
   const publish = useTranslations("publish");
+  const uploadText = useTranslations("upload");
   const locale = useLocale();
   const { user } = useAuth();
   const formId = useId();
@@ -64,6 +67,22 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
   const [busy, setBusy] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const [transferError, setTransferError] = useState("");
+  const [transferErrorCode, setTransferErrorCode] = useState("");
+  const [clearConfirmed, setClearConfirmed] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const transfer = useRef<AbortController | null>(null);
+  const savingNow = useRef(false);
+  const submissionId = useRef("");
+
+  useEffect(() => () => transfer.current?.abort(), []);
+  useEffect(() => {
+    if (!busy) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [busy]);
 
   useEffect(() => {
     if (!busy && !confirmOpen && focusPending.current) {
@@ -138,15 +157,29 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
     setFieldErrors(next);
     if (Object.keys(next).length) { focusPending.current = true; return; }
     if (initial) { void save(); return; }
+    setProgress(null);
+    setTransferError("");
+    setTransferErrorCode("");
     setConfirmOpen(true);
   }
 
   async function save() {
-    if (busy || uploadingImage) return;
+    if (savingNow.current || busy || uploadingImage || clearing) return;
+    savingNow.current = true;
+    const controller = new AbortController();
+    transfer.current = controller;
     setBusy(true);
+    setConfirmOpen(true);
+    setTransferError("");
+    setTransferErrorCode("");
+    setClearConfirmed(false);
+    setProgress(null);
     setError("");
     try {
       const form = new FormData();
+      if (!globalThis.crypto?.randomUUID) throw new UploadError("browser");
+      submissionId.current ||= crypto.randomUUID();
+      form.append("submission_id", submissionId.current);
       for (const field of translatedFields[kind]) form.append(`${field}_az`, values[`${field}_az`].trim());
       form.append("category", values.category);
       if (!initial) form.append("rights_confirmed", "true");
@@ -171,15 +204,25 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
         form.append("contact_email", contactMode === "EMAIL" ? values.contact_email.trim() : "");
       }
       if (image) form.append(kind === "artworks" ? "original_master" : "cover_image", image);
-      await api.saveContent(kind, form, initial?.id);
+      await api.saveContent(kind, form, initial?.id, {
+        signal: controller.signal, scope: `${user?.id || "account"}:${initial?.id || "new"}`, onProgress: setProgress,
+      });
+      setConfirmOpen(false);
       onSaved();
     } catch (error) {
+      if (error instanceof UploadError) {
+        setTransferErrorCode(error.code);
+        setTransferError(uploadText(`error_${error.code}`));
+        return;
+      }
       const next = readFieldErrors(error, v);
       setFieldErrors(next);
       if (!Object.keys(next).length) setError(v("requestFailed"));
       setConfirmOpen(false);
       focusPending.current = true;
     } finally {
+      savingNow.current = false;
+      transfer.current = null;
       setBusy(false);
     }
   }
@@ -317,11 +360,15 @@ export function ContentEditor({ kind, initial, onSaved, onCancel }: {
         <button type="submit" disabled={busy || uploadingImage || loadingCategories || categoryError} className="min-h-12 w-full rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-black disabled:opacity-50 sm:w-auto">{busy || uploadingImage ? common("loading") : initial ? common("save") : t("add")}</button>
       </fieldset>
     </form>
-    <Modal open={confirmOpen} title={publish("modalNoticeTitle")} busy={busy} onClose={() => setConfirmOpen(false)}>
-      <p className="mt-4 text-sm leading-7 text-stone-600">{t("reviewNotice")}</p>
+    <Modal open={confirmOpen} title={busy || progress || transferError || initial ? uploadText("title") : publish("modalNoticeTitle")} busy={busy || clearing} onClose={() => setConfirmOpen(false)}>
+      {busy || progress || transferError ? <UploadStatus progress={progress} busy={busy} error={transferError} /> : <p className="mt-4 text-sm leading-7 text-stone-600">{initial ? t("editPublishedNotice") : t("reviewNotice")}</p>}
+      {transferErrorCode === "quota" && <div className="mt-4 space-y-3 rounded-xl border border-amber-200 p-3">
+        <label className="flex items-start gap-2 text-xs leading-6"><input type="checkbox" checked={clearConfirmed} disabled={clearing} onChange={event => setClearConfirmed(event.target.checked)} className="mt-1.5 h-4 w-4 shrink-0" />{uploadText("clearConfirm")}</label>
+        <button type="button" disabled={!clearConfirmed || clearing} onClick={async () => { setClearing(true); try { await api.clearIncompleteBookUploads(); setTransferErrorCode("paused"); setTransferError(uploadText("cleared")); } catch { setTransferError(uploadText("error_server")); } finally { setClearing(false); } }} className="min-h-11 rounded-lg border border-rose-200 px-3 text-xs text-rose-700 disabled:opacity-50">{clearing ? common("loading") : uploadText("clearUploads")}</button>
+      </div>}
       <div className="mt-6 grid grid-cols-2 gap-3">
-        <button type="button" autoFocus disabled={busy} onClick={() => setConfirmOpen(false)} className="min-h-12 rounded-xl border px-3 py-3 text-sm disabled:opacity-50">{common("cancel")}</button>
-        <button type="button" disabled={busy} onClick={save} className="min-h-12 rounded-xl bg-stone-900 px-3 py-3 text-sm text-white disabled:opacity-50">{busy ? common("loading") : common("submit")}</button>
+        <button type="button" autoFocus disabled={clearing || busy && ["saving", "verifying"].includes(progress?.stage || "")} onClick={() => { if (busy) transfer.current?.abort(); else setConfirmOpen(false); }} className="min-h-12 rounded-xl border px-3 py-3 text-sm disabled:opacity-50">{busy ? uploadText("pause") : common("cancel")}</button>
+        <button type="button" disabled={busy || clearing} onClick={save} className="min-h-12 rounded-xl bg-stone-900 px-3 py-3 text-sm text-white disabled:opacity-50">{busy ? uploadText("inProgress") : transferError ? uploadText("resume") : common("submit")}</button>
       </div>
     </Modal>
   </div>;

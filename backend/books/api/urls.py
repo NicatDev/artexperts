@@ -1,6 +1,7 @@
 from django.urls import path
 from core.content_views import ContentViewRecordView
 from books.reader import BookReaderSessionView, BookReaderPageView
+from books.uploads import BookUploadStartView, BookUploadStatusView, BookUploadChunkView
 from books.api.views import (
     BookCategoryListView,
     BookListView,
@@ -16,6 +17,9 @@ from books.api.views import (
 )
 
 urlpatterns = [
+    path('books/uploads/', BookUploadStartView.as_view(), name='book-upload-start'),
+    path('books/uploads/<uuid:id>/', BookUploadStatusView.as_view(), name='book-upload-status'),
+    path('books/uploads/<uuid:id>/chunks/', BookUploadChunkView.as_view(), name='book-upload-chunk'),
     path('books/categories/', BookCategoryListView.as_view(), name='book-categories'),
     path('books/', BookListView.as_view(), name='book-list'),
     path('books/publish/', BookCreateView.as_view(), name='book-create'),

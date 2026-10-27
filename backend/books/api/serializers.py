@@ -155,7 +155,7 @@ class BookDetailSerializer(ContactDetailMixin, serializers.ModelSerializer):
             size = obj.digital_file.size
         except OSError:
             size = None
-        return {'name': PurePosixPath(obj.digital_file.name).name, 'size_bytes': size}
+        return {'name': obj.digital_filename or PurePosixPath(obj.digital_file.name).name, 'size_bytes': size}
 
     def get_has_download_access(self, obj):
         return bool(obj.digital_file and obj.availability_mode == AvailabilityMode.FREE)
@@ -195,6 +195,7 @@ class BookAccessRecordSerializer(serializers.ModelSerializer):
 
 
 class BookCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializer):
+    pdf_upload_id = serializers.UUIDField(write_only=True, required=False)
     rights_confirmed = serializers.BooleanField(write_only=True, required=False)
     remove_digital_file = serializers.BooleanField(write_only=True, required=False)
     title_az = serializers.CharField(write_only=True, required=True, max_length=250)
@@ -218,7 +219,7 @@ class BookCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializer)
     class Meta:
         model = Book
         fields = [
-            'id', 'cover_image', 'digital_file', 'availability_mode', 'category', 'price',
+            'id', 'cover_image', 'digital_file', 'pdf_upload_id', 'availability_mode', 'category', 'price',
             'currency', 'publication_year', 'isbn', 'publisher', 'languages',
             'page_count', 'authors', 'rights_confirmed', 'remove_digital_file', 'allow_online_reading',
             'contact_mode', 'contact_phone', 'contact_email',
@@ -252,9 +253,11 @@ class BookCreateUpdateSerializer(ContactWriteMixin, serializers.ModelSerializer)
     def validate(self, attrs):
         attrs = super().validate(attrs)
         if attrs.get('remove_digital_file'):
+            if attrs.get('pdf_upload_id'):
+                raise serializers.ValidationError({'digital_file': 'Faylı silmək və ya dəyişmək seçimlərindən birini edin.'})
             attrs['allow_online_reading'] = False
         reading = attrs.get('allow_online_reading', getattr(self.instance, 'allow_online_reading', False))
-        if reading and not attrs.get('digital_file', getattr(self.instance, 'digital_file', None)):
+        if reading and not attrs.get('pdf_upload_id') and not attrs.get('digital_file', getattr(self.instance, 'digital_file', None)):
             raise serializers.ValidationError({'allow_online_reading': 'Saytda oxumağı açmaq üçün PDF faylı əlavə edin.'})
         price = attrs.get('price', getattr(self.instance, 'price', None))
         if price is not None and price < 0:

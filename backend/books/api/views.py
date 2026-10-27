@@ -183,7 +183,7 @@ class BookManagedFileDownloadView(views.APIView):
             raise Http404('PDF not found.')
         response = FileResponse(
             file, as_attachment=True,
-            filename=PurePosixPath(book.digital_file.name).name,
+            filename=book.digital_filename or PurePosixPath(book.digital_file.name).name,
             content_type='application/pdf',
         )
         response['X-Content-Type-Options'] = 'nosniff'
