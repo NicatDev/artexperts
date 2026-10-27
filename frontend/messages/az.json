@@ -64,6 +64,7 @@
     "deleteError": "Silmək mümkün olmadı.",
     "deleted": "Paylaşım silindi.",
     "deleteTitle": "Silmək istədiyinizdən əminsiniz?",
+    "deleteBookFilesNotice": "Kitabın PDF-i, üz qabığı və oxuyucu önizləmələri də serverdən silinəcək. Faylları yalnız ehtiyat nüsxədən bərpa etmək olar.",
     "deletePrompt": "“{title}” paylaşımını silmək istədiyinizdən əminsiniz? Silindikdən sonra saytda görünməyəcək.",
     "retry": "Yenidən yoxla",
     "pagination": "Paylaşımların səhifələri",

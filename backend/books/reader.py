@@ -62,7 +62,7 @@ def private_source(book):
         stat = source.stat()
     except (OSError, ValueError, NotImplementedError):
         raise Http404('PDF tapılmadı.')
-    revision = hashlib.sha256(f'{book.pk}:{book.digital_file.name}:{stat.st_size}:{stat.st_mtime_ns}:{book.updated_at.isoformat()}'.encode()).hexdigest()
+    revision = book.pk.hex + '-' + hashlib.sha256(f'{book.pk}:{book.digital_file.name}:{stat.st_size}:{stat.st_mtime_ns}:{book.updated_at.isoformat()}'.encode()).hexdigest()
     return source, revision
 
 
@@ -137,6 +137,9 @@ def prune_cache(directory):
 
 
 def preview_asset(source, revision, page=None):
+    book_id = revision.split('-', 1)[0]
+    if not Book.objects.filter(pk=book_id).exists():
+        raise Http404
     directory = cache_directory()
     target = directory / (f'{revision}-{page}.webp' if page is not None else f'{revision}.json')
     try:
@@ -168,6 +171,8 @@ def preview_asset(source, revision, page=None):
                     raise ValueError
                 Path(temporary).write_text(json.dumps({'pages': count}), encoding='utf-8')
             prune_cache(directory)
+            if not Book.objects.filter(pk=book_id).exists():
+                raise Http404
             os.replace(temporary, target)
         except (OSError, subprocess.SubprocessError, ValueError, KeyError):
             raise ReaderUnavailable()

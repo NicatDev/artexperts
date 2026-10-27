@@ -113,6 +113,7 @@ export default function ProfileDashboardPage() {
     </section>
     <Modal open={!!deleting} title={t("deleteTitle")} busy={deleteBusy} onClose={() => setDeleting(null)}>
       <p className="mt-4 break-words text-sm leading-7 text-stone-600">{t("deletePrompt", { title: deleting?.item.title || "" })}</p>
+      {deleting?.kind === "books" && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm leading-7 text-amber-950">{t("deleteBookFilesNotice")}</p>}
       {deleteError && <p role="alert" className="mt-3 break-words text-sm text-rose-700">{deleteError}</p>}
       <div className="mt-6 grid grid-cols-2 gap-3"><button autoFocus disabled={deleteBusy} onClick={() => setDeleting(null)} className="min-h-12 rounded-xl border px-3 text-sm disabled:opacity-50">{common("cancel")}</button><button disabled={deleteBusy} onClick={() => void remove()} className="min-h-12 rounded-xl bg-rose-700 px-3 text-sm text-white disabled:opacity-50">{deleteBusy ? common("loading") : common("delete")}</button></div>
     </Modal>

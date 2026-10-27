@@ -88,6 +88,36 @@ sudo docker compose exec -T backend python manage.py cleanup_book_uploads
 Əmr vaxtı bitmiş yarımçıq faylları və 7 gündən köhnə təkrar sorğu qeydlərini silir;
 kitablara bağlanmış PDF-ləri saxlayır. DB ilə media volume-u birlikdə backup edin.
 
+## Kitab silindikdə faylların təmizlənməsi
+
+Admin panelində tək və toplu silmə, həmçinin profildən kitab silmə artıq PDF-i,
+üz qabığını və kitaba aid oxuyucu keşini də təmizləyir. Kitabın məlumat bazasındakı
+audit qeydi qalır, fayl sahələri boşaldılır. Faylları yalnız backup-dan bərpa etmək
+olar; silmə təsdiqində bu barədə bildiriş göstərilir. Başqa paylaşımın istifadə
+etdiyi fayl saxlanır. Hissəli yükləmə ilə əvvəllər bu kitaba bağlanmış PDF-lər də
+təmizlənir; tamamlanmamış yükləmələr öz 24 saatlıq müddətinə tabedir.
+
+Təmizləmə yalnız DB tranzaksiyası təsdiqləndikdən sonra başlayır. Disk icazəsi və
+ya kilidlənmiş fayl səbəbilə silinmə alınmasa, tapşırıq DB-də qalır və backend
+loguna qeyd yazılır. Belə tapşırıqlar üçün gündəlik server planlayıcısında işlədin:
+
+```sh
+sudo docker compose exec -T backend python manage.py cleanup_deleted_book_media --apply
+```
+
+Əvvəlki versiyada silinmiş kitabların faylları avtomatik toplu silinmir. Əvvəl
+sayını yoxlayın (fayl silmir):
+
+```sh
+sudo docker compose exec -T backend python manage.py cleanup_deleted_book_media --include-existing
+```
+
+Backup yoxlandıqdan sonra həmin köhnə silinmiş kitabların fayllarını da təmizləmək
+üçün `--include-existing --apply` istifadə edin. Aktiv kitabların faylları bu əmrlə
+silinmir. Köhnə oxuyucu keşinin əvvəlki reviziyalarına aid anonim fayllar mövcud
+ölçü limitinə əsasən adi keş təmizlənməsi ilə çıxarılır; yeni keş faylları kitab ID-si
+ilə əlaqələndirilir və kitab silinəndə birlikdə çıxarılır.
+
 ## 1. Əvvəl yüklənəcək proqramlar və faylların köçürülməsi
 
 Aşağıdakı ardıcıllıq boş **Ubuntu 24.04 LTS** server üçündür. `SERVER_IP` yerinə

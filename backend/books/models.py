@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from core.models import SoftDeletableModel, TimestampedModel
+from core.models import SoftDeletableModel, TimestampedModel, SoftDeleteQuerySet, SoftDeleteManager
 from artworks.models import ModerationStatus
 from core.validators import validate_pdf_file
 from core.services.media import validate_new_image
@@ -42,7 +42,31 @@ class BookContributor(TimestampedModel):
         return self.full_name
 
 
+class BookQuerySet(SoftDeleteQuerySet):
+    def delete(self):
+        # Admin's bulk action normally calls update(), bypassing model.delete().
+        from django.db import transaction
+        with transaction.atomic(using=self.db):
+            count = 0
+            for book in self.filter(deleted_at__isnull=True).iterator():
+                book.delete(using=self.db)
+                count += 1
+            return count
+
+
+class BookManager(SoftDeleteManager.from_queryset(BookQuerySet)):
+    def get_queryset(self):
+        return BookQuerySet(self.model, using=self._db).filter(deleted_at__isnull=True)
+
+    def all_with_deleted(self):
+        return BookQuerySet(self.model, using=self._db)
+
+    def only_deleted(self):
+        return self.all_with_deleted().filter(deleted_at__isnull=False)
+
+
 class Book(SoftDeletableModel):
+    objects = BookManager()
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='books')
     category = models.ForeignKey(BookCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='books')
 
@@ -96,6 +120,25 @@ class Book(SoftDeletableModel):
             from django.core.exceptions import ValidationError
             raise ValidationError({'allow_online_reading': 'Saytda oxumağı açmaq üçün PDF faylı əlavə edin.'})
 
+    def delete(self, using=None, keep_parents=False):
+        from django.db import router, transaction
+        from books.media_cleanup import enqueue_book_media
+        database = using or router.db_for_write(type(self), instance=self)
+        with transaction.atomic(using=database):
+            current = type(self).all_objects.using(database).select_for_update().get(pk=self.pk)
+            if current.deleted_at is not None:
+                return
+            enqueue_book_media(current, using=database)
+            current.deleted_at = timezone.now()
+            # Keep the audit record, but never restore references to deleted files.
+            type(self).all_objects.using(database).filter(pk=self.pk).update(
+                deleted_at=current.deleted_at, digital_file='', digital_filename='',
+                cover_image='', allow_online_reading=False,
+            )
+            self.deleted_at = current.deleted_at
+            self.digital_file = self.cover_image = self.digital_filename = ''
+            self.allow_online_reading = False
+
     class Meta:
         verbose_name = 'Book'
         verbose_name_plural = 'Books'
@@ -104,6 +147,15 @@ class Book(SoftDeletableModel):
     def __str__(self):
         t = self.translations.filter(language='az').first() or self.translations.first()
         return f"{t.title if t else 'Untitled Book'} ({self.moderation_status})"
+
+
+class BookMediaCleanup(TimestampedModel):
+    # No foreign key: cleanup must survive hard deletion and user cascades.
+    book_id = models.UUIDField(db_index=True)
+    files = models.JSONField(default=list)
+    legacy_revision = models.CharField(max_length=64, blank=True, default='')
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True, default='')
 
 
 class BookView(TimestampedModel):

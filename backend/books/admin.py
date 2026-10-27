@@ -50,6 +50,8 @@ class BookContributorAdmin(admin.ModelAdmin):
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     form = BookAdminForm
+    delete_confirmation_template = 'admin/books/book/delete_confirmation.html'
+    delete_selected_confirmation_template = 'admin/books/book/delete_selected_confirmation.html'
     list_display = ('__str__', 'owner', 'category', 'availability_mode', 'allow_online_reading', 'moderation_status', 'is_featured', 'is_founder_book', 'views_count', 'downloads_count', 'created_at')
     list_filter = ('moderation_status', 'availability_mode', 'allow_online_reading', 'contact_mode', 'is_featured', 'is_founder_book', 'category')
     search_fields = ('translations__title', 'isbn', 'publisher')

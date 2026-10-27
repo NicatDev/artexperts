@@ -64,6 +64,7 @@
     "deleteError": "Could not delete.",
     "deleted": "Content deleted.",
     "deleteTitle": "Are you sure you want to delete?",
+    "deleteBookFilesNotice": "The book’s PDF, cover and reader previews will also be removed from the server. Restoring these files requires a backup.",
     "deletePrompt": "Are you sure you want to delete “{title}”? It will no longer appear on the site.",
     "retry": "Retry",
     "pagination": "Content pages",
