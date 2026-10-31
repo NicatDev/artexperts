@@ -6,7 +6,6 @@ import { api } from "@/lib/api";
 import { loadPublicData } from "@/lib/public-data";
 import { FeedError } from "@/components/shared/FeedError";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
-import { ArtistSupportInitiative } from "@/components/shared/ArtistSupportInitiative";
 import { 
   ArrowRight, BookOpen, Feather, Palette, Sparkles, 
   Clock, Award
@@ -160,10 +159,6 @@ export default async function HomePage({
             {tArtworks("empty")}
           </div>
         )}
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ArtistSupportInitiative />
       </section>
 
       {/* 4. Featured Digital Books Section */}

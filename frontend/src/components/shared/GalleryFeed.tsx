@@ -73,7 +73,7 @@ export function GalleryFeed({ initialItems, initialCount, initialHasMore, initia
     <div className="space-y-6" aria-busy={loading}>
       {/* Separate batches keep existing columns in place when more work is appended. */}
       {batches.map((batch, batchIndex) => (
-        <div key={batchIndex} className="columns-1 gap-6 sm:columns-2 lg:columns-3 lg:gap-8">
+        <div key={batchIndex} className="columns-1 gap-6 sm:columns-2 lg:columns-4">
           {batch.map((art: any) => (
             <div
               key={art.id}

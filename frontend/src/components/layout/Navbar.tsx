@@ -95,7 +95,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium">
+          <nav className="hidden xl:flex items-center gap-7 text-sm font-medium">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -118,7 +118,7 @@ export function Navbar() {
           </nav>
 
           {/* Desktop Search Icon & Auth Controls */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden xl:flex items-center gap-4">
             {/* Search Icon Trigger */}
             <button
               type="button"
@@ -191,7 +191,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile menu toggle & Mobile search icon */}
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="flex items-center gap-2 xl:hidden">
             {/* Search Icon Trigger Mobile */}
             <button
               type="button"
@@ -229,7 +229,7 @@ export function Navbar() {
 
         {/* Mobile Drawer */}
         {mobileOpen && (
-          <div className="lg:hidden border-t border-stone-200 bg-[#FAF9F5] px-4 pt-4 pb-6 space-y-4 shadow-lg">
+          <div className="xl:hidden border-t border-stone-200 bg-[#FAF9F5] px-4 pt-4 pb-6 space-y-4 shadow-lg">
             <button
               type="button"
               onClick={() => {
