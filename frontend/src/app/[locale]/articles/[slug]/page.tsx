@@ -7,7 +7,9 @@ import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
-import { ArrowLeft, Clock, Calendar, User, Share2 } from "lucide-react";
+import { ArtistAvatar } from "@/components/shared/ArtistAvatar";
+import { ArtistLinks } from "@/components/shared/ArtistLinks";
+import { ArrowLeft, Clock, Calendar, User, Palette } from "lucide-react";
 import { ContentViews } from "@/features/content/ContentViews";
 
 export async function generateMetadata({
@@ -41,7 +43,8 @@ export default async function ArticleDetailPage({
   setRequestLocale(locale);
 
   const tArticles = await getTranslations({ locale, namespace: "articles" });
-  const tCommon = await getTranslations({ locale, namespace: "common" });
+  const tArtists = await getTranslations({ locale, namespace: "artists" });
+  const tEditor = await getTranslations({ locale, namespace: "editor" });
 
   let article: any = null;
   try {
@@ -64,7 +67,7 @@ export default async function ArticleDetailPage({
   };
 
   return (
-    <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+    <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
@@ -80,12 +83,14 @@ export default async function ArticleDetailPage({
         </Link>
       </div>
 
+      <div className={article.author_profile ? "grid min-w-0 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_19rem]" : "mx-auto max-w-4xl"}>
+      <div className="min-w-0 space-y-8">
       {/* Header */}
       <div className="space-y-4">
         <span className="text-xs font-serif uppercase tracking-widest text-amber-800 font-bold">
           {article.category?.name || "Sənət Nəzəriyyəsi"}
         </span>
-        <h1 className="text-3xl sm:text-5xl font-serif text-stone-900 leading-tight">
+        <h1 className="break-words text-3xl sm:text-5xl font-serif text-stone-900 leading-tight">
           {article.title}
         </h1>
 
@@ -133,30 +138,26 @@ export default async function ArticleDetailPage({
       {/* Article Content Body */}
       <div className="article-content border-b border-stone-200 pb-12" dangerouslySetInnerHTML={{ __html: article.content }} />
 
-      {/* Author Profile Footer Card */}
+      </div>
+
       {article.author_profile && (
-        <div className="bg-[#FAF6ED] border border-amber-200/80 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 shadow-xs">
-          <div className="w-16 h-16 rounded-full border border-amber-500/30 bg-white flex items-center justify-center text-amber-900 font-serif font-bold text-xl flex-shrink-0 shadow-2xs">
-            {article.author_profile.full_name?.charAt(0) || "A"}
+        <aside aria-labelledby="article-author-heading" className="min-w-0 rounded-3xl border border-[#E5DFD3] bg-[#FFFCF7]/95 p-6 shadow-xs lg:sticky lg:top-28">
+          <h2 id="article-author-heading" className="mb-6 text-xs font-semibold uppercase tracking-widest text-amber-800">{tArticles("authorProfile")}</h2>
+          <div className="flex flex-col items-center gap-4 text-center">
+            <ArtistAvatar artist={article.author_profile} large />
+            <h3 className="w-full break-words font-serif text-xl font-medium text-stone-900">{article.author_profile.full_name}</h3>
+            {article.author_profile.specialties && <div className="w-full space-y-2 text-sm text-stone-600">
+              <p className="flex items-center justify-center gap-2 text-xs font-medium text-amber-800"><Palette aria-hidden="true" className="h-4 w-4 shrink-0" />{tArtists("specialties")}</p>
+              <p className="break-words leading-relaxed">{article.author_profile.specialties}</p>
+            </div>}
+            <ArtistLinks artist={article.author_profile} websiteLabel={tEditor("website")} />
+            {article.author_profile.username && <Link href={`/artists/${article.author_profile.username}`} className="mt-2 inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700">
+              {tArticles("viewArtistProfile")} →
+            </Link>}
           </div>
-          <div className="space-y-2 text-center sm:text-left flex-1">
-            <h3 className="text-lg font-serif text-stone-900 font-medium">
-              {article.author_profile.full_name}
-            </h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              {article.author_profile.short_bio || "Platforma rəssamı və müəllifi."}
-            </p>
-            <div className="pt-2">
-              <Link
-                href={`/artists/${article.author_profile.username}`}
-                className="text-xs text-amber-800 hover:text-amber-950 font-semibold underline underline-offset-4"
-              >
-                Rəssamın Portfelinə Bax →
-              </Link>
-            </div>
-          </div>
-        </div>
+        </aside>
       )}
+      </div>
     </article>
   );
 }

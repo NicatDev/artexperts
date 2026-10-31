@@ -233,7 +233,9 @@
     "publishedOn": "Dərc tarixi:",
     "share": "Məqaləni Bölüş",
     "relatedArticles": "Digər Sənət Məqalələri",
-    "empty": "Hələlik heç bir məqalə tapılmadı."
+    "empty": "Hələlik heç bir məqalə tapılmadı.",
+    "authorProfile": "Müəllif haqqında",
+    "viewArtistProfile": "Rəssamın profilinə bax"
   },
   "artists": {
     "title": "Platforma Rəssamları",

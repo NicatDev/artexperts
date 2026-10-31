@@ -233,7 +233,9 @@
     "publishedOn": "Published on:",
     "share": "Share Article",
     "relatedArticles": "More Art Articles",
-    "empty": "No articles published yet."
+    "empty": "No articles published yet.",
+    "authorProfile": "About the author",
+    "viewArtistProfile": "View artist profile"
   },
   "artists": {
     "title": "Platform Artists",
