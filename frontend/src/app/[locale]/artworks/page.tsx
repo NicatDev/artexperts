@@ -1,4 +1,5 @@
 import React from "react";
+import { CatalogSearch } from "@/components/shared/CatalogSearch";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
@@ -49,6 +50,8 @@ export default async function ArtworksPage({
           {tArtworks("subtitle")}
         </p>
       </div>
+
+      <CatalogSearch kind="artworks" locale={locale} filters={sp} />
 
       {/* Categories Filter Bar */}
       <div className="flex flex-wrap items-center justify-center gap-2 pt-2">

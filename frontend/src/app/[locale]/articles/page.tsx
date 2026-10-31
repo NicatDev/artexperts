@@ -1,4 +1,5 @@
 import React from "react";
+import { CatalogSearch } from "@/components/shared/CatalogSearch";
 import { loadPublicData } from "@/lib/public-data";
 import { FeedError } from "@/components/shared/FeedError";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -57,6 +58,8 @@ export default async function ArticlesPage({
           {tArticles("subtitle")}
         </p>
       </div>
+
+      <CatalogSearch kind="articles" locale={locale} filters={sp} />
 
       {/* Categories Filter Bar */}
       <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
@@ -139,7 +142,7 @@ export default async function ArticlesPage({
         </div>
       ) : (
         <div className="text-center py-20 border border-dashed border-stone-200 rounded-2xl text-stone-500 text-sm bg-white">
-          {tArticles("empty")}
+          {sp.search ? tCommon("searchNoResults") : tArticles("empty")}
         </div>
       )}
 

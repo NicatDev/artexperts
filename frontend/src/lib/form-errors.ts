@@ -5,6 +5,9 @@ type Translate = (key: string) => string;
 
 export function friendlyError(message: string, t: Translate): string {
   const rules: [RegExp, string][] = [
+    [/invalid email or password/i, "invalidCredentials"],
+    [/account.*not.*verified/i, "accountUnverified"],
+    [/account.*deactivated/i, "accountInactive"],
     [/already registered|email.*already|email.*exists/i, "emailTaken"],
     [/username.*taken|username.*exists|username.*unique/i, "usernameTaken"],
     [/similar|similarity/i, "passwordSimilar"],

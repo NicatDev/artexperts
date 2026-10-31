@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/features/auth/AuthContext";
 import { api } from "@/lib/api";
+import { instagramUrl } from "@/lib/artist-links";
 import { siteConfig } from "@/config/site";
 import { focusFirstError, readFieldErrors, type FieldErrors } from "@/lib/form-errors";
 
@@ -31,8 +32,8 @@ export function ProfileSettings() {
     const profile = user?.artist_profile;
     if (!profile) return;
     const fields = ["full_name", "username", "specialties", "location", "website", "short_bio", "artist_statement", "phone_number"] as const;
-    setValues(Object.fromEntries(fields.map(field => [field, profile[field] || ""])));
-    setSocialLinks(Object.entries(profile.social_links || {}).map(([name, url]) => ({ name, url })));
+    setValues({ ...Object.fromEntries(fields.map(field => [field, profile[field] || ""])), instagram: Object.entries(profile.social_links || {}).find(([key]) => key.trim().toLowerCase() === "instagram")?.[1] || "" });
+    setSocialLinks(Object.entries(profile.social_links || {}).filter(([key]) => key.trim().toLowerCase() !== "instagram").map(([name, url]) => ({ name, url })));
   }, [user]);
   useEffect(() => {
     if (!avatar) { setPreview(user?.artist_profile?.avatar ? siteConfig.mediaUrl(user.artist_profile.avatar) : ""); return; }
@@ -60,8 +61,9 @@ export function ProfileSettings() {
       else if (input.validity.typeMismatch) next[input.name] = v("urlInvalid");
       else if (input.validity.patternMismatch) next[input.name] = v("usernameInvalid");
     }
+    if (values.instagram?.trim() && !instagramUrl(values.instagram)) next.instagram = v("instagramInvalid");
     if (values.phone_number && !/^\+[1-9]\d{6,14}$/.test(values.phone_number.replace(/[\s().-]/g, ""))) next.phone_number = v("phoneInvalid");
-    if (new Set(names).size !== names.length || names.some(name => !name)) next.social_links = t("socialDuplicate");
+    if (new Set(names).size !== names.length || names.some(name => !name || name === "instagram")) next.social_links = t("socialDuplicate");
     if (avatar && avatar.size > 25 * 1024 * 1024) next.avatar = v("fileSize");
     else if (avatar && !["image/jpeg", "image/png", "image/webp"].includes(avatar.type)) next.avatar = v("imageInvalid");
     setFieldErrors(next);
@@ -69,8 +71,10 @@ export function ProfileSettings() {
     setBusy(true);
     try {
       const form = new FormData();
-      for (const [name, value] of Object.entries(values)) form.append(name, value.trim());
-      form.append("social_links", JSON.stringify(Object.fromEntries(socialLinks.map((row, index) => [names[index], row.url.trim()]))));
+      for (const [name, value] of Object.entries(values)) if (name !== "instagram") form.append(name, value.trim());
+      const links = Object.fromEntries(socialLinks.map((row, index) => [names[index], row.url.trim()]));
+      if (values.instagram?.trim()) links.instagram = instagramUrl(values.instagram)!;
+      form.append("social_links", JSON.stringify(links));
       if (avatar) form.append("avatar", avatar);
       if (removeAvatar) form.append("remove_avatar", "true");
       await api.updateProfile(form);
@@ -92,7 +96,7 @@ export function ProfileSettings() {
       </label>
       {user.artist_profile.avatar && <label className="flex items-center gap-3 text-sm"><input type="checkbox" disabled={!!avatar} className="h-4 w-4" checked={removeAvatar} onChange={event => setRemoveAvatar(event.target.checked)} />{t("removeAvatar")}</label>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {["full_name", "username", "phone_number", "specialties", "location", "website"].map(name => <label key={name} className="block min-w-0 space-y-2 text-sm"><span>{t(name)}</span><input {...inputProps(name)} className={inputClass} type={name === "website" ? "url" : name === "phone_number" ? "tel" : "text"} autoComplete={name === "phone_number" ? "tel" : undefined} required={name === "full_name" || name === "username"} maxLength={name === "full_name" ? 200 : name === "username" ? 100 : name === "phone_number" ? 25 : name === "specialties" ? 250 : name === "location" ? 150 : 300} pattern={name === "username" ? "[a-z0-9_-]+" : undefined} value={values[name] || ""} onChange={event => { clearError(name); setValues(previous => ({ ...previous, [name]: name === "username" ? event.target.value.toLowerCase() : event.target.value })); }} />{errorBelow(name)}{name === "phone_number" && <span className="block text-xs leading-5 text-stone-500">{t("profilePhoneHint")}</span>}</label>)}
+        {["full_name", "username", "phone_number", "specialties", "location", "website", "instagram"].map(name => <label key={name} className="block min-w-0 space-y-2 text-sm"><span>{t(name)}</span><input {...inputProps(name)} className={inputClass} type={name === "website" ? "url" : name === "phone_number" ? "tel" : "text"} placeholder={name === "instagram" ? "@username" : name === "website" ? "https://example.com" : undefined} autoComplete={name === "phone_number" ? "tel" : undefined} required={name === "full_name" || name === "username"} maxLength={name === "full_name" ? 200 : name === "username" ? 100 : name === "phone_number" ? 25 : name === "specialties" ? 250 : name === "location" ? 150 : 300} pattern={name === "username" ? "[a-z0-9_-]+" : undefined} value={values[name] || ""} onChange={event => { clearError(name); setValues(previous => ({ ...previous, [name]: name === "username" ? event.target.value.toLowerCase() : event.target.value })); }} />{errorBelow(name)}{name === "instagram" && <span className="block text-xs leading-5 text-stone-500">{t("instagramHint")}</span>}{name === "phone_number" && <span className="block text-xs leading-5 text-stone-500">{t("profilePhoneHint")}</span>}</label>)}
       </div>
       {["short_bio", "artist_statement"].map(name => <label key={name} className="block space-y-2 text-sm"><span>{t(name)}</span><textarea {...inputProps(name)} className={inputClass} rows={4} value={values[name] || ""} onChange={event => { clearError(name); setValues(previous => ({ ...previous, [name]: event.target.value })); }} />{errorBelow(name)}</label>)}
       <div className="space-y-3"><h3 className="text-sm font-medium">{t("socialLinks")}</h3>

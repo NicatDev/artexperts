@@ -1,4 +1,7 @@
 import React from "react";
+import { ArtistLinks } from "@/components/shared/ArtistLinks";
+import { artistSummary } from "@/lib/artist-links";
+import { CatalogSearch } from "@/components/shared/CatalogSearch";
 import { ArtistAvatar } from "@/components/shared/ArtistAvatar";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
@@ -26,6 +29,7 @@ export default async function ArtistsPage({
   setRequestLocale(locale);
 
   const tArtists = await getTranslations({ locale, namespace: "artists" });
+  const tEditor = await getTranslations({ locale, namespace: "editor" });
   const tCommon = await getTranslations({ locale, namespace: "common" });
 
   const currentPage = Math.max(1, parseInt(sp.page || "1", 10));
@@ -58,6 +62,8 @@ export default async function ArtistsPage({
           {tArtists("subtitle")}
         </p>
       </div>
+
+      <CatalogSearch kind="artists" locale={locale} filters={sp} />
 
       {/* Artists Grid */}
       {artistsList.length > 0 ? (
@@ -96,9 +102,9 @@ export default async function ArtistsPage({
                   )}
                 </div>
 
-                {artist.short_bio && (
-                  <p className="text-xs text-stone-600 leading-relaxed line-clamp-3 font-sans">
-                    {artist.short_bio}
+                {artistSummary(artist) && (
+                  <p className="break-words text-xs text-stone-600 leading-relaxed line-clamp-3 font-sans">
+                    {artistSummary(artist)}
                   </p>
                 )}
 
@@ -117,6 +123,8 @@ export default async function ArtistsPage({
                 )}
               </div>
 
+              <ArtistLinks artist={artist} websiteLabel={tEditor("website")} />
+
               <div className="pt-4 border-t border-stone-100 flex justify-end">
                 <Link
                   href={`/artists/${artist.username}`}
@@ -131,7 +139,7 @@ export default async function ArtistsPage({
         </div>
       ) : (
         <div className="text-center py-20 border border-dashed border-stone-200 rounded-2xl text-stone-500 text-sm bg-white">
-          {tArtists("empty")}
+          {sp.search ? tCommon("searchNoResults") : tArtists("empty")}
         </div>
       )}
 

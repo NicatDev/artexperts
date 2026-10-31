@@ -3,6 +3,14 @@ from rest_framework.response import Response
 from rest_framework import status
 
 
+def first_error(value):
+    if isinstance(value, dict):
+        return first_error(value.get('non_field_errors') or value.get('detail') or next(iter(value.values()), ''))
+    if isinstance(value, (list, tuple)):
+        return first_error(value[0]) if value else ''
+    return str(value)
+
+
 def custom_exception_handler(exc, context):
     """
     Standardizes all API exception responses across the platform:
@@ -22,7 +30,7 @@ def custom_exception_handler(exc, context):
             'error': {
                 'status_code': response.status_code,
                 'code': getattr(exc, 'default_code', 'error'),
-                'message': str(exc),
+                'message': first_error(response.data) or 'Request failed.',
                 'details': response.data
             }
         }

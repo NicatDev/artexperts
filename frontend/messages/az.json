@@ -115,7 +115,9 @@
     "artworkDownloadPermission": "Şəkli yükləmək",
     "downloadAllowed": "Yükləmək olar",
     "downloadNotAllowed": "Yükləmək olmaz",
-    "artworkDownloadHelp": "«Yükləmək olar» seçimi paylaşımı hamıya açır və əsərin səhifəsində yükləmə düyməsini göstərir. «Yükləmək olmaz» seçildikdə orijinal fayl bağlı saxlanılır və önizləməyə su nişanı əlavə olunur. Sağ klik və birbaşa yükləməyə qarşı tədbirlər görülür, lakin görünən şəkillərin ekran görüntüsünə və surətinin çıxarılmasına qarşı tam zəmanət verilmir."
+    "artworkDownloadHelp": "«Yükləmək olar» seçimi paylaşımı hamıya açır və əsərin səhifəsində yükləmə düyməsini göstərir. «Yükləmək olmaz» seçildikdə orijinal fayl bağlı saxlanılır və önizləməyə su nişanı əlavə olunur. Sağ klik və birbaşa yükləməyə qarşı tədbirlər görülür, lakin görünən şəkillərin ekran görüntüsünə və surətinin çıxarılmasına qarşı tam zəmanət verilmir.",
+    "instagram": "Instagram",
+    "instagramHint": "İstifadəçi adınızı (@username) və ya Instagram profilinizin linkini daxil edin."
   },
   "nav": {
     "home": "Ana Səhifə",
@@ -152,7 +154,8 @@
     "rightsNotice": "Bu əsərin/məzmunun müəllif hüquqlarına sahib olduğumu və ya dərc etməyə icazəmin olduğunu təsdiqləyirəm.",
     "approvalNotice": "Təqdim etdiyiniz məzmun sayt sahibi/admin təsdiqindən sonra ictimaiyyətə görünəcəkdir.",
     "imageUnavailable": "Şəkil yüklənə bilmədi",
-    "retryImage": "Şəkli yenidən yüklə"
+    "retryImage": "Şəkli yenidən yüklə",
+    "searchNoResults": "Axtarışınıza uyğun nəticə tapılmadı. Başqa sözlə yenidən axtarın."
   },
   "home": {
     "featuredArtworks": "Virtual sərgimizdən",
@@ -383,7 +386,11 @@
     "imageDimensions": "Şəklin eni və hündürlüyü 10000 pikseldən çox olmamalıdır.",
     "pdfSize": "PDF faylı 300 MB-dan böyük olmamalıdır.",
     "phoneInvalid": "Nömrəni ölkə kodu ilə düzgün daxil edin. Məsələn: +994501234567.",
-    "urlInvalid": "Düzgün veb ünvan daxil edin. Məsələn: https://example.com."
+    "urlInvalid": "Düzgün veb ünvan daxil edin. Məsələn: https://example.com.",
+    "instagramInvalid": "Düzgün Instagram istifadəçi adı və ya profil linki daxil edin.",
+    "invalidCredentials": "Email və ya şifrə yanlışdır. Məlumatları yoxlayıb yenidən cəhd edin.",
+    "accountUnverified": "Hesabınızın email ünvanı hələ təsdiqlənməyib.",
+    "accountInactive": "Bu hesab deaktiv edilib."
   },
   "downloadAccess": {
     "downloadBook": "Kitabı endir (PDF)",
@@ -453,5 +460,15 @@
     "clearConfirm": "Yarımçıq PDF yükləmələrimin silinməsini təsdiqləyirəm. Digər açıq vərəqlərdəki yükləmələr də dayanacaq. Kitablara artıq əlavə edilmiş PDF-lər silinməyəcək.",
     "clearUploads": "Yarımçıq yükləmələri sil",
     "cleared": "Yarımçıq yükləmələr təmizləndi. «Davam et» ilə bu faylı yenidən göndərin."
+  },
+  "catalogSearch": {
+    "artworks": "Qalereyada axtarış",
+    "articles": "Məqalələrdə axtarış",
+    "artists": "Rəssamlarda axtarış",
+    "books": "Kitablarda axtarış",
+    "placeholder": "Axtarış sözünü daxil edin…",
+    "submit": "Axtar",
+    "clear": "Axtarışı təmizlə",
+    "query": "Axtarış: {query}"
   }
 }

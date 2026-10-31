@@ -125,7 +125,7 @@ export function GalleryFeed({ initialItems, initialCount, initialHasMore, initia
           ))}
         </div>
       ))}
-      {!items.length && !failed && !loading && <p className="rounded-2xl border border-dashed border-stone-200 bg-white py-20 text-center text-sm text-stone-500">{tArtworks("empty")}</p>}
+      {!items.length && !failed && !loading && <p className="rounded-2xl border border-dashed border-stone-200 bg-white py-20 text-center text-sm text-stone-500">{filters.search ? tCommon("searchNoResults") : tArtworks("empty")}</p>}
       <div className="flex flex-col items-center gap-4 text-center">
         <p aria-live="polite" aria-atomic="true" className="text-sm text-stone-500">{text.shown}: {items.length} / {count}</p>
         {failed && <p role="alert" className="text-sm text-red-700">{text.error}</p>}

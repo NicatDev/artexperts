@@ -1,4 +1,5 @@
 import React from "react";
+import { ArtistLinks } from "@/components/shared/ArtistLinks";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
@@ -35,6 +36,7 @@ export default async function ArtistPortfolioPage({
   setRequestLocale(locale);
 
   const tArtists = await getTranslations({ locale, namespace: "artists" });
+  const tEditor = await getTranslations({ locale, namespace: "editor" });
   const tCommon = await getTranslations({ locale, namespace: "common" });
   const tArtworks = await getTranslations({ locale, namespace: "artworks" });
 
@@ -119,18 +121,9 @@ export default async function ArtistPortfolioPage({
                   <span>{artist.location}</span>
                 </div>
               )}
-              {artist.website && (
-                <a
-                  href={artist.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-amber-800 hover:underline font-medium"
-                >
-                  <Globe className="w-4 h-4" />
-                  <span>Vebsayt</span>
-                </a>
-              )}
+
             </div>
+            <div className="flex justify-center sm:justify-start"><ArtistLinks artist={artist} websiteLabel={tEditor("website")} /></div>
           </div>
         </div>
 

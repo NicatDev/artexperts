@@ -1,4 +1,5 @@
 import React from "react";
+import { CatalogSearch } from "@/components/shared/CatalogSearch";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
@@ -70,6 +71,8 @@ export default async function BooksPage({
         </p>
       </div>
 
+      <CatalogSearch kind="books" locale={locale} filters={sp} />
+
       <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
         <Link href="/books" className={`px-4 py-1.5 rounded-full text-xs font-medium ${!sp.category ? "bg-stone-900 text-white" : "bg-white border border-stone-200 text-stone-600"}`}>{tCommon("all")}</Link>
         {categories.map((category: any) => <Link key={category.id} href={`/books?category=${category.slug}`} className={`px-4 py-1.5 rounded-full text-xs font-medium ${sp.category === category.slug ? "bg-stone-900 text-white" : "bg-white border border-stone-200 text-stone-600"}`}>{category.name || category.name_az}</Link>)}
@@ -126,7 +129,7 @@ export default async function BooksPage({
         </div>
       ) : (
         <div className="text-center py-20 border border-dashed border-stone-200 rounded-2xl text-stone-500 text-sm bg-white">
-          {tBooks("empty")}
+          {sp.search ? tCommon("searchNoResults") : tBooks("empty")}
         </div>
       )}
 

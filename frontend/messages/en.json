@@ -115,7 +115,9 @@
     "artworkDownloadPermission": "Download the image",
     "downloadAllowed": "Downloads allowed",
     "downloadNotAllowed": "Downloads not allowed",
-    "artworkDownloadHelp": "Allowing downloads switches sharing to public and shows a download button on the artwork page. Otherwise the original file stays private and previews receive a watermark. Right-click and direct download deterrents cannot guarantee protection against screenshots or reproduction of displayed images."
+    "artworkDownloadHelp": "Allowing downloads switches sharing to public and shows a download button on the artwork page. Otherwise the original file stays private and previews receive a watermark. Right-click and direct download deterrents cannot guarantee protection against screenshots or reproduction of displayed images.",
+    "instagram": "Instagram",
+    "instagramHint": "Enter your username (@username) or Instagram profile link."
   },
   "nav": {
     "home": "Home",
@@ -152,7 +154,8 @@
     "rightsNotice": "I confirm that I own this content or have explicit permission to publish it.",
     "approvalNotice": "Submitted content will become publicly visible following approval by the site owner/admin.",
     "imageUnavailable": "The image could not be loaded",
-    "retryImage": "Retry loading image"
+    "retryImage": "Retry loading image",
+    "searchNoResults": "No matching results. Try a different search term."
   },
   "home": {
     "featuredArtworks": "Most Viewed Artworks",
@@ -383,7 +386,11 @@
     "imageDimensions": "Image width and height must not exceed 10000 pixels.",
     "pdfSize": "PDF files must be no larger than 300 MB.",
     "phoneInvalid": "Enter a valid number including the country code, e.g. +994501234567.",
-    "urlInvalid": "Enter a valid website URL, e.g. https://example.com."
+    "urlInvalid": "Enter a valid website URL, e.g. https://example.com.",
+    "instagramInvalid": "Enter a valid Instagram username or profile link.",
+    "invalidCredentials": "The email or password is incorrect. Check your details and try again.",
+    "accountUnverified": "Your email address has not been verified yet.",
+    "accountInactive": "This account has been deactivated."
   },
   "downloadAccess": {
     "downloadBook": "Download book (PDF)",
@@ -453,5 +460,15 @@
     "clearConfirm": "I confirm deleting my incomplete PDF uploads. Uploads in other tabs will also stop. PDFs already attached to books will not be deleted.",
     "clearUploads": "Clear incomplete uploads",
     "cleared": "Incomplete uploads were cleared. Resume to send this file again."
+  },
+  "catalogSearch": {
+    "artworks": "Search the gallery",
+    "articles": "Search articles",
+    "artists": "Search artists",
+    "books": "Search books",
+    "placeholder": "Enter a search term…",
+    "submit": "Search",
+    "clear": "Clear search",
+    "query": "Search: {query}"
   }
 }

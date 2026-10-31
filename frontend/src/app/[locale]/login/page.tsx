@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
+import { ApiError } from "@/lib/api";
+import { friendlyError } from "@/lib/form-errors";
 import { useAuth } from "@/features/auth/AuthContext";
 import { Mail, Lock, LogIn, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
+  const v = useTranslations("validation");
   const tAuth = useTranslations("auth");
   const tCommon = useTranslations("common");
   const router = useRouter();
@@ -33,7 +36,7 @@ export default function LoginPage() {
       await login({ email: email.trim(), password });
       router.push("/profile");
     } catch (err: any) {
-      setErrorMsg(err.message || "Giriş məlumatları yanlışdır.");
+      setErrorMsg(err instanceof ApiError ? friendlyError(err.message, v) : v("requestFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -55,19 +58,22 @@ export default function LoginPage() {
         </div>
 
         {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
+          <div role="alert" id="login-error" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-            <span>{errorMsg}</span>
+            <span className="min-w-0 break-words">{errorMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1.5">
+            <label htmlFor="login-email" className="block text-xs font-medium text-stone-700 mb-1.5">
               {tAuth("email")}
             </label>
             <div className="relative">
               <input
+                id="login-email"
+                autoComplete="email"
+                aria-describedby={errorMsg ? "login-error" : undefined}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -80,11 +86,14 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1.5">
+            <label htmlFor="login-password" className="block text-xs font-medium text-stone-700 mb-1.5">
               {tAuth("password")}
             </label>
             <div className="relative">
               <input
+                id="login-password"
+                autoComplete="current-password"
+                aria-describedby={errorMsg ? "login-error" : undefined}
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
