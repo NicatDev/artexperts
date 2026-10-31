@@ -90,22 +90,22 @@ export default async function ArticlesPage({
 
       {/* Full-width editorial list with a left-hand image. */}
       {articleFeed.failed ? <FeedError locale={locale} /> : articlesList.length > 0 ? (
-        <div className="w-full divide-y divide-stone-300/70 border-y border-stone-300/70">
+        <div className="w-full space-y-4">
           {articlesList.map((art: any) => (
             <article
               key={art.id}
-              className={`group grid w-full items-start gap-4 py-6 sm:gap-6 sm:py-8 lg:gap-8 ${art.cover_thumbnail || art.cover_image ? "grid-cols-[5.5rem_minmax(0,1fr)] sm:grid-cols-[11rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)]" : "grid-cols-1"}`}
+              className="group grid w-full grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-4 rounded-2xl border border-[#E5DFD3] bg-[#FFFCF7]/95 p-4 transition-colors hover:border-[#D4C5AD] hover:bg-[#FAF5EC] focus-within:border-[#D4C5AD] sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-6 sm:p-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8"
             >
-              {(art.cover_thumbnail || art.cover_image) && <Link href={`/articles/${art.slug || art.id}`} aria-label={art.title} className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700">
+              <Link href={`/articles/${art.slug || art.id}`} aria-label={art.title} className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700">
                 <ImageProtectionWrapper
-                  src={art.cover_thumbnail || art.cover_image}
-                    fallbackSrc={art.cover_image}
-                  alt={art.title}
+                  src={art.cover_thumbnail || art.cover_image || "/images/article-placeholder.svg"}
+                  fallbackSrc={art.cover_image}
+                  alt={art.cover_thumbnail || art.cover_image ? art.title : ""}
                   fill
                   className="w-full h-full"
                   watermarkText="Art Experts"
                 />
-              </Link>}
+              </Link>
 
               <div className="min-w-0 space-y-3 sm:space-y-4">
                 <div>
@@ -115,7 +115,7 @@ export default async function ArticlesPage({
                   <h2 className="break-words text-base font-serif text-stone-900 group-hover:text-amber-800 transition-colors mt-1.5 font-medium sm:text-xl lg:text-2xl">
                     <Link href={`/articles/${art.slug || art.id}`} className="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700">{art.title}</Link>
                   </h2>
-                  <p className="break-words text-xs text-stone-600 mt-2 line-clamp-3 leading-relaxed sm:text-sm">
+                  <p className="break-words text-[13px] text-stone-600 mt-2 line-clamp-3 leading-relaxed sm:text-sm">
                     {art.excerpt}
                   </p>
                 </div>

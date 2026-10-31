@@ -269,7 +269,7 @@ export default async function HomePage({
               >
                 <div className="relative aspect-[16/9] bg-stone-100 overflow-hidden">
                   <ImageProtectionWrapper
-                    src={art.cover_thumbnail || art.cover_image}
+                    src={art.cover_thumbnail || art.cover_image || "/images/article-placeholder.svg"}
                     fallbackSrc={art.cover_image}
                     alt={art.title}
                     fill
