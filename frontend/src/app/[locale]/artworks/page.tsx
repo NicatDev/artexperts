@@ -2,8 +2,8 @@ import React from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
-import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
-import { Pagination } from "@/components/shared/Pagination";
+import { GalleryFeed } from "@/components/shared/GalleryFeed";
+import { loadPublicData } from "@/lib/public-data";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -27,33 +27,13 @@ export default async function ArtworksPage({
   const tArtworks = await getTranslations({ locale, namespace: "artworks" });
   const tCommon = await getTranslations({ locale, namespace: "common" });
 
-  const currentPage = Math.max(1, parseInt(sp.page || "1", 10));
-  let artworksList: any[] = [];
-  let categories: any[] = [];
-  let totalPages = 1;
-  let totalCount = 0;
-
-  try {
-    const [artRes, catRes] = await Promise.all([
-      api.getArtworks({
-        lang: locale,
-        category: sp.category || "",
-        search: sp.search || "",
-        founder: sp.founder || "",
-        page: sp.page || "1",
-      }),
-      api.getArtworkCategories(locale),
-    ]);
-    artworksList = artRes?.results || (Array.isArray(artRes) ? artRes : []);
-    categories = Array.isArray(catRes) ? catRes : (catRes?.results || []);
-    totalCount = artRes?.count !== undefined ? artRes.count : artworksList.length;
-    totalPages = artRes?.total_pages || Math.max(1, Math.ceil(totalCount / 12));
-  } catch {
-    artworksList = [];
-    categories = [];
-    totalPages = 1;
-    totalCount = 0;
-  }
+  const filters = { category: sp.category || "", search: sp.search || "", founder: sp.founder || "" };
+  const [artworkFeed, categoryFeed] = await Promise.all([
+    loadPublicData("gallery", () => api.getArtworks({ ...filters, lang: locale, page: "1" })),
+    loadPublicData("gallery categories", () => api.getArtworkCategories(locale)),
+  ]);
+  const artworksList = artworkFeed.data?.results || [];
+  const categories = Array.isArray(categoryFeed.data) ? categoryFeed.data : categoryFeed.data?.results || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
@@ -100,76 +80,14 @@ export default async function ArtworksPage({
         })}
       </div>
 
-      {/* Variable-height columns preserve each artwork's original proportions. */}
-      {artworksList.length > 0 ? (
-        <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 lg:gap-8">
-          {artworksList.map((art: any) => (
-            <div
-              key={art.id}
-              className="group mb-6 w-full break-inside-avoid bg-white border border-[#EAE6DF] rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 shadow-xs hover:shadow-xl lg:mb-8"
-            >
-              <div className="relative bg-stone-100">
-                <ImageProtectionWrapper
-                  src={art.thumbnail_image || art.detail_image}
-                    fallbackSrc={art.detail_image}
-                  alt={art.title}
-                  naturalAspectRatio
-                  className="w-full"
-                  imageClassName="object-contain"
-                  showWatermark={true}
-                  watermarkText="Art Experts"
-                />
-                {art.is_founder_piece && (
-                  <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded bg-amber-500/95 text-black text-[10px] font-serif font-bold uppercase tracking-wider shadow-sm">
-                    Müəllif Əsəri
-                  </div>
-                )}
-              </div>
-
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                <div>
-                  <h3 className="text-lg font-serif text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-1 font-medium">
-                    {art.title}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-stone-500">
-                    <span>{art.medium || "Yağlı boya"}</span>
-                    {art.dimensions && <span>• {art.dimensions}</span>}
-                    {art.creation_year && <span>• {art.creation_year}</span>}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
-                  <span className="text-amber-900 font-medium line-clamp-1">
-                    {art.artist_attribution}
-                  </span>
-                  <Link
-                    href={`/artworks/${art.id}`}
-                    className="text-amber-800 hover:text-amber-950 font-semibold ml-2 inline-flex items-center gap-1"
-                  >
-                    {tCommon("viewDetails")} →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 border border-dashed border-stone-200 rounded-2xl text-stone-500 text-sm bg-white">
-          {tArtworks("empty")}
-        </div>
-      )}
-
-      {/* Pagination is always visible as requested */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        basePath="/artworks"
-        searchParams={{
-          category: sp.category,
-          search: sp.search,
-          founder: sp.founder,
-        }}
+      <GalleryFeed
+        key={JSON.stringify([locale, filters, artworkFeed.data])}
+        initialItems={artworksList}
+        initialCount={artworkFeed.data?.count ?? 0}
+        initialHasMore={Boolean(artworkFeed.data?.next)}
+        initialFailed={artworkFeed.failed}
+        filters={filters}
+        locale={locale}
       />
     </div>
   );

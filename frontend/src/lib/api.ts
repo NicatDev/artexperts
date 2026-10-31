@@ -106,9 +106,9 @@ export const api = {
   getSiteSettings: () => request<any>(`/pages/settings/`),
 
   // Artworks
-  getArtworks: (params: Record<string, string> = {}) => {
+  getArtworks: (params: Record<string, string> = {}, options: RequestInit = {}) => {
     const qs = new URLSearchParams(params).toString();
-    return request<any>(`/artworks/${qs ? `?${qs}` : ""}`);
+    return request<any>(`/artworks/${qs ? `?${qs}` : ""}`, options);
   },
   getBookCategories: (lang: string = "az") => request<any>(`/books/categories/?lang=${lang}`),
   getArtworkCategories: (lang: string = "az") => request<any>(`/artworks/categories/?lang=${lang}`),
@@ -168,7 +168,7 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request<any>(`/artists/${qs ? `?${qs}` : ""}`);
   },
-  getArtistDetail: (username: string) => request<any>(`/artists/${username}/`),
+  getArtistDetail: (username: string) => request<any>(`/artists/${encodeURIComponent(username)}/`),
 
   // Search
   search: (query: string, type: string = "all") =>

@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
+import { loadPublicData } from "@/lib/public-data";
+import { FeedError } from "@/components/shared/FeedError";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { ArtistSupportInitiative } from "@/components/shared/ArtistSupportInitiative";
 import { 
@@ -25,33 +27,17 @@ export default async function HomePage({
   const tBooks = await getTranslations({ locale, namespace: "books" });
   const tArticles = await getTranslations({ locale, namespace: "articles" });
 
-  let overviewData: any = null;
-  try {
-    overviewData = await api.getHomeOverview(locale);
-  } catch {
-    overviewData = {
-      featured_artworks: [],
-      featured_articles: [],
-      featured_books: [],
-    };
-  }
-
-  const banner = overviewData?.banner;
-  let artworks = overviewData?.featured_artworks || [];
-  let articles = overviewData?.featured_articles || [];
-  let books = overviewData?.featured_books || [];
-  try {
-    const [artworkRes, articleRes, bookRes] = await Promise.all([
-      api.getArtworks({ lang: locale, page_size: "6" }),
-      api.getArticles({ lang: locale, page_size: "3" }),
-      api.getBooks({ lang: locale, page_size: "4" }),
-    ]);
-    artworks = artworkRes?.results || artworks;
-    articles = articleRes?.results || articles;
-    books = bookRes?.results || books;
-  } catch {
-    // Keep the public overview as a graceful fallback when a catalog API is unavailable.
-  }
+  const overview = await loadPublicData("home overview", () => api.getHomeOverview(locale));
+  const banner = overview.data?.banner;
+  // Use the curated overview when available; recover each section independently.
+  const [artworkFeed, articleFeed, bookFeed] = await Promise.all([
+    overview.failed ? loadPublicData("home artworks", () => api.getArtworks({ lang: locale, page_size: "6" })) : Promise.resolve({ data: null, failed: false }),
+    overview.failed ? loadPublicData("home articles", () => api.getArticles({ lang: locale, page_size: "3" })) : Promise.resolve({ data: null, failed: false }),
+    overview.failed ? loadPublicData("home books", () => api.getBooks({ lang: locale, page_size: "4" })) : Promise.resolve({ data: null, failed: false }),
+  ]);
+  const artworks = overview.data?.featured_artworks || artworkFeed.data?.results || [];
+  const articles = overview.data?.featured_articles || articleFeed.data?.results || [];
+  const books = overview.data?.featured_books || bookFeed.data?.results || [];
 
   return (
     <div className="space-y-24 pb-20">
@@ -119,7 +105,7 @@ export default async function HomePage({
           </Link>
         </div>
 
-        {artworks.length > 0 ? (
+        {artworkFeed.failed ? <FeedError locale={locale} /> : artworks.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {artworks.map((art: any) => (
               <div
@@ -200,7 +186,7 @@ export default async function HomePage({
           </Link>
         </div>
 
-        {books.length > 0 ? (
+        {bookFeed.failed ? <FeedError locale={locale} /> : books.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {books.map((book: any) => (
               <div
@@ -274,7 +260,7 @@ export default async function HomePage({
           </Link>
         </div>
 
-        {articles.length > 0 ? (
+        {articleFeed.failed ? <FeedError locale={locale} /> : articles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {articles.map((art: any) => (
               <article

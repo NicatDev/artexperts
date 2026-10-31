@@ -2,7 +2,10 @@ import React from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+import { loadPublicData } from "@/lib/public-data";
+import { FeedError } from "@/components/shared/FeedError";
+import { ArtistAvatar } from "@/components/shared/ArtistAvatar";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { Palette, MapPin, Globe, ArrowLeft, BookOpen, FileText } from "lucide-react";
 
@@ -35,24 +38,21 @@ export default async function ArtistPortfolioPage({
   const tCommon = await getTranslations({ locale, namespace: "common" });
   const tArtworks = await getTranslations({ locale, namespace: "artworks" });
 
-  let artist: any = null;
-  let artworks: any[] = [];
-  let books: any[] = [];
-  let articles: any[] = [];
-
+  let artist: any;
   try {
     artist = await api.getArtistDetail(username);
-    const [artRes, bkRes, postRes] = await Promise.all([
-      api.getArtworks({ artist: username, lang: locale }),
-      api.getBooks({ author: artist.full_name, lang: locale }),
-      api.getArticles({ author: username, lang: locale }),
-    ]);
-    artworks = artRes?.results || [];
-    books = bkRes?.results || [];
-    articles = postRes?.results || [];
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
   }
+  const [artworkFeed, bookFeed, articleFeed] = await Promise.all([
+    loadPublicData("artist artworks", () => api.getArtworks({ artist: artist.username, lang: locale })),
+    loadPublicData("artist books", () => api.getBooks({ artist: artist.username, lang: locale })),
+    loadPublicData("artist articles", () => api.getArticles({ author: artist.username, lang: locale })),
+  ]);
+  const artworks = artworkFeed.data?.results || [];
+  const books = bookFeed.data?.results || [];
+  const articles = articleFeed.data?.results || [];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -83,9 +83,7 @@ export default async function ArtistPortfolioPage({
       {/* Artist Profile Header Banner */}
       <div className="bg-white border border-[#EAE6DF] rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-xs">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-amber-300 bg-amber-50 flex items-center justify-center text-amber-900 font-serif font-bold text-3xl flex-shrink-0 shadow-md">
-            {artist.full_name?.charAt(0) || "A"}
-          </div>
+          <ArtistAvatar artist={artist} large />
 
           <div className="space-y-4 text-center sm:text-left flex-1">
             <div className="space-y-1">
@@ -154,7 +152,7 @@ export default async function ArtistPortfolioPage({
         <h2 className="text-2xl font-serif text-stone-900 border-b border-stone-200 pb-3">
           Rəssamın Əsərləri ({artworks.length})
         </h2>
-        {artworks.length > 0 ? (
+        {artworkFeed.failed ? <FeedError locale={locale} /> : artworks.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {artworks.map((art: any) => (
               <div
@@ -194,6 +192,7 @@ export default async function ArtistPortfolioPage({
         )}
       </section>
 
+      {bookFeed.failed && <FeedError locale={locale} />}
       {/* Published Books Section */}
       {books.length > 0 && (
         <section className="space-y-6">
@@ -228,6 +227,7 @@ export default async function ArtistPortfolioPage({
         </section>
       )}
 
+      {articleFeed.failed && <FeedError locale={locale} />}
       {/* Published Articles Section */}
       {articles.length > 0 && (
         <section className="space-y-6">

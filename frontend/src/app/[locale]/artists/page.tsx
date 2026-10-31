@@ -1,4 +1,5 @@
 import React from "react";
+import { ArtistAvatar } from "@/components/shared/ArtistAvatar";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
@@ -68,9 +69,7 @@ export default async function ArtistsPage({
             >
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full border border-amber-300 bg-amber-50 flex items-center justify-center text-amber-900 font-serif font-bold text-lg flex-shrink-0 shadow-2xs">
-                    {artist.full_name?.charAt(0) || "A"}
-                  </div>
+                  <ArtistAvatar artist={artist} />
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-serif text-stone-900 font-medium">

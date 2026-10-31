@@ -1,4 +1,6 @@
 import React from "react";
+import { loadPublicData } from "@/lib/public-data";
+import { FeedError } from "@/components/shared/FeedError";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
@@ -29,32 +31,17 @@ export default async function ArticlesPage({
   const tCommon = await getTranslations({ locale, namespace: "common" });
 
   const currentPage = Math.max(1, parseInt(sp.page || "1", 10));
-  let articlesList: any[] = [];
-  let categories: any[] = [];
-  let totalPages = 1;
-  let totalCount = 0;
-
-  try {
-    const [artRes, catRes] = await Promise.all([
-      api.getArticles({
-        lang: locale,
-        category: sp.category || "",
-        search: sp.search || "",
-        author: sp.author || "",
-        page: sp.page || "1",
-      }),
-      api.getArticleCategories(locale),
-    ]);
-    articlesList = artRes?.results || (Array.isArray(artRes) ? artRes : []);
-    categories = Array.isArray(catRes) ? catRes : (catRes?.results || []);
-    totalCount = artRes?.count !== undefined ? artRes.count : articlesList.length;
-    totalPages = artRes?.total_pages || Math.max(1, Math.ceil(totalCount / 12));
-  } catch {
-    articlesList = [];
-    categories = [];
-    totalPages = 1;
-    totalCount = 0;
-  }
+  const [articleFeed, categoryFeed] = await Promise.all([
+    loadPublicData("articles", () => api.getArticles({
+      lang: locale, category: sp.category || "", search: sp.search || "",
+      author: sp.author || "", page: String(currentPage),
+    })),
+    loadPublicData("article categories", () => api.getArticleCategories(locale)),
+  ]);
+  const articlesList = articleFeed.data?.results || [];
+  const categories = Array.isArray(categoryFeed.data) ? categoryFeed.data : categoryFeed.data?.results || [];
+  const totalCount = articleFeed.data?.count ?? articlesList.length;
+  const totalPages = articleFeed.data?.total_pages || Math.max(1, Math.ceil(totalCount / 12));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
@@ -102,7 +89,7 @@ export default async function ArticlesPage({
       </div>
 
       {/* Full-width editorial list with a left-hand image. */}
-      {articlesList.length > 0 ? (
+      {articleFeed.failed ? <FeedError locale={locale} /> : articlesList.length > 0 ? (
         <div className="w-full divide-y divide-stone-300/70 border-y border-stone-300/70">
           {articlesList.map((art: any) => (
             <article

@@ -37,7 +37,17 @@ class ArticleListSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
     author_name = serializers.CharField(source='author.artist_profile.full_name', read_only=True)
     author_username = serializers.CharField(source='author.artist_profile.username', read_only=True)
-    author_avatar = serializers.CharField(source='author.artist_profile.avatar_thumbnail.url', read_only=True, default='')
+    author_avatar = serializers.SerializerMethodField()
+
+    def get_author_avatar(self, obj):
+        profile = getattr(obj.author, 'artist_profile', None)
+        if not profile:
+            return ''
+        image = profile.avatar_thumbnail or profile.avatar
+        if not image:
+            return ''
+        request = self.context.get('request')
+        return request.build_absolute_uri(image.url) if request else image.url
 
     class Meta:
         model = Article
