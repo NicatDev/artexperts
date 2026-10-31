@@ -89,20 +89,21 @@ export default async function ArtworkDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         {/* Protected Visual Display (7 cols) */}
         <div className="lg:col-span-7 bg-white border border-[#EAE6DF] rounded-3xl p-4 sm:p-6 overflow-hidden shadow-lg">
-          <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 flex items-center justify-center">
+          <div className="relative w-full rounded-2xl overflow-hidden bg-stone-100">
             <ImageProtectionWrapper
               src={artwork.detail_image || artwork.thumbnail_image}
                     fallbackSrc={artwork.thumbnail_image}
               alt={artwork.title}
-              fill
-              className="w-full h-full object-cover"
+              naturalAspectRatio
+              className="w-full"
+              imageClassName="object-contain"
               priority={true}
               showWatermark={true}
               watermarkText="Art Experts"
             />
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-xs text-stone-500 px-2">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500 px-2">
             <span className="flex items-center gap-1.5">
               <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
               {tArtworks("copyRestricted")}

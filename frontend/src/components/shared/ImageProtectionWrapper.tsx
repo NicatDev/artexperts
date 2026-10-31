@@ -19,6 +19,7 @@ interface ImageProtectionWrapperProps {
   watermarkText?: string;
   unoptimized?: boolean;
   imageClassName?: string;
+  naturalAspectRatio?: boolean;
 }
 
 /**
@@ -26,7 +27,7 @@ interface ImageProtectionWrapperProps {
  * - Prevents native image drag.
  * - Suppresses context-menu clicks as an immediate deterrent against basic asset scraping.
  * - Adds a subtle, elegant watermark badge if requested.
- * - Eliminates CLS with fixed aspect ratios.
+ * - Supports fixed frames and uncropped natural image proportions.
  * - Falls back only to another image belonging to the same content, with a retry state on failure.
  */
 export function ImageProtectionWrapper({
@@ -42,6 +43,7 @@ export function ImageProtectionWrapper({
   watermarkText = "Art Experts",
   unoptimized = true,
   imageClassName = "object-cover",
+  naturalAspectRatio = false,
 }: ImageProtectionWrapperProps) {
   const t = useTranslations("common");
   const [failedSources, setFailedSources] = React.useState<string[]>([]);
@@ -60,13 +62,14 @@ export function ImageProtectionWrapper({
         key={`${currentSrc}-${attempt}`}
         src={currentSrc}
         alt={alt}
-        width={!fill ? width || 800 : undefined}
-        height={!fill ? height || 600 : undefined}
-        fill={fill}
+        width={!fill || naturalAspectRatio ? width || 800 : undefined}
+        height={!fill || naturalAspectRatio ? height || 600 : undefined}
+        fill={fill && !naturalAspectRatio}
         priority={priority}
         unoptimized={unoptimized}
         onError={() => setFailedSources(previous => [...new Set([...previous, currentSrc])])}
-        className={`${imageClassName} transition-transform duration-500 ease-out group-hover:scale-[1.02] pointer-events-none`}
+        className={`${imageClassName} ${naturalAspectRatio ? "block h-auto w-full" : "transition-transform duration-500 ease-out group-hover:scale-[1.02]"} pointer-events-none`}
+        style={naturalAspectRatio ? { width: "100%", height: "auto" } : undefined}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       /> : <div role="img" aria-label={alt} className={`${fill ? "absolute inset-0" : "min-h-40"} flex flex-col items-center justify-center gap-3 bg-stone-100 p-4 text-center text-stone-500`}>
         <ImageOff aria-hidden="true" className="h-8 w-8" />

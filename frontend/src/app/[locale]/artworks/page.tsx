@@ -4,7 +4,6 @@ import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { Pagination } from "@/components/shared/Pagination";
-import { Palette, Filter, ArrowRight } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -101,21 +100,22 @@ export default async function ArtworksPage({
         })}
       </div>
 
-      {/* Artworks Grid */}
+      {/* Variable-height columns preserve each artwork's original proportions. */}
       {artworksList.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 lg:gap-8">
           {artworksList.map((art: any) => (
             <div
               key={art.id}
-              className="group bg-white border border-[#EAE6DF] rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 flex flex-col shadow-xs hover:shadow-xl"
+              className="group mb-6 w-full break-inside-avoid bg-white border border-[#EAE6DF] rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 shadow-xs hover:shadow-xl lg:mb-8"
             >
-              <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
+              <div className="relative bg-stone-100">
                 <ImageProtectionWrapper
                   src={art.thumbnail_image || art.detail_image}
                     fallbackSrc={art.detail_image}
                   alt={art.title}
-                  fill
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  naturalAspectRatio
+                  className="w-full"
+                  imageClassName="object-contain"
                   showWatermark={true}
                   watermarkText="Art Experts"
                 />
@@ -138,7 +138,7 @@ export default async function ArtworksPage({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+                <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
                   <span className="text-amber-900 font-medium line-clamp-1">
                     {art.artist_attribution}
                   </span>

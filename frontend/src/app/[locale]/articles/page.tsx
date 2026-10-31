@@ -4,7 +4,7 @@ import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { Pagination } from "@/components/shared/Pagination";
-import { Clock, ArrowRight, User } from "lucide-react";
+import { Clock } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -101,49 +101,47 @@ export default async function ArticlesPage({
         })}
       </div>
 
-      {/* Articles Grid */}
+      {/* Full-width editorial list with a left-hand image. */}
       {articlesList.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="w-full divide-y divide-stone-300/70 border-y border-stone-300/70">
           {articlesList.map((art: any) => (
             <article
               key={art.id}
-              className="group bg-white border border-[#EAE6DF] rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 flex flex-col shadow-xs hover:shadow-xl"
+              className={`group grid w-full items-start gap-4 py-6 sm:gap-6 sm:py-8 lg:gap-8 ${art.cover_thumbnail || art.cover_image ? "grid-cols-[5.5rem_minmax(0,1fr)] sm:grid-cols-[11rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)]" : "grid-cols-1"}`}
             >
-              <div className="relative aspect-[16/9] bg-stone-100 overflow-hidden">
+              {(art.cover_thumbnail || art.cover_image) && <Link href={`/articles/${art.slug || art.id}`} aria-label={art.title} className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-stone-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700">
                 <ImageProtectionWrapper
                   src={art.cover_thumbnail || art.cover_image}
                     fallbackSrc={art.cover_image}
                   alt={art.title}
                   fill
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full"
                   watermarkText="Art Experts"
                 />
-                <div className="absolute top-2 right-2 z-20 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[10px] text-stone-700 border border-stone-200 shadow-2xs font-medium">
-                  <Clock className="w-3 h-3 text-amber-700" />
-                  <span>{art.reading_time_minutes} {tArticles("readingTime")} · {art.views_count || 0} {tCommon("views")}</span>
-                </div>
-              </div>
+              </Link>}
 
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+              <div className="min-w-0 space-y-3 sm:space-y-4">
                 <div>
                   <span className="text-[11px] font-mono text-amber-800 uppercase tracking-wider font-semibold">
                     {art.category_name || "Sənət Nəzəriyyəsi"}
                   </span>
-                  <h3 className="text-lg font-serif text-stone-900 group-hover:text-amber-800 transition-colors mt-1.5 line-clamp-2 font-medium">
-                    {art.title}
-                  </h3>
-                  <p className="text-xs text-stone-600 mt-2 line-clamp-3 leading-relaxed">
+                  <h2 className="break-words text-base font-serif text-stone-900 group-hover:text-amber-800 transition-colors mt-1.5 font-medium sm:text-xl lg:text-2xl">
+                    <Link href={`/articles/${art.slug || art.id}`} className="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700">{art.title}</Link>
+                  </h2>
+                  <p className="break-words text-xs text-stone-600 mt-2 line-clamp-3 leading-relaxed sm:text-sm">
                     {art.excerpt}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
-                  <span className="font-medium text-stone-700">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-500">
+                  <span className="break-words font-medium text-stone-700">
                     {art.author_name}
                   </span>
+                  <span className="inline-flex items-center gap-1.5"><Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />{art.reading_time_minutes} {tArticles("readingTime")}</span>
+                  <span>{art.views_count || 0} {tCommon("views")}</span>
                   <Link
                     href={`/articles/${art.slug || art.id}`}
-                    className="text-amber-800 hover:text-amber-950 font-semibold inline-flex items-center gap-1"
+                    className="inline-flex min-h-11 items-center gap-1 font-semibold text-amber-800 hover:text-amber-950 sm:ml-auto"
                   >
                     {tCommon("readMore")} →
                   </Link>
