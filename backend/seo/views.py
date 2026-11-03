@@ -84,6 +84,10 @@ class DynamicSitemapDataView(views.APIView):
                     "changefreq": "monthly"
                 })
 
+        from learning.models import Entry
+        for entry in Entry.objects.all():
+            urls.append({"path": f"{entry.kind}/{entry.id}", "lastmod": entry.updated_at.isoformat(), "priority": 0.7, "changefreq": "weekly"})
+
         # 5. Public Artists
         artists = ArtistProfile.objects.filter(
             user__is_active=True,

@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 api_v1_patterns = [
+    path('', include('learning.urls')),
     path('', include('users.api.urls')),
     path('', include('artworks.api.urls')),
     path('', include('articles.api.urls')),

@@ -26,6 +26,7 @@ export interface User {
   is_artist: boolean;
   is_verified: boolean;
   is_staff: boolean;
+  is_superuser: boolean;
   artist_profile?: ArtistProfile;
 }
 

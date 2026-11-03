@@ -19,7 +19,7 @@ function remember(key: string, id?: string) {
   try { if (id) localStorage.setItem(key, id); else localStorage.removeItem(key); } catch { /* Storage can be disabled. */ }
 }
 
-function xhrJson<T>(path: string, method: string, body: FormData | string | null, csrf: string, options: {
+export function xhrJson<T>(path: string, method: string, body: FormData | string | null, csrf: string, options: {
   signal?: AbortSignal; progress?: (fraction: number) => void; sent?: () => void;
 } = {}): Promise<T> {
   return new Promise((resolve, reject) => {

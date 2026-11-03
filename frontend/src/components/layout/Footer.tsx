@@ -77,6 +77,8 @@ export function Footer() {
                   {tNav("about")}
                 </Link>
               </li>
+              <li><Link href="/lessons" className="text-stone-600 hover:text-amber-800">{tNav("lessons")}</Link></li>
+              <li><Link href="/facts" className="text-stone-600 hover:text-amber-800">{tNav("facts")}</Link></li>
             </ul>
           </div>
 

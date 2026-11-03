@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@/features/auth/AuthContext";
+import { LearningDashboard } from "@/features/content/LearningDashboard";
 import { ProfileSettings } from "@/features/auth/ProfileSettings";
 import { ContentEditor, type ContentKind } from "@/features/content/ContentEditor";
 import { Modal } from "@/components/shared/Modal";
@@ -12,11 +13,12 @@ import { api } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { Palette, BookOpen, FileText, Settings, Plus, Edit3, Trash2 } from "lucide-react";
 
-type Tab = ContentKind | "settings";
-const tabs = [{ kind: "artworks", icon: Palette }, { kind: "books", icon: BookOpen }, { kind: "articles", icon: FileText }, { kind: "settings", icon: Settings }] as const;
+type Tab = ContentKind | "settings" | "lessons" | "facts";
+const tabs = [{ kind: "artworks", icon: Palette }, { kind: "books", icon: BookOpen }, { kind: "articles", icon: FileText }, { kind: "lessons", icon: BookOpen }, { kind: "facts", icon: FileText }, { kind: "settings", icon: Settings }] as const;
 
 export default function ProfileDashboardPage() {
   const t = useTranslations("editor");
+  const learning = useTranslations("learning");
   const profile = useTranslations("profile");
   const common = useTranslations("common");
   const locale = useLocale();
@@ -39,11 +41,11 @@ export default function ProfileDashboardPage() {
 
   useEffect(() => { if (!isLoading && !user) router.replace("/login"); }, [isLoading, user, router]);
   const load = useCallback(async () => {
-    if (!user || tab === "settings") return;
+    if (!user || ["settings","lessons","facts"].includes(tab)) return;
     const id = ++requestId.current;
     setLoading(true); setError("");
     try {
-      const response = await api.getMyContent(tab, page, locale);
+      const response = await api.getMyContent(tab as ContentKind, page, locale);
       if (id !== requestId.current) return;
       setRows(response.results); setCount(response.count); setTotalPages(Math.max(1, response.total_pages));
     } catch (error) { if (id === requestId.current) setError(error instanceof Error ? error.message : t("loadError")); }
@@ -58,9 +60,9 @@ export default function ProfileDashboardPage() {
     setEditor(null); setError(""); setSuccess("");
   }
   async function edit(item: any) {
-    if (tab === "settings" || editing) return;
+    if (["settings","lessons","facts"].includes(tab) || editing) return;
     setEditing(true); setError(""); setSuccess("");
-    try { setEditor({ kind: tab, item: await api.getManagedContent(tab, item.id) }); }
+    try { setEditor({ kind: tab as ContentKind, item: await api.getManagedContent(tab as ContentKind, item.id) }); }
     catch (error) { setError(error instanceof Error ? error.message : t("loadError")); }
     finally { setEditing(false); }
   }
@@ -88,12 +90,12 @@ export default function ProfileDashboardPage() {
       <button onClick={() => switchTab("settings")} className="min-h-11 rounded-xl border px-4 text-sm">{profile("editProfile")}</button>
     </header>
     <div role="tablist" aria-label={profile("dashboard")} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {tabs.map(({ kind, icon: Icon }) => <button key={kind} id={`profile-tab-${kind}`} type="button" role="tab" aria-selected={tab === kind} aria-controls={`profile-panel-${kind}`} disabled={editing || deleteBusy} onClick={() => switchTab(kind)} className={`flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium sm:text-sm ${tab === kind ? "border-amber-400 bg-amber-50 text-amber-900" : "border-stone-200 bg-white text-stone-600"} disabled:opacity-50`}><Icon className="h-4 w-4 shrink-0" />{t(kind)}</button>)}
+      {tabs.filter(item => !["lessons","facts"].includes(item.kind) || user.is_superuser).map(({ kind, icon: Icon }) => <button key={kind} id={`profile-tab-${kind}`} type="button" role="tab" aria-selected={tab === kind} aria-controls={`profile-panel-${kind}`} disabled={editing || deleteBusy} onClick={() => switchTab(kind)} className={`flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium sm:text-sm ${tab === kind ? "border-amber-400 bg-amber-50 text-amber-900" : "border-stone-200 bg-white text-stone-600"} disabled:opacity-50`}><Icon className="h-4 w-4 shrink-0" />{kind === "lessons" || kind === "facts" ? learning(kind) : t(kind)}</button>)}
     </div>
     {success && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">{success}</p>}
     {error && <div role="alert" className="space-y-3 rounded-xl bg-rose-50 p-4 text-sm text-rose-700"><p className="break-words">{error}</p><button onClick={() => void load()} className="min-h-11 rounded-lg border border-rose-200 px-4">{t("retry")}</button></div>}
     <section role="tabpanel" id={`profile-panel-${tab}`} aria-labelledby={`profile-tab-${tab}`}>
-      {tab === "settings" ? <ProfileSettings /> : editor ? <ContentEditor key={`${editor.kind}-${editor.item?.id || "new"}`} kind={editor.kind} initial={editor.item} isStaff={user.is_staff} onCancel={() => setEditor(null)} onSaved={() => { setEditor(null); setSuccess(t("saved")); if (page !== 1) setPage(1); else void load(); }} /> : <div className="space-y-5">
+      {tab === "settings" ? <ProfileSettings /> : tab === "lessons" || tab === "facts" ? <LearningDashboard key={tab} kind={tab} /> : editor ? <ContentEditor key={`${editor.kind}-${editor.item?.id || "new"}`} kind={editor.kind} initial={editor.item} isStaff={user.is_staff} onCancel={() => setEditor(null)} onSaved={() => { setEditor(null); setSuccess(t("saved")); if (page !== 1) setPage(1); else void load(); }} /> : <div className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-serif text-xl sm:text-2xl">{t(tab)} {!loading && `(${count})`}</h2><button disabled={editing} onClick={() => { setSuccess(""); setEditor({ kind: tab }); }} className="flex min-h-12 items-center gap-2 rounded-xl bg-stone-900 px-4 text-sm text-white disabled:opacity-50"><Plus className="h-4 w-4" />{t("add")}</button></div>
         {loading ? <p className="py-12 text-center text-sm text-stone-500">{common("loading")}</p> : !error && rows.length === 0 ? <p className="rounded-2xl border border-dashed bg-white p-8 text-center text-sm text-stone-500">{profile("emptyContent")}</p> : !error && <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

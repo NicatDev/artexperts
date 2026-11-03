@@ -83,6 +83,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  learningList: (kind: string, params: Record<string,string> = {}) => request<any>(`/${kind}/?${new URLSearchParams(params)}`, {cache:"no-store"}),
+  learningDetail: (kind: string, id: string) => request<any>(`/${kind}/${id}/`, {cache:"no-store"}),
+  learningSave: (kind: string, data: unknown, id?: string) => request<any>(id ? `/${kind}/${id}/manage/` : `/${kind}/publish/`, {method:id ? "PATCH" : "POST",body:JSON.stringify(data)}),
+  learningDelete: (kind: string, id: string) => request<void>(`/${kind}/${id}/manage/`, {method:"DELETE"}),
   recordContentView: async (kind: "artworks" | "articles" | "books", id: string) => {
     const result = await request<{ counted: boolean; views_count: number; visitor_id: string }>(`/${kind}/${id}/view/`, {
       method: "POST", body: JSON.stringify({}), headers: { "X-Art-Experts-Visitor": getVisitorId() },

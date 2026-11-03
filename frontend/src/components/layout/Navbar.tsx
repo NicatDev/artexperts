@@ -29,6 +29,8 @@ export function Navbar() {
     { href: "/books", label: tNav("books") },
     { href: "/articles", label: tNav("articles") },
     { href: "/artists", label: tNav("artists") },
+    { href: "/lessons", label: tNav("lessons") },
+    { href: "/facts", label: tNav("facts") },
     { href: "/about", label: tNav("about") },
   ];
 
@@ -55,7 +57,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden xl:flex items-center gap-7 text-sm font-medium">
+          <nav className="hidden xl:flex items-center gap-3 text-xs font-medium">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (

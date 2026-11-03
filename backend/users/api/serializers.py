@@ -77,8 +77,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'is_artist', 'is_verified', 'is_staff', 'artist_profile', 'created_at']
-        read_only_fields = ['id', 'is_verified', 'is_staff', 'created_at']
+        fields = ['id', 'email', 'is_artist', 'is_verified', 'is_staff', 'is_superuser', 'artist_profile', 'created_at']
+        read_only_fields = ['id', 'is_verified', 'is_staff', 'is_superuser', 'created_at']
 
 
 class RequestVerificationCodeSerializer(serializers.Serializer):

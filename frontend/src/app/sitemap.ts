@@ -8,6 +8,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "artworks", priority: 0.9, changefreq: "daily" },
     { path: "books", priority: 0.9, changefreq: "daily" },
     { path: "articles", priority: 0.8, changefreq: "daily" },
+    { path: "lessons", priority: 0.8, changefreq: "weekly" },
+    { path: "facts", priority: 0.8, changefreq: "weekly" },
     { path: "artists", priority: 0.8, changefreq: "weekly" },
     { path: "about", priority: 0.8, changefreq: "monthly" },
   ];

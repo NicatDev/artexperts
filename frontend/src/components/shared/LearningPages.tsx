@@ -1,0 +1,29 @@
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import { api, ApiError } from '@/lib/api';
+import { Link } from '@/i18n/routing';
+import { siteConfig } from '@/config/site';
+import { ImageProtectionWrapper } from './ImageProtectionWrapper';
+import { Pagination } from './Pagination';
+import { CatalogSearch } from './CatalogSearch';
+import { ArtistAvatar } from './ArtistAvatar';
+export const entryCover = (entry: any) => { const a = entry.assets || []; return a.find((x: any) => x.role === 'cover')?.file || a.find((x: any) => x.role === 'image')?.file || a.find((x: any) => x.role === 'video' && x.poster)?.poster || '/images/article-placeholder.svg'; };
+export async function LearningList({ kind, params, searchParams }: { kind: 'lessons' | 'facts'; params: Promise<{ locale: string }>; searchParams: Promise<{ search?: string; page?: string }> }) {
+  const { locale } = await params; const sp = await searchParams; setRequestLocale(locale); const t = await getTranslations({ locale, namespace: 'learning' }), c = await getTranslations({ locale, namespace: 'common' });
+  let data: any = null; try { data = await api.learningList(kind, { search: sp.search || '', page: sp.page || '1' }); } catch { }
+  return <div className="mx-auto max-w-7xl space-y-10 px-4 py-12 sm:px-6 lg:px-8"><header className="mx-auto max-w-2xl space-y-4 text-center"><h1 className="font-serif text-3xl text-stone-900 sm:text-5xl">{t(kind)}</h1><p className="text-sm leading-7 text-stone-600">{t(kind + 'Intro')}</p></header><CatalogSearch kind={kind} locale={locale} filters={sp} />
+    {!data ? <p role="alert" className="rounded-xl bg-amber-50 p-5">{t('loadError')}</p> : !data.results.length ? <p className="rounded-2xl border border-dashed bg-white p-10 text-center text-stone-600">{sp.search ? c('searchNoResults') : t('empty')}</p> : <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">{data.results.map((entry: any) => <article key={entry.id} className="overflow-hidden rounded-2xl border border-stone-200 bg-[#FFFCF7] transition-colors hover:border-amber-300"><Link href={`/${kind}/${entry.id}`} aria-label={entry.title} className="block"><ImageProtectionWrapper src={entryCover(entry)} alt={entry.title} fill className="aspect-[4/3] w-full" /></Link><div className="space-y-3 p-5"><h2 className="break-words font-serif text-xl"><Link href={`/${kind}/${entry.id}`} className="text-stone-900 hover:text-amber-800">{entry.title}</Link></h2>{entry.summary && <p className="line-clamp-3 break-words text-sm leading-7 text-stone-600">{entry.summary}</p>}<Link href={`/${kind}/${entry.id}`} className="inline-flex min-h-11 items-center text-sm font-medium text-amber-800">{t('open')} →</Link></div></article>)}</div>}
+    {data && <Pagination currentPage={Number(sp.page) || 1} totalPages={data.total_pages} totalCount={data.count} basePath={`/${kind}`} searchParams={{ search: sp.search }} />}</div>;
+}
+export async function LearningDetail({ kind, params }: { kind: 'lessons' | 'facts'; params: Promise<{ locale: string; id: string }> }) {
+  const { locale, id } = await params; setRequestLocale(locale); const t = await getTranslations({ locale, namespace: 'learning' }); let entry: any;
+  try { entry = await api.learningDetail(kind, id); } catch(e) { if(e instanceof ApiError && e.status === 404) notFound(); throw e; }
+  const images = entry.assets.filter((a: any) => a.role === 'image'), videos = entry.assets.filter((a: any) => a.role === 'video');
+  return <article className="mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6 lg:px-8"><Link href={`/${kind}`} className="inline-flex min-h-11 items-center text-sm text-amber-800">← {t(kind)}</Link><header className="space-y-5"><h1 className="break-words font-serif text-3xl leading-tight text-stone-900 sm:text-5xl">{entry.title}</h1>{entry.author_profile && <div className="flex items-center gap-3"><ArtistAvatar artist={entry.author_profile} /><span className="text-sm text-stone-700">{entry.author_profile.full_name}</span></div>}</header>
+    {entry.assets.some((a: any) => a.role === 'cover') && <ImageProtectionWrapper src={entryCover(entry)} alt={entry.title} naturalAspectRatio className="w-full rounded-2xl" />}
+    {entry.summary && <section className="rounded-2xl border border-amber-200 bg-amber-50/90 p-5 sm:p-7"><h2 className="mb-3 font-serif text-xl">{t('summary')}</h2><p className="whitespace-pre-line break-words text-sm leading-8 text-stone-700">{entry.summary}</p></section>}
+    {entry.content && <div className="article-content min-w-0 rounded-2xl border border-stone-200 bg-[#FFFCF7]/95 p-5 sm:p-8" dangerouslySetInnerHTML={{ __html: entry.content }} />}
+    {videos.length > 0 && <section className="space-y-5"><h2 className="font-serif text-2xl">{t('videos')}</h2>{videos.map((a: any, i: number) => <figure key={a.id} className="space-y-2"><video className="max-h-[75vh] w-full rounded-2xl bg-stone-900" controls playsInline preload="metadata" poster={a.poster ? siteConfig.mediaUrl(a.poster) : undefined} src={siteConfig.mediaUrl(a.file)} aria-label={`${t('videos')} ${i + 1}`} /><figcaption className="text-sm text-stone-600">{t('videos')} {i + 1}</figcaption></figure>)}</section>}
+    {images.length > 0 && <section className="space-y-5"><h2 className="font-serif text-2xl">{t('images')}</h2><div className="grid items-start gap-5 sm:grid-cols-2">{images.map((a: any, i: number) => <ImageProtectionWrapper key={a.id} src={a.file} alt={`${entry.title} — ${i + 1}`} naturalAspectRatio className="w-full rounded-2xl" />)}</div></section>}
+  </article>;
+}

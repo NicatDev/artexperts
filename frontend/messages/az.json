@@ -130,7 +130,9 @@
     "profile": "Profilim",
     "login": "Daxil Ol",
     "register": "Qeydiyyat",
-    "logout": "Çıxış"
+    "logout": "Çıxış",
+    "lessons": "Tədris materialları",
+    "facts": "Maraqlı faktlar"
   },
   "common": {
     "siteName": "Art Experts",
@@ -471,6 +473,40 @@
     "placeholder": "Axtarış sözünü daxil edin…",
     "submit": "Axtar",
     "clear": "Axtarışı təmizlə",
-    "query": "Axtarış: {query}"
+    "query": "Axtarış: {query}",
+    "lessons": "Tədris materialları",
+    "facts": "Maraqlı faktlar"
+  },
+  "learning": {
+    "lessons": "Tədris materialları",
+    "facts": "Maraqlı faktlar",
+    "lessonsIntro": "Sənəti addım-addım öyrənin: dərslər, izahlar, şəkillər və videolar.",
+    "factsIntro": "İncəsənət dünyasından maraqlı biliklər və hekayələr.",
+    "add": "Əlavə et",
+    "empty": "Hələlik paylaşım yoxdur.",
+    "loadError": "Məlumatları yükləmək mümkün olmadı. Yenidən cəhd edin.",
+    "previous": "Əvvəlki",
+    "next": "Növbəti",
+    "deleteTitle": "Paylaşımı sil",
+    "deletePrompt": "Bu paylaşımı və ona aid yüklənmiş faylları silmək istədiyinizə əminsiniz?",
+    "title": "Başlıq",
+    "summary": "Dərsin qısa məzmunu",
+    "content": "Əsas məzmun",
+    "cover": "Cover şəkli (istəyə bağlı)",
+    "images": "Şəkillər",
+    "videos": "Videolar",
+    "required": "Bu sahəni doldurun.",
+    "atLeastOne": "Mətn, şəkil və ya videodan ən az birini əlavə edin.",
+    "mediaLimit": "Ən çox 25 media faylı əlavə etmək olar.",
+    "oneImage": "Maraqlı fakt üçün bir şəkil seçin.",
+    "fileHint": "Şəkillər: JPG, PNG, WebP — 25 MB-a qədər. Video: MP4 (H.264) və WebM — 2 GB-a qədər. Cover yoxdursa ilk şəkil və ya video kadrı istifadə olunur.",
+    "imageHint": "JPG, PNG və ya WebP — 25 MB-a qədər.",
+    "immediate": "Paylaşım dərhal dərc ediləcək. Bu bölməni yalnız superuserlər idarə edir.",
+    "uploadTitle": "Yükləmə və dərc",
+    "pause": "Dayandır",
+    "retry": "Davam et",
+    "paused": "Yükləmə dayandırıldı. Eyni fayllarla davam edə bilərsiniz.",
+    "uploadError": "Fayl yüklənmədi və ya emal edilə bilmədi. Formatı və bağlantını yoxlayıb yenidən cəhd edin.",
+    "open": "Bax"
   }
 }

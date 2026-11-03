@@ -130,7 +130,9 @@
     "profile": "Profile",
     "login": "Sign In",
     "register": "Register",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "lessons": "Teaching materials",
+    "facts": "Interesting facts"
   },
   "common": {
     "siteName": "Art Experts",
@@ -471,6 +473,40 @@
     "placeholder": "Enter a search term…",
     "submit": "Search",
     "clear": "Clear search",
-    "query": "Search: {query}"
+    "query": "Search: {query}",
+    "lessons": "Teaching materials",
+    "facts": "Interesting facts"
+  },
+  "learning": {
+    "lessons": "Teaching materials",
+    "facts": "Interesting facts",
+    "lessonsIntro": "Learn art step by step through lessons, explanations, images and video.",
+    "factsIntro": "Discover knowledge and stories from the world of art.",
+    "add": "Add",
+    "empty": "No posts yet.",
+    "loadError": "Could not load the content. Please try again.",
+    "previous": "Previous",
+    "next": "Next",
+    "deleteTitle": "Delete post",
+    "deletePrompt": "Delete this post and its uploaded files?",
+    "title": "Title",
+    "summary": "Lesson overview",
+    "content": "Main content",
+    "cover": "Cover image (optional)",
+    "images": "Images",
+    "videos": "Videos",
+    "required": "Complete this field.",
+    "atLeastOne": "Add at least one text, image or video.",
+    "mediaLimit": "Use no more than 25 media files.",
+    "oneImage": "Choose one image for a fact.",
+    "fileHint": "Images: JPG, PNG, WebP up to 25 MB. Video: MP4 (H.264), WebM up to 2 GB. Without a cover, the first image or a video frame is used.",
+    "imageHint": "JPG, PNG or WebP up to 25 MB.",
+    "immediate": "This post is published immediately. Only superusers manage this section.",
+    "uploadTitle": "Upload and publish",
+    "pause": "Pause",
+    "retry": "Resume",
+    "paused": "Upload paused. Continue with the same files.",
+    "uploadError": "Could not upload or process the file. Check the format and connection, then try again.",
+    "open": "View"
   }
 }

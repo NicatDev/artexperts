@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
     'rest_framework', 'corsheaders', 'drf_spectacular',
-    'core', 'users', 'artworks', 'articles', 'books', 'pages', 'search', 'seo',
+    'learning', 'core', 'users', 'artworks', 'articles', 'books', 'pages', 'search', 'seo',
 ]
 
 AUTH_USER_MODEL = 'users.User'

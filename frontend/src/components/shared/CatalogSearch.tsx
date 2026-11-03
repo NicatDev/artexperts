@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 
 export async function CatalogSearch({ kind, locale, filters }: {
-  kind: 'artworks' | 'articles' | 'artists' | 'books'; locale: string;
+  kind: 'artworks' | 'articles' | 'artists' | 'books' | 'lessons' | 'facts'; locale: string;
   filters: Record<string, string | undefined>;
 }) {
   const t = await getTranslations({ locale, namespace: 'catalogSearch' });

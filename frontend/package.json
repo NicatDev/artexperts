@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:uploads": "node --test scripts/test-content-upload.mjs",
-    "test:profiles": "node --test scripts/test-artist-links.mjs"
+    "test:profiles": "node --test scripts/test-artist-links.mjs",
+    "test:learning": "node --test scripts/test-learning-upload.mjs"
   },
   "dependencies": {
     "@tiptap/core": "^3.31.4",
