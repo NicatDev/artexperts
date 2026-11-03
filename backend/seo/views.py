@@ -24,6 +24,8 @@ class DynamicSitemapDataView(views.APIView):
             ('artworks', 0.9, 'daily'),
             ('books', 0.9, 'daily'),
             ('articles', 0.8, 'daily'),
+            ('lessons', 0.8, 'weekly'),
+            ('facts', 0.8, 'weekly'),
             ('artists', 0.8, 'weekly'),
             ('about', 0.8, 'monthly'),
         ]
@@ -33,7 +35,6 @@ class DynamicSitemapDataView(views.APIView):
         for path, priority, freq in static_pages:
             urls.append({
                 "path": path,
-                "lastmod": now_iso,
                 "priority": priority,
                 "changefreq": freq
             })
@@ -63,7 +64,7 @@ class DynamicSitemapDataView(views.APIView):
             if trans and trans.slug:
                 urls.append({
                     "path": f"articles/{trans.slug}",
-                    "lastmod": art.updated_at.isoformat(),
+                    "lastmod": max([art.updated_at] + [t.updated_at for t in art.translations.all()]).isoformat(),
                     "priority": 0.7,
                     "changefreq": "monthly"
                 })
@@ -79,7 +80,7 @@ class DynamicSitemapDataView(views.APIView):
             if trans and trans.slug:
                 urls.append({
                     "path": f"books/{trans.slug}",
-                    "lastmod": bk.updated_at.isoformat(),
+                    "lastmod": max([bk.updated_at] + [t.updated_at for t in bk.translations.all()]).isoformat(),
                     "priority": 0.7,
                     "changefreq": "monthly"
                 })

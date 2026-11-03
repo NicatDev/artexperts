@@ -103,7 +103,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'excerpt', 'content', 'author_profile',
             'category', 'cover_image', 'cover_thumbnail', 'reading_time_minutes',
             'views_count', 'is_featured', 'is_founder_article', 'moderation_status',
-            'rejection_reason', 'translations', 'created_at'
+            'rejection_reason', 'translations', 'created_at', 'updated_at'
         ]
 
     def _get_translation(self, obj):

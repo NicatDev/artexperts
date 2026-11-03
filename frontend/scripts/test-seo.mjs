@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import ts from 'typescript';
+const module={exports:{}};
+const source=fs.readFileSync(new URL('../src/lib/seo.ts',import.meta.url),'utf8');
+const config={name:'Art Experts',siteUrl:'https://artexperts.net',locales:['az','en','ru'],mediaUrl:s=>s.startsWith('/')?'https://artexperts.net'+s:s};
+new Function('require','module','exports',ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(()=>({siteConfig:config}),module,module.exports);
+const {pageMetadata,plainDescription,canonicalSlug}=module.exports;
+test('each public route has its own canonical and matching language alternates',()=>{const m=pageMetadata({locale:'en',path:'lessons/123',title:'Lesson',description:'<p>Content</p>'});assert.equal(m.alternates.canonical,'https://artexperts.net/en/lessons/123');assert.equal(m.alternates.languages.az,'https://artexperts.net/az/lessons/123');assert.equal(m.alternates.languages['x-default'],m.alternates.languages.az);assert.equal(m.openGraph.url,m.alternates.canonical);assert.equal(m.robots.index,true);});
+test('pagination is self-canonical and search/filter results are noindex',()=>{const m=pageMetadata({locale:'az',path:'facts',title:'Facts',query:{page:'2'}});assert.equal(m.alternates.canonical,'https://artexperts.net/az/facts?page=2');assert.equal(m.robots.index,true);assert.equal(pageMetadata({locale:'az',title:'Search',query:{search:'art'}}).robots.index,false);});
+test('description is plain and bounded, brand suffixes are not repeated',()=>{assert.equal(plainDescription('<p>Text &amp; art</p>'),'Text & art');assert.ok(plainDescription('a'.repeat(300)).length<=160);assert.equal(pageMetadata({locale:'az',title:'Book | Art Experts | Art Experts'}).title,'Book');});
+test('translated slug aliases choose the same primary URL as sitemap',()=>{assert.equal(canonicalSlug({slug:'en-title',translations:[{language:'en',slug:'en-title'},{language:'az',slug:'az-title'}]}),'az-title');});

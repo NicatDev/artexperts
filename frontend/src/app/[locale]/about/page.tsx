@@ -1,13 +1,12 @@
+import { pageMetadata } from "@/lib/seo";
 import React from "react";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArtistSupportInitiative } from "@/components/shared/ArtistSupportInitiative";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { locale } = await params;
-  return {
-    title: locale === "az" ? "Haqqımızda" : locale === "ru" ? "О нас" : "About Us",
-    description: "Azərbaycan rəssamlarını və təsviri incəsənət yaradıcılığını təqdim edən platforma.",
-  };
+  const t = await getTranslations({ locale, namespace: "about" });
+  return pageMetadata({ locale, path: "about", title: t("title"), description: locale === "az" ? "Azərbaycan rəssamlarının əsərlərini, kitablarını və yaradıcılıq irsini təqdim edən Art Experts platformasının vizyonu və missiyası." : locale === "ru" ? "Узнайте о миссии и целях Art Experts — платформы произведений, книг и творческого наследия азербайджанских художников." : "Learn about the mission and vision of Art Experts, a platform for Azerbaijani artists, their works, books and creative heritage.", query: await searchParams });
 }
 
 export default async function AboutPage({

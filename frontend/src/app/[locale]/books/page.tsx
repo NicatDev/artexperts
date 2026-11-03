@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import React from "react";
 import { CatalogSearch } from "@/components/shared/CatalogSearch";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -7,12 +8,10 @@ import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapp
 import { Pagination } from "@/components/shared/Pagination";
 import { BookOpen, ArrowRight, User } from "lucide-react";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { locale } = await params;
-  return {
-    title: locale === "az" ? "Kitabxana və Nəşrlər" : locale === "ru" ? "Библиотека и издания" : "Library & Books",
-    description: "Sənət nəzəriyyəsi, rəssamlıq monoqrafiyaları və bədii kataloqlar.",
-  };
+  const t = await getTranslations({ locale, namespace: "books" });
+  return pageMetadata({ locale, path: "books", title: t("title"), description: t("subtitle"), query: await searchParams });
 }
 
 export default async function BooksPage({

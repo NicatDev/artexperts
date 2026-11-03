@@ -1,10 +1,11 @@
+import { pageMetadata, canonicalSlug } from "@/lib/seo";
 import React from "react";
 
 export const dynamic = "force-dynamic";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { ArtistAvatar } from "@/components/shared/ArtistAvatar";
@@ -12,26 +13,12 @@ import { ArtistLinks } from "@/components/shared/ArtistLinks";
 import { ArrowLeft, Clock, Calendar, User, Palette } from "lucide-react";
 import { ContentViews } from "@/features/content/ContentViews";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; slug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   try {
     const article = await api.getArticleDetail(slug, locale);
-    return {
-      title: `${article.title} | Redaksiya | Art Experts`,
-      description: article.excerpt || article.title,
-      openGraph: {
-        title: article.title,
-        description: article.excerpt,
-        images: article.cover_image ? [siteConfig.mediaUrl(article.cover_image)] : [],
-      },
-    };
-  } catch {
-    return { title: "Məqalə | Art Experts" };
-  }
+    return pageMetadata({locale,path:`articles/${canonicalSlug(article)}`,title:article.title,description:article.excerpt || article.content,image:article.cover_image,type:"article"});
+  } catch { return {robots: {index:false,follow:false}}; }
 }
 
 export default async function ArticleDetailPage({
@@ -49,8 +36,9 @@ export default async function ArticleDetailPage({
   let article: any = null;
   try {
     article = await api.getArticleDetail(slug, locale);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
   }
 
   const jsonLd = {
@@ -58,10 +46,9 @@ export default async function ArticleDetailPage({
     "@type": "Article",
     "headline": article.title,
     "description": article.excerpt,
-    "author": {
-      "@type": "Person",
-      "name": article.author_profile?.full_name || "İlqar Məmmədov",
-    },
+    ...(article.author_profile?.full_name ? {author:{"@type":"Person",name:article.author_profile.full_name}} : {}),
+    "dateModified": article.updated_at || article.created_at,
+    "url": siteConfig.absoluteUrl(`/articles/${canonicalSlug(article)}`, locale),
     "datePublished": article.created_at,
     ...(article.cover_image ? { image: siteConfig.mediaUrl(article.cover_image) } : {}),
   };

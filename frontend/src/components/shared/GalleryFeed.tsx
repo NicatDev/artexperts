@@ -7,7 +7,8 @@ import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 
-export function GalleryFeed({ initialItems, initialCount, initialHasMore, initialFailed, filters, locale }: {
+export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initialHasMore, initialFailed, filters, locale }: {
+  initialPage?: number;
   initialItems: any[];
   initialCount: number;
   initialHasMore: boolean;
@@ -18,7 +19,7 @@ export function GalleryFeed({ initialItems, initialCount, initialHasMore, initia
   const tCommon = useTranslations("common");
   const tArtworks = useTranslations("artworks");
   const [batches, setBatches] = useState<any[][]>(initialItems.length ? [initialItems] : []);
-  const [page, setPage] = useState(initialFailed ? 0 : 1);
+  const [page, setPage] = useState(initialFailed ? initialPage-1 : initialPage);
   const [count, setCount] = useState(initialCount);
   const [hasMore, setHasMore] = useState(initialHasMore || initialFailed);
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,8 @@ export function GalleryFeed({ initialItems, initialCount, initialHasMore, initia
   const activeRequest = useRef<AbortController | null>(null);
   useEffect(() => () => activeRequest.current?.abort(), []);
   const items = batches.flat();
+  const nextQuery = new URLSearchParams(Object.entries(filters).filter(([,value])=>!!value));
+  nextQuery.set("page",String(page+1));
   const text = locale === "az" ? {
     more: "Daha çox yüklə", loading: "Yüklənir…", retry: "Yenidən cəhd et",
     error: "Əsərləri yükləmək mümkün olmadı. Yenidən cəhd edin.", shown: "Göstərilən əsərlər",
@@ -129,11 +132,11 @@ export function GalleryFeed({ initialItems, initialCount, initialHasMore, initia
       <div className="flex flex-col items-center gap-4 text-center">
         <p aria-live="polite" aria-atomic="true" className="text-sm text-stone-500">{text.shown}: {items.length} / {count}</p>
         {failed && <p role="alert" className="text-sm text-red-700">{text.error}</p>}
-        {(hasMore || failed) && <button type="button" onClick={loadMore} disabled={loading}
-          className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-stone-900 px-8 py-3 text-sm font-medium text-white transition hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700 disabled:cursor-wait disabled:opacity-60">
+        {(hasMore || failed) && <Link href={`/artworks?${nextQuery}`} onClick={event=>{event.preventDefault();void loadMore();}} aria-disabled={loading}
+          className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-stone-900 px-8 py-3 text-sm font-medium text-white transition hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700 aria-disabled:cursor-wait aria-disabled:opacity-60">
           {loading && <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />}
           {loading ? text.loading : failed ? text.retry : text.more}
-        </button>}
+        </Link>}
       </div>
     </div>
   );

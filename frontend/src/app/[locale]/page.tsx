@@ -1,3 +1,5 @@
+import { siteConfig } from "@/config/site";
+import { pageMetadata } from "@/lib/seo";
 import React from "react";
 export const dynamic = "force-dynamic";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,6 +12,12 @@ import {
   ArrowRight, BookOpen, Feather, Palette, Sparkles, 
   Clock, Award
 } from "lucide-react";
+
+export async function generateMetadata({ params }: { params: Promise<{locale:string}> }) {
+ const {locale}=await params;
+ const copy=locale==='az' ? ['Art Experts — Təsviri incəsənət platforması','Azərbaycan rəssamları, qalereya, müəllif kitabları, məqalələr, tədris materialları və incəsənət haqqında maraqlı faktlar.'] : locale==='ru' ? ['Art Experts — Платформа изобразительного искусства','Азербайджанские художники, галерея, авторские книги, статьи, учебные материалы и интересные факты об искусстве.'] : ['Art Experts — Fine Art Platform','Discover Azerbaijani artists, artworks, books, articles, teaching materials and interesting facts about art.'];
+ return pageMetadata({locale,title:copy[0],description:copy[1]});
+}
 
 export default async function HomePage({
   params,
@@ -40,6 +48,7 @@ export default async function HomePage({
 
   return (
     <div className="space-y-24 pb-20">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":`${siteConfig.siteUrl}/#organization`,name:siteConfig.name,url:siteConfig.siteUrl,logo:`${siteConfig.siteUrl}/art-expert-logo.png`},{"@type":"WebSite",name:siteConfig.name,url:siteConfig.siteUrl,publisher:{"@id":`${siteConfig.siteUrl}/#organization`}}]}).replace(/</g,"\\u003c")}}/>
       {/* 1. Hero / Banner Section (Luxury Gallery Light) */}
       <section className="relative min-h-[72vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 border-b border-[#EAE6DF] overflow-hidden">
         {/* Subtle decorative art canvas glow */}

@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import React from "react";
 import { ArtistLinks } from "@/components/shared/ArtistLinks";
 import { artistSummary } from "@/lib/artist-links";
@@ -9,12 +10,10 @@ import { api } from "@/lib/api";
 import { Pagination } from "@/components/shared/Pagination";
 import { User, MapPin, Palette, ArrowRight, CheckCircle } from "lucide-react";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { locale } = await params;
-  return {
-    title: locale === "az" ? "Platforma Rəssamları" : locale === "ru" ? "Художники платформы" : "Platform Artists",
-    description: "Platformada qeydiyyatdan keçən və əsərlərini təqdim edən yaradıcılar.",
-  };
+  const t = await getTranslations({ locale, namespace: "artists" });
+  return pageMetadata({ locale, path: "artists", title: t("title"), description: t("subtitle"), query: await searchParams });
 }
 
 export default async function ArtistsPage({

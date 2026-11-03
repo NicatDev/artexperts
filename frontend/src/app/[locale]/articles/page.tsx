@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import React from "react";
 import { CatalogSearch } from "@/components/shared/CatalogSearch";
 import { loadPublicData } from "@/lib/public-data";
@@ -9,12 +10,10 @@ import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapp
 import { Pagination } from "@/components/shared/Pagination";
 import { Clock } from "lucide-react";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { locale } = await params;
-  return {
-    title: locale === "az" ? "Sənət Məqalələri" : locale === "ru" ? "Статьи об искусстве" : "Art Articles",
-    description: "Rəssamlıq fəlsəfəsi, estetika dərsləri və sərgi təhlilləri.",
-  };
+  const t = await getTranslations({ locale, namespace: "articles" });
+  return pageMetadata({ locale, path: "articles", title: t("title"), description: t("subtitle"), query: await searchParams });
 }
 
 export default async function ArticlesPage({

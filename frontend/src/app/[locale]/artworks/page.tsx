@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/seo";
 import React from "react";
 import { CatalogSearch } from "@/components/shared/CatalogSearch";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -6,12 +7,10 @@ import { api } from "@/lib/api";
 import { GalleryFeed } from "@/components/shared/GalleryFeed";
 import { loadPublicData } from "@/lib/public-data";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { locale } = await params;
-  return {
-    title: locale === "az" ? "Rəsm Qalereyası" : locale === "ru" ? "Художественная галерея" : "Art Gallery",
-    description: "Təsviri sənət əsərləri, müəllifləri və kateqoriyalar üzrə ən çox baxılan əsərlər.",
-  };
+  const t = await getTranslations({ locale, namespace: "artworks" });
+  return pageMetadata({ locale, path: "artworks", title: t("title"), description: t("subtitle"), query: await searchParams });
 }
 
 export default async function ArtworksPage({
@@ -28,9 +27,10 @@ export default async function ArtworksPage({
   const tArtworks = await getTranslations({ locale, namespace: "artworks" });
   const tCommon = await getTranslations({ locale, namespace: "common" });
 
+  const page = Number.isSafeInteger(Number(sp.page)) && Number(sp.page)>0 ? Number(sp.page) : 1;
   const filters = { category: sp.category || "", search: sp.search || "", founder: sp.founder || "" };
   const [artworkFeed, categoryFeed] = await Promise.all([
-    loadPublicData("gallery", () => api.getArtworks({ ...filters, lang: locale, page: "1" })),
+    loadPublicData("gallery", () => api.getArtworks({ ...filters, lang: locale, page: String(page) })),
     loadPublicData("gallery categories", () => api.getArtworkCategories(locale)),
   ]);
   const artworksList = artworkFeed.data?.results || [];
@@ -85,6 +85,7 @@ export default async function ArtworksPage({
 
       <GalleryFeed
         key={JSON.stringify([locale, filters, artworkFeed.data])}
+        initialPage={page}
         initialItems={artworksList}
         initialCount={artworkFeed.data?.count ?? 0}
         initialHasMore={Boolean(artworkFeed.data?.next)}

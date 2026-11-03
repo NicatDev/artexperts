@@ -1,3 +1,4 @@
+import { pageMetadata, canonicalSlug } from "@/lib/seo";
 import React from "react";
 import { ArtistLinks } from "@/components/shared/ArtistLinks";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,21 +11,12 @@ import { ArtistAvatar } from "@/components/shared/ArtistAvatar";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { Palette, MapPin, Globe, ArrowLeft, BookOpen, FileText } from "lucide-react";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; username: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; username: string }> }) {
   const { locale, username } = await params;
   try {
     const artist = await api.getArtistDetail(username);
-    return {
-      title: `${artist.full_name} | Rəssam Portfeli | Art Experts`,
-      description: artist.short_bio || `${artist.full_name} sənət portfeli`,
-    };
-  } catch {
-    return { title: "Rəssam | Art Experts" };
-  }
+    return pageMetadata({locale,path:`artists/${artist.username}`,title:artist.full_name,description:artist.short_bio || artist.artist_statement,image:artist.avatar_thumbnail || artist.avatar,type:"website"});
+  } catch { return {robots: {index:false,follow:false}}; }
 }
 
 export default async function ArtistPortfolioPage({

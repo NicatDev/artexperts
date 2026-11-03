@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (!Array.isArray(data.urls)) throw new Error("Invalid sitemap API response");
     const urlsByPath = new Map(staticUrls.map(item => [item.path, item]));
     for (const item of data.urls) {
-      if (typeof item?.path === "string") urlsByPath.set(item.path, item);
+      if (typeof item?.path === "string" && !item.path.includes("?") && !item.path.includes("#") && !item.path.startsWith("/") && !item.path.includes("..") && !item.path.includes(":") && !item.path.includes("\\")) urlsByPath.set(item.path, item);
     }
     backendUrls = Array.from(urlsByPath.values());
   } catch (error) {
@@ -40,11 +40,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const localizedPath = item.path ? `/${locale}/${item.path}` : `/${locale}`;
       sitemapEntries.push({
         url: `${siteConfig.siteUrl}${localizedPath}`,
-        lastModified: item.lastmod ? new Date(item.lastmod) : new Date(),
+        ...(item.lastmod && !Number.isNaN(Date.parse(item.lastmod)) ? {lastModified:new Date(item.lastmod)} : {}),
         changeFrequency: item.changefreq || "weekly",
-        priority: item.priority || 0.7,
+        priority: item.priority ?? 0.7,
         alternates: {
           languages: {
+            "x-default": `${siteConfig.siteUrl}/az${item.path ? `/${item.path}` : ""}`,
             az: `${siteConfig.siteUrl}/az${item.path ? `/${item.path}` : ""}`,
             en: `${siteConfig.siteUrl}/en${item.path ? `/${item.path}` : ""}`,
             ru: `${siteConfig.siteUrl}/ru${item.path ? `/${item.path}` : ""}`,

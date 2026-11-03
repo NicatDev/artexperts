@@ -1,34 +1,21 @@
+import { pageMetadata, canonicalSlug } from "@/lib/seo";
 import React from "react";
 
 export const dynamic = "force-dynamic";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { BookDetailClient } from "@/features/books/BookDetailClient";
 import { ArrowLeft } from "lucide-react";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; slug: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   try {
     const book = await api.getBookDetail(slug, locale);
-    return {
-      title: `${book.title} | Nəşrlər | Art Experts`,
-      description: book.short_description || book.title,
-      openGraph: {
-        title: book.title,
-        description: book.short_description,
-        images: [siteConfig.mediaUrl(book.cover_image)],
-      },
-    };
-  } catch {
-    return { title: "Kitab | Art Experts" };
-  }
+    return pageMetadata({locale,path:`books/${canonicalSlug(book)}`,title:book.title,description:book.short_description || book.full_description,image:book.cover_image,type:"website"});
+  } catch { return {robots: {index:false,follow:false}}; }
 }
 
 export default async function BookDetailPage({
@@ -42,8 +29,9 @@ export default async function BookDetailPage({
   let book: any = null;
   try {
     book = await api.getBookDetail(slug, locale);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
   }
 
   const jsonLd = {

@@ -31,14 +31,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       shortcut: "/favicon.ico",
       apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
     },
-    alternates: {
-      canonical: `/${locale}`,
-      languages: {
-        az: "/az",
-        en: "/en",
-        ru: "/ru",
-      },
-    },
     openGraph: {
       title: "Art Experts — İncəsənət Platforması",
       description: "Milli və müasir rəssamlıq sənətinin rəqəmsal arxivi və yaradıcılar üçün sənət məkanı.",

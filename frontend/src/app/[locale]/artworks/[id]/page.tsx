@@ -1,8 +1,9 @@
+import { pageMetadata, canonicalSlug } from "@/lib/seo";
 import React from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { siteConfig } from "@/config/site";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { ShieldAlert, ArrowLeft, Palette, Calendar, Maximize, User } from "lucide-react";
@@ -12,26 +13,12 @@ import { ContentViews } from "@/features/content/ContentViews";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; id: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale, id } = await params;
   try {
     const artwork = await api.getArtworkDetail(id, locale);
-    return {
-      title: `${artwork.title} | ${artwork.artist_attribution}`,
-      description: artwork.description || `${artwork.title} - ${artwork.medium}`,
-      openGraph: {
-        title: artwork.title,
-        description: artwork.description,
-        images: [siteConfig.mediaUrl(artwork.detail_image || artwork.thumbnail_image)],
-      },
-    };
-  } catch {
-    return { title: "Əsər | Art Experts" };
-  }
+    return pageMetadata({locale,path:`artworks/${artwork.id}`,title:artwork.title,description:artwork.description,image:artwork.detail_image || artwork.thumbnail_image,type:"website"});
+  } catch { return {robots: {index:false,follow:false}}; }
 }
 
 export default async function ArtworkDetailPage({
@@ -48,8 +35,9 @@ export default async function ArtworkDetailPage({
   let artwork: any = null;
   try {
     artwork = await api.getArtworkDetail(id, locale);
-  } catch {
-    notFound();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
   }
 
   // JSON-LD structured data
@@ -64,7 +52,7 @@ export default async function ArtworkDetailPage({
     },
     "artMedium": artwork.medium,
     "artform": "Painting",
-    "dateCreated": artwork.creation_year,
+    "dateCreated": artwork.creation_year ? String(artwork.creation_year) : undefined,
     "image": siteConfig.mediaUrl(artwork.detail_image || artwork.thumbnail_image),
   };
 
