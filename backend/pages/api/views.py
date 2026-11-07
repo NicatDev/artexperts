@@ -52,7 +52,7 @@ class HomePageOverviewView(views.APIView):
     - hero_banner
     - featured_artworks (limit 6)
     - featured_articles (limit 3)
-    - featured_books (limit 4)
+    - featured_books (limit 6)
     - founder_intro
     """
     permission_classes = [permissions.AllowAny]
@@ -74,7 +74,7 @@ class HomePageOverviewView(views.APIView):
         books = Book.objects.filter(
             moderation_status=ModerationStatus.PUBLISHED,
             deleted_at__isnull=True
-        ).select_related('owner__artist_profile').prefetch_related('translations', 'contributor_links__contributor').annotate(unique_views_count=Count('unique_views', distinct=True)).order_by('-unique_views_count', '-created_at')[:4]
+        ).select_related('owner__artist_profile').prefetch_related('translations', 'contributor_links__contributor').annotate(unique_views_count=Count('unique_views', distinct=True)).order_by('-unique_views_count', '-created_at')[:6]
 
         return Response({
             "banner": HeroBannerSerializer(banner, context={'request': request}).data if banner else None,

@@ -37,10 +37,10 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#EAE6DF] text-[#18181B] shadow-xs transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 xl:h-16 flex items-center justify-between gap-4">
           {/* Brand Logo & Name: Art Experts */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-amber-200/80 bg-white shadow-2xs group-hover:border-amber-400 group-hover:shadow-xs transition-all duration-300">
+          <Link href="/" className="group flex min-w-0 items-center gap-3 xl:shrink-0">
+            <div className="relative w-11 h-11 shrink-0 rounded-xl overflow-hidden border border-amber-200/80 bg-white shadow-2xs group-hover:border-amber-400 group-hover:shadow-xs transition-all duration-300">
               <Image
                 src="/art-expert-logo.png"
                 alt="Art Experts Logo"
@@ -55,29 +55,6 @@ export function Navbar() {
               </span>
             </div>
           </Link>
-
-          {/* Desktop Navigation Links */}
-          <nav className="hidden xl:flex items-center gap-3 text-xs font-medium">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`transition-colors py-1 relative ${
-                    isActive
-                      ? "text-amber-800 font-semibold"
-                      : "text-stone-600 hover:text-stone-950"
-                  }`}
-                >
-                  {link.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-600 to-transparent rounded" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
 
           {/* Desktop Auth Controls */}
           <div className="hidden xl:flex items-center gap-4">
@@ -113,7 +90,7 @@ export function Navbar() {
                   className="flex items-center gap-1.5 text-xs text-stone-700 hover:text-stone-950 font-medium py-1.5"
                 >
                   <UserIcon className="w-3.5 h-3.5 text-amber-700" />
-                  <span>{user.artist_profile?.full_name || tNav("profile")}</span>
+                  <span className="max-w-48 truncate">{user.artist_profile?.full_name || tNav("profile")}</span>
                 </Link>
                 <button
                   onClick={() => logout()}
@@ -166,6 +143,32 @@ export function Navbar() {
               {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6 text-stone-800" />}
             </button>
           </div>
+        </div>
+
+        <div className="hidden border-t border-stone-100 xl:block">
+          {/* Desktop Navigation Links */}
+          <nav className="mx-auto hidden max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-1 px-8 py-1 text-sm font-medium xl:flex">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href + "/"));
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative whitespace-nowrap py-2 transition-colors ${
+                    isActive
+                      ? "text-amber-800 font-semibold"
+                      : "text-stone-600 hover:text-stone-950"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-600 to-transparent rounded" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
         </div>
 
         {/* Mobile Drawer */}

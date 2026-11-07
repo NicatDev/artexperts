@@ -13,6 +13,7 @@ from rest_framework import views, permissions, serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from core.validators import MAX_PDF_SIZE_BYTES, validate_pdf_file
 from core.pagination import StandardResultsSetPagination
 from articles.rich_text import sanitize_article_html
 from core.services.media import media_service
@@ -25,6 +26,12 @@ class Superuser(permissions.BasePermission):
         return bool(request.user.is_authenticated and request.user.is_superuser)
 
 class AssetSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.role == 'pdf':
+            data['file'] = None
+        return data
+
     class Meta:
         model = Asset
         fields = ['id','role','filename','size','file','poster','order']
@@ -81,7 +88,7 @@ class EntryManage(views.APIView):
         has_text = bool(strip_tags(html).replace('&nbsp;', '').strip()) or '<img ' in html
         if kind == 'lessons' and not has_text and not data['summary'].strip() and not assets: raise ValidationError({'content':'Add text, an image or a video.'})
         if kind == 'facts' and not has_text: raise ValidationError({'content':'Content is required.'})
-        if kind == 'facts' and (len(assets)>1 or any(a.role=='video' for a in assets)): raise ValidationError({'assets':'Use one image.'})
+        if kind == 'facts' and (len(assets)>1 or any(a.role not in ('cover', 'image') for a in assets)): raise ValidationError({'assets':'Use one image.'})
         if sum(a.role=='cover' for a in assets)>1: raise ValidationError({'assets':'Use one cover.'})
         entry = existing or Entry(id=data['submission_id'], owner=request.user, kind=kind)
         entry.title=data['title']; entry.summary=data['summary']; entry.content=html; entry.save()
@@ -91,7 +98,15 @@ class EntryManage(views.APIView):
         return Response(EntrySerializer(entry,context={'request':request}).data,status=200 if existing else 201)
 
 def part_path(asset): return Path(settings.MEDIA_ROOT)/'private'/'learning'/f'{asset.pk}.part'
-def status(asset): return {'id':str(asset.pk),'uploaded':asset.uploaded,'size':asset.size,'chunk_size':CHUNK,'state':'READY' if asset.ready else 'UPLOADING'}
+def status(asset):
+    return {
+        'id': str(asset.pk),
+        'uploaded': asset.uploaded,
+        'size': asset.size,
+        'chunk_size': CHUNK,
+        'state': 'READY' if asset.ready else 'UPLOADING',
+        'attached': asset.entry_id is not None,
+    }
 
 def cleanup():
     for asset in Asset.objects.filter(entry__isnull=True, updated_at__lt=timezone.now()-timedelta(days=2))[:100]: asset.delete()
@@ -109,10 +124,18 @@ class UploadStart(PrivateUpload):
         role=request.data.get('role'); size=request.data.get('size'); hashes=request.data.get('hashes',[])
         filename=str(request.data.get('filename','')).replace('\\','/').split('/')[-1][:250]
         ext=Path(filename).suffix.lower()
-        limit=2*1024**3 if role=='video' else 25*1024**2
+        file_types = {
+            'video': (2 * 1024**3, ('.mp4', '.webm')),
+            'pdf': (MAX_PDF_SIZE_BYTES, ('.pdf',)),
+            'cover': (25 * 1024**2, ('.png', '.jpg', '.jpeg', '.webp')),
+            'image': (25 * 1024**2, ('.png', '.jpg', '.jpeg', '.webp')),
+        }
+        if not isinstance(role, str) or role not in file_types:
+            raise ValidationError({'assets': 'Unsupported media type.'})
+        limit, extensions = file_types[role]
         import re
-        if role not in ('cover','image','video') or not isinstance(size,int) or not 0<size<=limit or not isinstance(hashes,list) or len(hashes)!=(size+CHUNK-1)//CHUNK or any(not isinstance(h,str) or not re.fullmatch('[0-9a-f]{64}',h) for h in hashes): raise ValidationError({'assets':'Invalid file or size.'})
-        if ext not in (('.mp4','.webm') if role=='video' else ('.png','.jpg','.jpeg','.webp')): raise ValidationError({'assets':'Unsupported media type.'})
+        if not isinstance(size,int) or not 0<size<=limit or not isinstance(hashes,list) or len(hashes)!=(size+CHUNK-1)//CHUNK or any(not isinstance(h,str) or not re.fullmatch('[0-9a-f]{64}',h) for h in hashes): raise ValidationError({'assets':'Invalid file or size.'})
+        if ext not in extensions: raise ValidationError({'assets':'Unsupported media type.'})
         cleanup(); directory=Path(settings.MEDIA_ROOT)/'private'/'learning'; directory.mkdir(parents=True,exist_ok=True)
         with transaction.atomic():
             from users.models import User
@@ -161,12 +184,17 @@ class UploadChunk(PrivateUpload):
                 try: finalize(a,path)
                 except Exception:
                     path.unlink(missing_ok=True)
-                    raise ValidationError({'assets':'Media could not be processed. Use a valid JPG, PNG, WebP, MP4 (H.264) or WebM video.'})
+                    raise ValidationError({'assets': 'Media could not be processed.'})
             a.save()
         return Response(status(a))
 
 def finalize(a,path):
-    if a.role!='video':
+    if a.role == 'pdf':
+        with open(path, 'rb') as source:
+            pdf = File(source, name=a.filename)
+            validate_pdf_file(pdf)
+            a.file.save(f'private/learning/pdfs/{a.pk}.pdf', pdf, save=False)
+    elif a.role != 'video':
         with open(path,'rb') as f:
             source=File(f,name=a.filename); media_service.validate_image(source); source.seek(0)
             image,_=media_service.process_artwork_derivatives(source)

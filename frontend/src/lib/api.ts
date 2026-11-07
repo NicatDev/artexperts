@@ -140,10 +140,10 @@ export const api = {
 
   // Books
   clearIncompleteBookUploads: () => request<{ removed: number }>("/books/uploads/", { method: "DELETE", signal: AbortSignal.timeout(30000) }),
-  startBookReader: (id: string, signal?: AbortSignal) =>
-    request<{ token: string; pages: number; expires_in: number }>(`/books/${id}/reader/`, { method: "POST", body: JSON.stringify({}), signal }),
-  getBookReaderPage: async (id: string, page: number, token: string, signal?: AbortSignal) => {
-    const response = await fetch(`${siteConfig.apiUrl}/books/${id}/reader/pages/${page}/?${new URLSearchParams({ token })}`, {
+  startBookReader: (id: string, signal?: AbortSignal, source: "books" | "learning/pdfs" = "books") =>
+    request<{ token: string; pages: number; expires_in: number }>(`/${source}/${id}/reader/`, { method: "POST", body: JSON.stringify({}), signal }),
+  getBookReaderPage: async (id: string, page: number, token: string, signal?: AbortSignal, source: "books" | "learning/pdfs" = "books") => {
+    const response = await fetch(`${siteConfig.apiUrl}/${source}/${id}/reader/pages/${page}/?${new URLSearchParams({ token })}`, {
       credentials: "include", cache: "no-store", referrerPolicy: "no-referrer", signal,
     });
     if (!response.ok) throw new ApiError("Could not load the page", {}, response.status);

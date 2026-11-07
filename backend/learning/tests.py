@@ -97,3 +97,33 @@ class LearningTests(TestCase):
         other=User.objects.create_superuser(email='other@example.com',password='testingPassword42')
         self.client.force_authenticate(other)
         self.assertEqual(self.client.get(f'/api/v1/learning/uploads/{id}/').status_code,404)
+
+    def test_lesson_pdf_reader_keeps_source_private_and_binds_token_to_session(self):
+        pdf = io.BytesIO()
+        Image.new('RGB', (64, 64), 'white').save(pdf, 'PDF')
+        asset_id, uploaded = self.upload(pdf.getvalue(), role='pdf', filename='lesson.pdf')
+        self.assertEqual(uploaded.status_code, 200, uploaded.data)
+        asset = Asset.objects.get(pk=asset_id)
+        reader = f'/api/v1/learning/pdfs/{asset_id}/reader/'
+        visitor = APIClient()
+        self.assertEqual(visitor.post(reader).status_code, 404)
+        self.assertEqual(self.post('facts', asset_ids=[asset_id]).status_code, 400)
+        lesson = self.post(content='', asset_ids=[asset_id])
+        self.assertEqual(lesson.status_code, 201, lesson.data)
+        self.assertIsNone(lesson.data['assets'][0]['file'])
+        self.assertTrue(asset.file.name.startswith('private/learning/pdfs/'))
+        self.assertEqual(visitor.get('/media/' + asset.file.name).status_code, 404)
+        session = visitor.post(reader)
+        self.assertEqual(session.status_code, 200, session.data)
+        self.assertEqual(session.data['pages'], 1)
+        params = {'token': session.data['token']}
+        page = visitor.get(reader + 'pages/1/', params)
+        self.assertEqual(page.status_code, 200)
+        self.assertEqual(page['Content-Type'], 'image/webp')
+        self.assertIn('no-store', page['Cache-Control'])
+        self.assertEqual(APIClient().get(reader + 'pages/1/', params).status_code, 403)
+        self.assertEqual(visitor.get(reader + 'pages/2/', params).status_code, 404)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.client.delete(f"/api/v1/lessons/{lesson.data['id']}/manage/").status_code, 204)
+        self.assertEqual(visitor.get(reader + 'pages/1/', params).status_code, 404)
+        self.assertFalse(asset.file.storage.exists(asset.file.name))

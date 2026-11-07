@@ -56,13 +56,17 @@ def reader_identity(request, create=False):
 
 
 def private_source(book):
+    return private_pdf_source(book.digital_file, book.pk, book.updated_at)
+
+
+def private_pdf_source(file, document_id, updated_at):
     try:
-        source = Path(book.digital_file.path).resolve()
+        source = Path(file.path).resolve()
         source.relative_to(Path(settings.MEDIA_ROOT).resolve() / 'private')
         stat = source.stat()
     except (OSError, ValueError, NotImplementedError):
         raise Http404('PDF tapılmadı.')
-    revision = book.pk.hex + '-' + hashlib.sha256(f'{book.pk}:{book.digital_file.name}:{stat.st_size}:{stat.st_mtime_ns}:{book.updated_at.isoformat()}'.encode()).hexdigest()
+    revision = document_id.hex + '-' + hashlib.sha256(f'{document_id}:{file.name}:{stat.st_size}:{stat.st_mtime_ns}:{updated_at.isoformat()}'.encode()).hexdigest()
     return source, revision
 
 
@@ -136,9 +140,11 @@ def prune_cache(directory):
             pass
 
 
-def preview_asset(source, revision, page=None):
-    book_id = revision.split('-', 1)[0]
-    if not Book.objects.filter(pk=book_id).exists():
+def preview_asset(source, revision, page=None, *, document_exists=None):
+    document_id = revision.split('-', 1)[0]
+    if document_exists is None:
+        document_exists = lambda pk: Book.objects.filter(pk=pk).exists()
+    if not document_exists(document_id):
         raise Http404
     directory = cache_directory()
     target = directory / (f'{revision}-{page}.webp' if page is not None else f'{revision}.json')
@@ -171,7 +177,7 @@ def preview_asset(source, revision, page=None):
                     raise ValueError
                 Path(temporary).write_text(json.dumps({'pages': count}), encoding='utf-8')
             prune_cache(directory)
-            if not Book.objects.filter(pk=book_id).exists():
+            if not document_exists(document_id):
                 raise Http404
             os.replace(temporary, target)
         except (OSError, subprocess.SubprocessError, ValueError, KeyError):
@@ -211,36 +217,49 @@ class ReaderResponseMixin:
         return response
 
 
-class BookReaderSessionView(ReaderResponseMixin, views.APIView):
+class BookReaderAccess:
+    token_salt = TOKEN_SALT
+
+    def get_document(self, request, id):
+        return reader_book(request, id)
+
+    def get_source(self, document):
+        return private_source(document)
+
+    def render_preview(self, source, revision, page=None):
+        return preview_asset(source, revision, page)
+
+
+class BookReaderSessionView(BookReaderAccess, ReaderResponseMixin, views.APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ReaderSessionThrottle]
 
     def post(self, request, id):
-        book = reader_book(request, id)
+        book = self.get_document(request, id)
         identity = reader_identity(request, create=True)
-        source, revision = private_source(book)
-        pages = preview_asset(source, revision)
-        token = signing.dumps({'book': str(book.pk), 'identity': identity, 'revision': revision}, salt=TOKEN_SALT, compress=True)
+        source, revision = self.get_source(book)
+        pages = self.render_preview(source, revision)
+        token = signing.dumps({'book': str(book.pk), 'identity': identity, 'revision': revision}, salt=self.token_salt, compress=True)
         return Response({'token': token, 'pages': pages, 'expires_in': TOKEN_TTL})
 
 
-class BookReaderPageView(ReaderResponseMixin, views.APIView):
+class BookReaderPageView(BookReaderAccess, ReaderResponseMixin, views.APIView):
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ReaderPageThrottle]
 
     def get(self, request, id, page):
-        book = reader_book(request, id)
-        source, revision = private_source(book)
+        book = self.get_document(request, id)
+        source, revision = self.get_source(book)
         try:
-            payload = signing.loads(request.query_params.get('token', ''), salt=TOKEN_SALT, max_age=TOKEN_TTL)
+            payload = signing.loads(request.query_params.get('token', ''), salt=self.token_salt, max_age=TOKEN_TTL)
         except signing.BadSignature:
             raise PermissionDenied('Oxuma sessiyasının vaxtı bitib. Oxuyucunu yenidən açın.')
         if payload != {'book': str(book.pk), 'identity': reader_identity(request), 'revision': revision}:
             raise PermissionDenied('Oxuma icazəsi etibarlı deyil. Oxuyucunu yenidən açın.')
-        count = preview_asset(source, revision)
+        count = self.render_preview(source, revision)
         if not 1 <= page <= count:
             raise Http404
-        data = preview_asset(source, revision, page)
+        data = self.render_preview(source, revision, page)
         # Session-specific mark remains even if a visitor extracts a rendered page.
         with Image.open(io.BytesIO(data)) as original:
             marked = Image.new('RGB', (original.width, original.height + 32), 'white')

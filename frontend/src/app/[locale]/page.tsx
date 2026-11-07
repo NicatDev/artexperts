@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { api } from "@/lib/api";
 import { loadPublicData } from "@/lib/public-data";
+import { LearningCards } from "@/components/shared/LearningPages";
 import { FeedError } from "@/components/shared/FeedError";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 import { 
@@ -34,13 +35,15 @@ export default async function HomePage({
   const tBooks = await getTranslations({ locale, namespace: "books" });
   const tArticles = await getTranslations({ locale, namespace: "articles" });
 
+  const tLearning = await getTranslations({ locale, namespace: "learning" });
   const overview = await loadPublicData("home overview", () => api.getHomeOverview(locale));
   const banner = overview.data?.banner;
   // Use the curated overview when available; recover each section independently.
-  const [artworkFeed, articleFeed, bookFeed] = await Promise.all([
+  const [artworkFeed, articleFeed, bookFeed, learningFeed] = await Promise.all([
     overview.failed ? loadPublicData("home artworks", () => api.getArtworks({ lang: locale, page_size: "6" })) : Promise.resolve({ data: null, failed: false }),
     overview.failed ? loadPublicData("home articles", () => api.getArticles({ lang: locale, page_size: "3" })) : Promise.resolve({ data: null, failed: false }),
-    overview.failed ? loadPublicData("home books", () => api.getBooks({ lang: locale, page_size: "4" })) : Promise.resolve({ data: null, failed: false }),
+    overview.failed ? loadPublicData("home books", () => api.getBooks({ lang: locale, page_size: "6" })) : Promise.resolve({ data: null, failed: false }),
+    loadPublicData("home teaching materials", () => api.learningList("lessons", { page_size: "6" })),
   ]);
   const artworks = overview.data?.featured_artworks || artworkFeed.data?.results || [];
   const articles = overview.data?.featured_articles || articleFeed.data?.results || [];
@@ -147,7 +150,7 @@ export default async function HomePage({
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+                  <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
                     <span className="text-amber-900 font-medium line-clamp-1">
                       {art.artist_attribution}
                     </span>
@@ -191,7 +194,7 @@ export default async function HomePage({
         </div>
 
         {bookFeed.failed ? <FeedError locale={locale} /> : books.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 xl:gap-6">
             {books.map((book: any) => (
               <div
                 key={book.id}
@@ -212,7 +215,7 @@ export default async function HomePage({
                   </div>
                 </div>
 
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                <div className="p-4 lg:p-3 flex-1 flex flex-col justify-between space-y-3">
                   <div>
                     <h3 className="font-serif text-base text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-1 font-medium">
                       {book.title}
@@ -222,7 +225,7 @@ export default async function HomePage({
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="text-stone-600 line-clamp-1 font-medium">
                       {book.contributors?.[0]?.name || "İlqar Məmmədov"}
                     </span>
@@ -299,7 +302,7 @@ export default async function HomePage({
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+                  <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
                     <span className="font-medium text-stone-700">{art.author_name}</span>
                     <Link
                       href={`/articles/${art.slug || art.id}`}
@@ -318,6 +321,18 @@ export default async function HomePage({
           </div>
         )}
       </section>
+
+      {!!learningFeed.data?.results?.length && (
+        <section className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 className="font-serif text-2xl text-stone-900 sm:text-3xl">{tLearning("lessons")}</h2>
+            <Link href="/lessons" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-amber-800">
+              {tLearning("viewAllLessons")} <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
+          </div>
+          <LearningCards entries={learningFeed.data.results} kind="lessons" locale={locale} />
+        </section>
+      )}
 
       {/* 6. Mission Call-to-Action */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

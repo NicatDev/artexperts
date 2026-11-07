@@ -41,7 +41,18 @@ e?.preventDefault(); if(saving.current || imageBusy) return;
     if(kind === 'lessons' && !content.replace(/<[^>]*>/g, '').trim() && !content.includes('<img') && !summary.trim() && !assets.length && !files.length) errors.content = t('atLeastOne');
     if(assets.length + files.length > 25) errors.assets = t('mediaLimit');
     if(kind === 'facts' && assets.length + files.length > 1) errors.assets = t('oneImage');
-    for(const { file, role } of files) if(file.size > (role === 'video' ? 2 * 1024 ** 3 : 25 * 1024 ** 2) || !file.size || !(role === 'video' ? /\.(mp4|webm)$/i : /\.(jpg|jpeg|png|webp)$/i).test(file.name)) errors.assets = t('fileHint');
+    for (const { file, role } of files) {
+      if (role === 'pdf') {
+        if (!file.size || file.size > 300 * 1024 ** 2 || !/\.pdf$/i.test(file.name)) {
+          errors.assets = t('pdfHint');
+        }
+        continue;
+      }
+      const isVideo = role === 'video';
+      const limit = isVideo ? 2 * 1024 ** 3 : 25 * 1024 ** 2;
+      const extensions = isVideo ? /\.(mp4|webm)$/i : /\.(jpg|jpeg|png|webp)$/i;
+      if (!file.size || file.size > limit || !extensions.test(file.name)) errors.assets = t('fileHint');
+    }
     setFieldErrors(errors); if(Object.keys(errors).length) { setTimeout(() => form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(), 0); return; }
     saving.current = true; setBusy(true); setOpen(true); setError(''); const controller = new AbortController(); transfer.current = controller;
     try {      
@@ -58,6 +69,14 @@ const ids = assets.map(a => a.id); for(const { file, role } of files) { setActiv
       <div className="space-y-2"><p id="learning-content-label">{t('content')}</p><RichTextEditor value={content} onChange={setContent} id="learning-content" labelledBy="learning-content-label" invalid={!!fieldErrors.content} disabled={busy} onUploading={setImageBusy} />{fieldErrors.content && <p role="alert" className="text-sm text-rose-700">{fieldErrors.content}</p>}</div>
       <label className="block space-y-2"><span>{t('cover')}</span><input className={input} type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { setAssets(a => a.filter(x => x.role !== 'cover')); select(e.target.files, 'cover'); }} /></label>
       {kind === 'lessons' && <><label className="block space-y-2"><span>{t('images')}</span><input className={input} type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={e => select(e.target.files, 'image')} /></label><label className="block space-y-2"><span>{t('videos')}</span><input className={input} type="file" multiple accept="video/mp4,video/webm" onChange={e => select(e.target.files, 'video')} /></label></>}
+      {kind === 'lessons' && (
+        <label className="block space-y-2">
+          <span>{t('pdfDocuments')}</span>
+          <input className={input} type="file" multiple accept=".pdf,application/pdf"
+            onChange={event => select(event.target.files, 'pdf')} />
+          <span className="block text-xs leading-6 text-stone-500">{t('pdfHint')}</span>
+        </label>
+      )}
       <p className="text-xs leading-6 text-stone-500">{t(kind === 'lessons' ? 'fileHint' : 'imageHint')}</p>
       <div tabIndex={-1} aria-invalid={!!fieldErrors.assets}>{fieldErrors.assets && <p role="alert" className="text-sm text-rose-700">{fieldErrors.assets}</p>}</div>
       {[...assets.map(a => ({ key: a.id, name: a.filename, remove: () => setAssets(old => old.filter(x => x.id !== a.id)) })), ...files.map((a, i) => ({ key: String(i), name: a.file.name, remove: () => setFiles(old => old.filter((_, j) => j !== i)) }))].map(item => <div key={item.key} className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-stone-50 p-3"><span className="min-w-0 break-all text-sm">{item.name}</span><button type="button" className="min-h-11 shrink-0 cursor-pointer px-3 text-sm text-rose-700" onClick={item.remove}>{c('delete')}</button></div>)}

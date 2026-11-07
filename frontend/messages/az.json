@@ -428,7 +428,10 @@
     "notice": "Kopyalama, çap və yükləməni məhdudlaşdıran tədbirlər tətbiq olunur. Ekran görüntüsü və surətin çıxarılmasına qarşı tam zəmanət verilmir.",
     "permissionError": "Oxuma icazəsi dəyişib və ya sessiyanın vaxtı bitib. Yenidən cəhd edin.",
     "rateError": "Qısa müddətdə çox səhifə açılıb. Bir dəqiqə gözləyib yenidən cəhd edin.",
-    "loadError": "Səhifə hazırlana bilmədi. Bir qədər sonra yenidən cəhd edin. Problem davam edərsə, müəllifə bildirin."
+    "loadError": "Səhifə hazırlana bilmədi. Bir qədər sonra yenidən cəhd edin. Problem davam edərsə, müəllifə bildirin.",
+    "openPdf": "PDF-i saytda oxu",
+    "protectedPdf": "Qorunan PDF oxuyucusu",
+    "pdfPageLabel": "PDF-in {page} / {total} səhifəsi"
   },
   "upload": {
     "title": "Yükləmənin gedişi",
@@ -496,7 +499,7 @@
     "images": "Şəkillər",
     "videos": "Videolar",
     "required": "Bu sahəni doldurun.",
-    "atLeastOne": "Mətn, şəkil və ya videodan ən az birini əlavə edin.",
+    "atLeastOne": "Mətn, şəkil, video və ya PDF-dən ən az birini əlavə edin.",
     "mediaLimit": "Ən çox 25 media faylı əlavə etmək olar.",
     "oneImage": "Maraqlı fakt üçün bir şəkil seçin.",
     "fileHint": "Şəkillər: JPG, PNG, WebP — 25 MB-a qədər. Video: MP4 (H.264) və WebM — 2 GB-a qədər. Cover yoxdursa ilk şəkil və ya video kadrı istifadə olunur.",
@@ -507,6 +510,11 @@
     "retry": "Davam et",
     "paused": "Yükləmə dayandırıldı. Eyni fayllarla davam edə bilərsiniz.",
     "uploadError": "Fayl yüklənmədi və ya emal edilə bilmədi. Formatı və bağlantını yoxlayıb yenidən cəhd edin.",
-    "open": "Bax"
+    "open": "Bax",
+    "pdfDocuments": "PDF sənədləri",
+    "pdfHint": "PDF faylı 300 MB-a qədər ola bilər. Sənəd qorunan oxuyucuda açılır.",
+    "videoBadge": "Video",
+    "imageBadge": "Şəkil",
+    "viewAllLessons": "Bütün materiallara bax"
   }
 }

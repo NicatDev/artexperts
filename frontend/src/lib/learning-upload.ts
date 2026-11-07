@@ -1,7 +1,7 @@
 import { api, ApiError } from './api';
 import { xhrJson, UploadError, type UploadProgress } from './content-upload';
 const CHUNK = 8 * 1024 * 1024;
-type Status = { id: string; uploaded: number; size: number; chunk_size: number; state: string };
+type Status = { id: string; uploaded: number; size: number; chunk_size: number; state: string; attached?: boolean };
 const hex = (buffer: ArrayBuffer) => Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
 export async function uploadLearning(file: File, role: string, scope: string, signal: AbortSignal, report: (p: UploadProgress) => void) {
   const emit = (stage: UploadProgress['stage'], loaded = 0) => report({ stage, loaded, total: file.size, percent: Math.floor(loaded * 100 / file.size) });
@@ -12,7 +12,7 @@ export async function uploadLearning(file: File, role: string, scope: string, si
   const key = `learning:${scope}:${role}:${file.size}:${hashes.join('')}`;
   let session: Status | undefined;
   try { const id = localStorage.getItem(key); if(id) session = await xhrJson<Status>(`/learning/uploads/${id}/`, 'GET', null, '', { signal }); } catch(e) { if(!(e instanceof ApiError && e.status === 404)) throw e; }
-  if(!session) { session = await xhrJson<Status>('/learning/uploads/', 'POST', JSON.stringify({ filename: file.name, size: file.size, role, hashes }), csrf, { signal }); try { localStorage.setItem(key, session.id); } catch { } }
+  if(!session || session.attached) { session = await xhrJson<Status>('/learning/uploads/', 'POST', JSON.stringify({ filename: file.name, size: file.size, role, hashes }), csrf, { signal }); try { localStorage.setItem(key, session.id); } catch { } }
   while(session.uploaded < file.size) {    
 check(); let success = false;
     for(let attempt = 0;attempt < 4;attempt++) {

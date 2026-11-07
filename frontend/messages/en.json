@@ -428,7 +428,10 @@
     "notice": "Measures restrict copying, printing and downloads. Complete protection against screenshots or reproduction cannot be guaranteed.",
     "permissionError": "Reading permission has changed or the session has expired. Please try again.",
     "rateError": "Too many pages opened recently. Wait a minute and try again.",
-    "loadError": "Could not prepare this page. Try again shortly. If the problem persists, contact the author."
+    "loadError": "Could not prepare this page. Try again shortly. If the problem persists, contact the author.",
+    "openPdf": "Read the PDF online",
+    "protectedPdf": "Protected PDF reader",
+    "pdfPageLabel": "PDF page {page} of {total}"
   },
   "upload": {
     "title": "Upload progress",
@@ -496,7 +499,7 @@
     "images": "Images",
     "videos": "Videos",
     "required": "Complete this field.",
-    "atLeastOne": "Add at least one text, image or video.",
+    "atLeastOne": "Add at least one text, image, video or PDF.",
     "mediaLimit": "Use no more than 25 media files.",
     "oneImage": "Choose one image for a fact.",
     "fileHint": "Images: JPG, PNG, WebP up to 25 MB. Video: MP4 (H.264), WebM up to 2 GB. Without a cover, the first image or a video frame is used.",
@@ -507,6 +510,11 @@
     "retry": "Resume",
     "paused": "Upload paused. Continue with the same files.",
     "uploadError": "Could not upload or process the file. Check the format and connection, then try again.",
-    "open": "View"
+    "open": "View",
+    "pdfDocuments": "PDF documents",
+    "pdfHint": "PDF files can be up to 300 MB. Documents open in the protected reader.",
+    "videoBadge": "Video",
+    "imageBadge": "Image",
+    "viewAllLessons": "View all materials"
   }
 }
