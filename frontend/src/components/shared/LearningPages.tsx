@@ -75,10 +75,25 @@ export async function LearningDetail({ kind, params }: { kind: 'lessons' | 'fact
   try { entry = await api.learningDetail(kind, id); } catch(e) { if(e instanceof ApiError && e.status === 404) notFound(); throw e; }
   const pdfs = entry.assets.filter((asset: { role: string }) => asset.role === 'pdf');
   const images = entry.assets.filter((a: any) => a.role === 'image'), videos = entry.assets.filter((a: any) => a.role === 'video');
+  const hasCover = entry.assets.some((asset: { role: string }) => asset.role === 'cover');
+  const compactCover = kind === 'lessons' && hasCover;
   const url=siteConfig.absoluteUrl(`/${kind}/${entry.id}`,locale);
   const schema={"@context":"https://schema.org","@type":kind==='lessons'?'LearningResource':'Article',name:entry.title,headline:entry.title,description:entry.summary||undefined,url,datePublished:entry.created_at,dateModified:entry.updated_at,isAccessibleForFree:true,author:entry.author_profile?{'@type':'Person',name:entry.author_profile.full_name,url:siteConfig.absoluteUrl(`/artists/${entry.author_profile.username}`,locale)}:undefined,image:entryCover(entry).endsWith('.svg')?undefined:siteConfig.mediaUrl(entryCover(entry)),publisher:{'@type':'Organization',name:siteConfig.name,url:siteConfig.siteUrl}};
-  return <article className="mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6 lg:px-8"><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({"@context":"https://schema.org","@graph":[schema,{"@type":"BreadcrumbList",itemListElement:[{"@type":"ListItem",position:1,name:siteConfig.name,item:siteConfig.absoluteUrl('',locale)},{"@type":"ListItem",position:2,name:t(kind),item:siteConfig.absoluteUrl(kind,locale)},{"@type":"ListItem",position:3,name:entry.title,item:url}]}]}).replace(/</g,"\\u003c")}}/><Link href={`/${kind}`} className="inline-flex min-h-11 items-center text-sm text-amber-800">← {t(kind)}</Link><header className="space-y-5"><h1 className="break-words font-serif text-3xl leading-tight text-stone-900 sm:text-5xl">{entry.title}</h1>{entry.author_profile && <div className="flex items-center gap-3"><ArtistAvatar artist={entry.author_profile} /><span className="text-sm text-stone-700">{entry.author_profile.full_name}</span></div>}</header>
-    {entry.assets.some((a: any) => a.role === 'cover') && <ImageProtectionWrapper src={entryCover(entry)} alt={entry.title} naturalAspectRatio className="w-full rounded-2xl" />}
+  return <article className="mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6 lg:px-8"><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({"@context":"https://schema.org","@graph":[schema,{"@type":"BreadcrumbList",itemListElement:[{"@type":"ListItem",position:1,name:siteConfig.name,item:siteConfig.absoluteUrl('',locale)},{"@type":"ListItem",position:2,name:t(kind),item:siteConfig.absoluteUrl(kind,locale)},{"@type":"ListItem",position:3,name:entry.title,item:url}]}]}).replace(/</g,"\\u003c")}}/>
+    <Link href={`/${kind}`} className="inline-flex min-h-11 items-center text-sm text-amber-800">← {t(kind)}</Link>
+    <div className={compactCover ? 'space-y-8 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center lg:gap-8 lg:space-y-0' : 'space-y-8'}>
+      <header className="space-y-5">
+        <h1 className="break-words font-serif text-3xl leading-tight text-stone-900 sm:text-5xl">{entry.title}</h1>
+        {entry.author_profile && <div className="flex items-center gap-3"><ArtistAvatar artist={entry.author_profile} /><span className="text-sm text-stone-700">{entry.author_profile.full_name}</span></div>}
+      </header>
+      {hasCover && <ImageProtectionWrapper
+        src={entryCover(entry)}
+        alt={entry.title}
+        naturalAspectRatio
+        className="w-full rounded-2xl"
+        imageClassName={compactCover ? 'object-cover lg:max-h-56 lg:object-contain' : undefined}
+      />}
+    </div>
     {entry.summary && <section className="rounded-2xl border border-amber-200 bg-amber-50/90 p-5 sm:p-7"><h2 className="mb-3 font-serif text-xl">{t('summary')}</h2><p className="whitespace-pre-line break-words text-sm leading-8 text-stone-700">{entry.summary}</p></section>}
     {entry.content && <div className="article-content min-w-0 rounded-2xl border border-stone-200 bg-[#FFFCF7]/95 p-5 sm:p-8" dangerouslySetInnerHTML={{ __html: entry.content }} />}
     {pdfs.length > 0 && (
