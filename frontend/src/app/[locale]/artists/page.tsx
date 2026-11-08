@@ -66,22 +66,22 @@ export default async function ArtistsPage({
 
       {/* Artists Grid */}
       {artistsList.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {artistsList.map((artist: any) => (
             <div
               key={artist.id}
-              className="bg-white border border-[#EAE6DF] rounded-3xl p-7 space-y-5 hover:border-amber-400/60 transition-all duration-300 flex flex-col justify-between shadow-xs hover:shadow-xl"
+              className="min-w-0 bg-white border border-[#EAE6DF] rounded-2xl p-4 space-y-3 hover:border-amber-400/60 transition-all duration-300 flex flex-col justify-between shadow-xs hover:shadow-xl"
             >
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 lg:flex-col lg:items-start">
                   <ArtistAvatar artist={artist} />
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-serif text-stone-900 font-medium">
+                      <h3 className="break-words font-serif text-base font-medium leading-snug text-stone-900">
                         {artist.full_name}
                       </h3>
                     </div>
-                    <span className="text-xs text-stone-400 font-mono">
+                    <span className="break-all text-xs text-stone-500 font-mono">
                       @{artist.username}
                     </span>
                   </div>
@@ -117,7 +117,7 @@ export default async function ArtistsPage({
                 {artist.location && (
                   <div className="flex items-center gap-1.5 text-xs text-stone-500">
                     <MapPin className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
-                    <span>{artist.location}</span>
+                    <span className="min-w-0 break-words">{artist.location}</span>
                   </div>
                 )}
               </div>
@@ -130,7 +130,7 @@ export default async function ArtistsPage({
                   className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 hover:text-amber-950 transition-colors"
                 >
                   <span>{tArtists("publishedWorks")}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0" />
                 </Link>
               </div>
             </div>

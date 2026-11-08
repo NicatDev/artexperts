@@ -17,10 +17,11 @@ type LearningCardEntry = {
   assets: { role: string }[];
 };
 
-export async function LearningCards({ entries, kind, locale }: {
+export async function LearningCards({ entries, kind, locale, catalog = false }: {
   entries: LearningCardEntry[];
   kind: 'lessons' | 'facts';
   locale: string;
+  catalog?: boolean;
 }) {
   const t = await getTranslations({ locale, namespace: 'learning' });
   const mediaTypes = [
@@ -29,7 +30,7 @@ export async function LearningCards({ entries, kind, locale }: {
     { roles: ['cover', 'image'], label: t('imageBadge'), Icon: ImageIcon, color: 'border-emerald-200 bg-emerald-50 text-emerald-900' },
   ];
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+    <div className={`grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 ${catalog ? "lg:grid-cols-5" : "lg:grid-cols-6"}`}>
       {entries.map(entry => {
         const href = `/${kind}/${entry.id}`;
         return (
@@ -37,7 +38,7 @@ export async function LearningCards({ entries, kind, locale }: {
             <Link href={href} aria-label={entry.title} className="block">
               <ImageProtectionWrapper src={entryCover(entry)} alt={entry.title} fill className="aspect-[4/3] w-full" />
             </Link>
-            <div className="flex flex-1 flex-col gap-3 p-4 lg:p-3">
+            <div className={`flex flex-1 flex-col p-4 ${catalog ? "gap-2" : "gap-3 lg:p-3"}`}>
               {kind === 'lessons' && (
                 <div className="flex flex-wrap gap-1.5">
                   {mediaTypes.filter(type => entry.assets.some(asset => type.roles.includes(asset.role))).map(({ label, Icon, color }) => (
@@ -48,10 +49,10 @@ export async function LearningCards({ entries, kind, locale }: {
                   ))}
                 </div>
               )}
-              <h2 className="break-words font-serif text-lg">
+              <h2 className={`break-words font-serif ${catalog ? "line-clamp-3 text-base leading-snug" : "text-lg"}`}>
                 <Link href={href} className="text-stone-900 hover:text-amber-800">{entry.title}</Link>
               </h2>
-              {entry.summary && <p className="line-clamp-3 break-words text-sm leading-6 text-stone-600">{entry.summary}</p>}
+              {entry.summary && <p className={`break-words text-stone-600 ${catalog ? "line-clamp-2 text-xs leading-5" : "line-clamp-3 text-sm leading-6"}`}>{entry.summary}</p>}
               <Link href={href} className="mt-auto inline-flex min-h-11 items-center text-sm font-medium text-amber-800">{t('open')} →</Link>
             </div>
           </article>
@@ -64,8 +65,8 @@ export async function LearningCards({ entries, kind, locale }: {
 export async function LearningList({ kind, params, searchParams }: { kind: 'lessons' | 'facts'; params: Promise<{ locale: string }>; searchParams: Promise<{ search?: string; page?: string }> }) {
   const { locale } = await params; const sp = await searchParams; setRequestLocale(locale); const t = await getTranslations({ locale, namespace: 'learning' }), c = await getTranslations({ locale, namespace: 'common' });
   let data: any = null; try { data = await api.learningList(kind, { search: sp.search || '', page: sp.page || '1' }); } catch { }
-  return <div className="mx-auto max-w-7xl space-y-10 px-4 py-12 sm:px-6 lg:px-8"><header className="mx-auto max-w-2xl space-y-4 text-center"><h1 className="font-serif text-3xl text-stone-900 sm:text-5xl">{t(kind)}</h1><p className="text-sm leading-7 text-stone-600">{t(kind + 'Intro')}</p></header><CatalogSearch kind={kind} locale={locale} filters={sp} />
-    {!data ? <p role="alert" className="rounded-xl bg-amber-50 p-5">{t('loadError')}</p> : !data.results.length ? <p className="rounded-2xl border border-dashed bg-white p-10 text-center text-stone-600">{sp.search ? c('searchNoResults') : t('empty')}</p> : <LearningCards entries={data.results} kind={kind} locale={locale} />}
+  return <div className="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8"><header className="mx-auto max-w-2xl space-y-4 text-center"><h1 className="font-serif text-3xl text-stone-900 sm:text-4xl">{t(kind)}</h1><p className="text-sm leading-7 text-stone-600">{t(kind + 'Intro')}</p></header><CatalogSearch kind={kind} locale={locale} filters={sp} />
+    {!data ? <p role="alert" className="rounded-xl bg-amber-50 p-5">{t('loadError')}</p> : !data.results.length ? <p className="rounded-2xl border border-dashed bg-white p-10 text-center text-stone-600">{sp.search ? c('searchNoResults') : t('empty')}</p> : <LearningCards entries={data.results} kind={kind} locale={locale} catalog />}
 
     {data && <Pagination currentPage={Number(sp.page) || 1} totalPages={data.total_pages} totalCount={data.count} basePath={`/${kind}`} searchParams={{ search: sp.search }} />}</div>;
 }

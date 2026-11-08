@@ -76,11 +76,11 @@ export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initi
     <div className="space-y-6" aria-busy={loading}>
       {/* Separate batches keep existing columns in place when more work is appended. */}
       {batches.map((batch, batchIndex) => (
-        <div key={batchIndex} className="columns-1 gap-4 sm:columns-2 lg:columns-6 xl:gap-6">
+        <div key={batchIndex} className="columns-1 gap-5 sm:columns-2 lg:columns-5">
           {batch.map((art: any) => (
             <div
               key={art.id}
-              className="group mb-6 w-full break-inside-avoid bg-white border border-[#EAE6DF] rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 shadow-xs hover:shadow-xl lg:mb-8"
+              className="group mb-5 w-full break-inside-avoid bg-white border border-[#EAE6DF] rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 shadow-xs hover:shadow-xl"
             >
               <div className="relative bg-stone-100">
                 <ImageProtectionWrapper
@@ -100,9 +100,9 @@ export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initi
                 )}
               </div>
 
-              <div className="p-4 lg:p-3 flex-1 flex flex-col justify-between space-y-4">
+              <div className="flex flex-1 flex-col justify-between space-y-3 p-4">
                 <div>
-                  <h3 className="text-lg font-serif text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-1 font-medium">
+                  <h3 className="line-clamp-2 break-words font-serif text-base font-medium leading-snug text-stone-900 transition-colors group-hover:text-amber-800">
                     {art.title}
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-stone-500">

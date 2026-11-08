@@ -138,7 +138,7 @@ export default async function ArtistPortfolioPage({
           Rəssamın Əsərləri ({artworks.length})
         </h2>
         {artworkFeed.failed ? <FeedError locale={locale} /> : artworks.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {artworks.map((art: any) => (
               <div
                 key={art.id}
@@ -156,10 +156,10 @@ export default async function ArtistPortfolioPage({
                   />
                 </div>
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
-                  <h3 className="text-base font-serif text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-1 font-medium">
+                  <h3 className="text-base font-serif text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-2 break-words font-medium leading-snug">
                     {art.title}
                   </h3>
-                  <div className="flex justify-between items-center text-xs text-stone-500">
+                  <div className="flex flex-wrap items-center justify-between gap-2 break-words text-xs text-stone-500">
                     <span>{art.medium || "Yağlı boya"}</span>
                     <Link
                       href={`/artworks/${art.id}`}
@@ -184,7 +184,7 @@ export default async function ArtistPortfolioPage({
           <h2 className="text-2xl font-serif text-stone-900 border-b border-stone-200 pb-3">
             Müəllif Kitabları ({books.length})
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 xl:gap-6">
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
             {books.map((b: any) => (
               <div
                 key={b.id}
@@ -201,7 +201,7 @@ export default async function ArtistPortfolioPage({
                   />
                 </div>
                 <div className="p-3 text-xs space-y-1">
-                  <h4 className="font-serif text-stone-900 truncate font-medium">{b.title}</h4>
+                  <h4 className="line-clamp-2 break-words font-serif text-sm font-medium text-stone-900">{b.title}</h4>
                   <Link href={`/books/${b.slug || b.id}`} className="text-amber-800 hover:text-amber-950 font-semibold block">
                     Kitaba Bax →
                   </Link>

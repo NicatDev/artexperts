@@ -79,7 +79,7 @@ export default async function BooksPage({
 
       {/* Books Grid with strictly equal aspect ratios */}
       {booksList.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 xl:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
           {booksList.map((book: any) => (
             <div
               key={book.id}
@@ -100,9 +100,9 @@ export default async function BooksPage({
                 </div>
               </div>
 
-              <div className="p-4 lg:p-3 flex-1 flex flex-col justify-between space-y-4">
+              <div className="flex flex-1 flex-col justify-between space-y-3 p-4">
                 <div>
-                  <h3 className="font-serif text-base text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-1 font-medium">
+                  <h3 className="font-serif text-base text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-2 break-words font-medium leading-snug">
                     {book.title}
                   </h3>
                   <p className="text-xs text-stone-500 mt-2 line-clamp-2 leading-relaxed">
@@ -111,7 +111,7 @@ export default async function BooksPage({
                 </div>
 
                 <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
-                  <span className="text-amber-900 font-medium line-clamp-1">
+                  <span className="min-w-0 break-words text-amber-900 font-medium line-clamp-1">
                     {book.contributors?.[0]?.name || "İlqar Məmmədov"}
                   </span>
                   <span className="whitespace-nowrap">{book.views_count || 0} {tCommon("views")}</span>
