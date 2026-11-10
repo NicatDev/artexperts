@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { LoaderCircle } from "lucide-react";
 import { Link } from "@/i18n/routing";
-import { api } from "@/lib/api";
 import { ImageProtectionWrapper } from "@/components/shared/ImageProtectionWrapper";
 
 export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initialHasMore, initialFailed, filters, locale }: {
@@ -18,15 +17,17 @@ export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initi
 }) {
   const tCommon = useTranslations("common");
   const tArtworks = useTranslations("artworks");
-  const [batches, setBatches] = useState<any[][]>(initialItems.length ? [initialItems] : []);
+  const [items, setItems] = useState(initialItems);
   const [page, setPage] = useState(initialFailed ? initialPage-1 : initialPage);
   const [count, setCount] = useState(initialCount);
   const [hasMore, setHasMore] = useState(initialHasMore || initialFailed);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(initialFailed);
   const activeRequest = useRef<AbortController | null>(null);
-  useEffect(() => () => activeRequest.current?.abort(), []);
-  const items = batches.flat();
+  useEffect(() => () => {
+    activeRequest.current?.abort();
+    activeRequest.current = null;
+  }, []);
   const nextQuery = new URLSearchParams(Object.entries(filters).filter(([,value])=>!!value));
   nextQuery.set("page",String(page+1));
   const text = locale === "az" ? {
@@ -46,10 +47,27 @@ export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initi
     activeRequest.current = controller;
     setLoading(true);
     setFailed(false);
+    let timedOut = false;
+    const timeout = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 30000);
     try {
-      const result = await api.getArtworks({ ...filters, lang: locale, page: String(page + 1) }, {
-        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]), cache: "no-store",
+      const query = new URLSearchParams(nextQuery);
+      query.set("lang", locale);
+      const request = () => fetch('/api/gallery?' + query, { signal: controller.signal, cache: "no-store" });
+      let response = await request().catch(error => {
+        if (!(error instanceof TypeError) || controller.signal.aborted) throw error;
+        return null;
       });
+      if (!response || [502, 503, 504].includes(response.status)) response = await request();
+      if (response.status === 404 && response.headers.get("X-Gallery-End") === "1" && items.length) {
+        setHasMore(false);
+        setCount(items.length);
+        return;
+      }
+      if (!response.ok) throw new Error("Could not fetch gallery");
+      const result = await response.json();
       if (!Array.isArray(result?.results)) throw new Error("Invalid gallery response");
       if (controller.signal.aborted) return;
       const seen = new Set(items.map(item => item.id));
@@ -58,14 +76,15 @@ export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initi
         seen.add(item.id);
         return true;
       });
-      setBatches(previous => additions.length ? [...previous, additions] : previous);
+      if (additions.length) setItems([...items, ...additions]);
       setPage(page + 1);
       setCount(result.count);
       setHasMore(Boolean(result.next));
     } catch {
-      if (!controller.signal.aborted) setFailed(true);
+      if (activeRequest.current === controller && (!controller.signal.aborted || timedOut)) setFailed(true);
     } finally {
-      if (!controller.signal.aborted) {
+      window.clearTimeout(timeout);
+      if (activeRequest.current === controller) {
         activeRequest.current = null;
         setLoading(false);
       }
@@ -74,10 +93,9 @@ export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initi
 
   return (
     <div className="space-y-6" aria-busy={loading}>
-      {/* Separate batches keep existing columns in place when more work is appended. */}
-      {batches.map((batch, batchIndex) => (
-        <div key={batchIndex} className="columns-1 gap-5 sm:columns-2 lg:columns-5">
-          {batch.map((art: any) => (
+      {items.length > 0 && (
+        <div className="columns-1 gap-5 sm:columns-2 lg:columns-5">
+          {items.map((art: any) => (
             <div
               key={art.id}
               className="group mb-5 w-full break-inside-avoid bg-white border border-[#EAE6DF] rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 shadow-xs hover:shadow-xl"
@@ -127,12 +145,12 @@ export function GalleryFeed({ initialPage = 1, initialItems, initialCount, initi
             </div>
           ))}
         </div>
-      ))}
+      )}
       {!items.length && !failed && !loading && <p className="rounded-2xl border border-dashed border-stone-200 bg-white py-20 text-center text-sm text-stone-500">{filters.search ? tCommon("searchNoResults") : tArtworks("empty")}</p>}
       <div className="flex flex-col items-center gap-4 text-center">
         <p aria-live="polite" aria-atomic="true" className="text-sm text-stone-500">{text.shown}: {items.length} / {count}</p>
         {failed && <p role="alert" className="text-sm text-red-700">{text.error}</p>}
-        {(hasMore || failed) && <Link href={`/artworks?${nextQuery}`} onClick={event=>{event.preventDefault();void loadMore();}} aria-disabled={loading}
+        {(hasMore || failed) && <Link href={`/artworks?${nextQuery}`} prefetch={false} onClick={event=>{event.preventDefault();void loadMore();}} aria-disabled={loading}
           className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-stone-900 px-8 py-3 text-sm font-medium text-white transition hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-700 aria-disabled:cursor-wait aria-disabled:opacity-60">
           {loading && <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />}
           {loading ? text.loading : failed ? text.retry : text.more}

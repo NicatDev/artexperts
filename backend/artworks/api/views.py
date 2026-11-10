@@ -52,7 +52,10 @@ class ArtworkListView(generics.ListAPIView):
         if search:
             qs = qs.filter(translations__title__icontains=search).distinct()
 
-        return qs.order_by('-unique_views_count', '-created_at')
+        popularity_order = ('-unique_views_count', '-created_at', 'pk')
+        if self.request.query_params.get('ordering') == 'gallery':
+            return qs.order_by(models.F('gallery_order').asc(nulls_last=True), *popularity_order)
+        return qs.order_by(*popularity_order)
 
 
 class ArtworkDetailView(generics.RetrieveAPIView):

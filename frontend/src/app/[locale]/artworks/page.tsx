@@ -30,7 +30,7 @@ export default async function ArtworksPage({
   const page = Number.isSafeInteger(Number(sp.page)) && Number(sp.page)>0 ? Number(sp.page) : 1;
   const filters = { category: sp.category || "", search: sp.search || "", founder: sp.founder || "" };
   const [artworkFeed, categoryFeed] = await Promise.all([
-    loadPublicData("gallery", () => api.getArtworks({ ...filters, lang: locale, page: String(page) })),
+    loadPublicData("gallery", () => api.getArtworks({ ...filters, lang: locale, page: String(page), ordering: "gallery" }, { cache: "no-store" })),
     loadPublicData("gallery categories", () => api.getArtworkCategories(locale)),
   ]);
   const artworksList = artworkFeed.data?.results || [];
@@ -44,7 +44,7 @@ export default async function ArtworksPage({
           Kolleksiya
         </span>
         <h1 className="text-3xl sm:text-5xl font-serif text-stone-900">
-            {locale === "az" ? "Ən çox baxılan əsərlər" : tArtworks("title")}
+            {tArtworks("title")}
         </h1>
         <p className="text-sm text-stone-600">
           {tArtworks("subtitle")}
@@ -84,7 +84,7 @@ export default async function ArtworksPage({
       </div>
 
       <GalleryFeed
-        key={JSON.stringify([locale, filters, artworkFeed.data])}
+        key={JSON.stringify([locale, filters, page, artworkFeed.data])}
         initialPage={page}
         initialItems={artworksList}
         initialCount={artworkFeed.data?.count ?? 0}

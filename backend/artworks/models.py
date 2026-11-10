@@ -44,6 +44,12 @@ class Artwork(SoftDeletableModel):
     is_featured = models.BooleanField(default=False, db_index=True)
     is_founder_piece = models.BooleanField(default=False, db_index=True, help_text="Masterpiece by Ilqar Mammadov")
 
+    gallery_order = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Qalereyada sıra',
+        help_text='Kiçik rəqəm öndə göstərilir. Sırasız əsərlər baxış sayına görə sonra gəlir.',
+    )
     creation_year = models.PositiveIntegerField(null=True, blank=True)
     medium = models.CharField(max_length=150, blank=True, default='', help_text="e.g. Oil on Canvas")
     dimensions = models.CharField(max_length=100, blank=True, default='', help_text="e.g. 100 x 80 cm")
